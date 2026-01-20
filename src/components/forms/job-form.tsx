@@ -26,8 +26,8 @@ type Category = {
   id: string;
   name: string;
   slug: string;
-  description?: string;
-  icon?: string;
+  description?: string | null;
+  icon?: string | null;
 };
 
 interface JobFormProps {
