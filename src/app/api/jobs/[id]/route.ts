@@ -116,11 +116,37 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Extract and transform data for Prisma
+    const { categoryId, images, ...directFields } = parsed.data;
+
+    // Build update data with proper Prisma syntax
+    const updateData: Parameters<typeof prisma.job.update>[0]['data'] = {
+      ...directFields,
+    };
+
+    // Handle category relation properly
+    if (categoryId) {
+      updateData.category = { connect: { id: categoryId } };
+    }
+
     const updatedJob = await prisma.job.update({
       where: { id },
-      data: parsed.data,
+      data: updateData,
       select: { id: true, title: true, status: true },
     });
+
+    // Handle images separately if provided
+    if (images && images.length > 0) {
+      // Delete existing images and create new ones
+      await prisma.jobImage.deleteMany({ where: { jobId: id } });
+      await prisma.jobImage.createMany({
+        data: images.map((url, index) => ({
+          jobId: id,
+          url,
+          order: index,
+        })),
+      });
+    }
 
     return NextResponse.json(updatedJob);
   } catch (error) {
