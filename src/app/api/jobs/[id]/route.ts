@@ -184,7 +184,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     // Can't cancel completed or already cancelled jobs
-    if ([JobStatus.COMPLETED, JobStatus.CANCELLED, JobStatus.REVIEWED].includes(job.status)) {
+    const nonCancellableStatuses: JobStatus[] = [JobStatus.COMPLETED, JobStatus.CANCELLED, JobStatus.REVIEWED];
+    if (nonCancellableStatuses.includes(job.status)) {
       return NextResponse.json(
         { error: 'Cannot cancel this job' },
         { status: 400 }
