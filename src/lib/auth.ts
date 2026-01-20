@@ -79,7 +79,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
 });
 
-// Type augmentation for NextAuth
+// Type augmentation for NextAuth v5
 declare module 'next-auth' {
   interface User {
     role: Role;
@@ -95,7 +95,7 @@ declare module 'next-auth' {
   }
 }
 
-declare module 'next-auth/jwt' {
+declare module '@auth/core/jwt' {
   interface JWT {
     id: string;
     role: Role;
