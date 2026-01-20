@@ -1,0 +1,5 @@
+# VakSpot
+User-agent: *
+Allow: /
+
+Sitemap: https://vakspot.nl/sitemap.xml

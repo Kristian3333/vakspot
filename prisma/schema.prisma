@@ -1,0 +1,398 @@
+// prisma/schema.prisma
+// VakSpot Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// AUTH & USERS
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String?
+  role          Role      @default(CLIENT)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Profiles (one-to-one)
+  clientProfile ClientProfile?
+  proProfile    ProProfile?
+
+  // Sessions & Accounts for NextAuth
+  accounts Account[]
+  sessions Session[]
+
+  // Messages sent
+  messages Message[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum Role {
+  CLIENT
+  PRO
+  ADMIN
+}
+
+// ============================================
+// PROFILES
+// ============================================
+
+model ClientProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone     String?
+  address   String?
+  city      String?
+  postcode  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Jobs posted by this client
+  jobs Job[]
+}
+
+model ProProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName   String
+  kvkNumber     String?  // Chamber of Commerce number
+  description   String?  @db.Text
+  phone         String
+  website       String?
+  serviceRadius Int      @default(25) // km
+  locationLat   Float?
+  locationLng   Float?
+  locationCity  String?
+  verified      Boolean  @default(false)
+  active        Boolean  @default(true)
+  
+  // Aggregated stats (denormalized for performance)
+  avgRating     Float    @default(0)
+  totalReviews  Int      @default(0)
+  responseRate  Float    @default(100) // percentage
+  responseTime  Int?     // average response time in hours
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  categories ProCategory[]
+  bids       Bid[]
+  reviews    Review[]
+
+  @@index([locationLat, locationLng])
+  @@index([avgRating])
+  @@index([verified])
+}
+
+// ============================================
+// CATEGORIES
+// ============================================
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?  // Lucide icon name
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  pros ProCategory[]
+  jobs Job[]
+
+  @@index([slug])
+  @@index([active, order])
+}
+
+model ProCategory {
+  proId      String
+  categoryId String
+  yearsExp   Int?       // Years of experience in this category
+  pro        ProProfile @relation(fields: [proId], references: [id], onDelete: Cascade)
+  category   Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([proId, categoryId])
+}
+
+// ============================================
+// JOBS
+// ============================================
+
+model Job {
+  id          String    @id @default(cuid())
+  title       String
+  description String    @db.Text
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  clientId    String
+  client      ClientProfile @relation(fields: [clientId], references: [id])
+  
+  status      JobStatus @default(DRAFT)
+  
+  // Budget
+  budgetMin   Int?      // in cents
+  budgetMax   Int?      // in cents
+  budgetType  BudgetType @default(ESTIMATE)
+  
+  // Location
+  locationAddress  String?
+  locationCity     String
+  locationPostcode String
+  locationLat      Float?
+  locationLng      Float?
+  
+  // Timeline
+  timeline    Timeline  @default(FLEXIBLE)
+  startDate   DateTime?
+  
+  // Metadata
+  viewCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+  completedAt DateTime?
+
+  // Relations
+  images      JobImage[]
+  bids        Bid[]
+  review      Review?
+  
+  // Accepted bid (one-to-one)
+  acceptedBidId String? @unique
+  acceptedBid   Bid?    @relation("AcceptedBid", fields: [acceptedBidId], references: [id])
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([clientId])
+  @@index([locationLat, locationLng])
+  @@index([createdAt])
+}
+
+model JobImage {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  url       String
+  filename  String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([jobId])
+}
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  IN_CONVERSATION
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  REVIEWED
+}
+
+enum BudgetType {
+  FIXED
+  ESTIMATE
+  HOURLY
+  TO_DISCUSS
+}
+
+enum Timeline {
+  URGENT      // Within a few days
+  THIS_WEEK
+  THIS_MONTH
+  NEXT_MONTH
+  FLEXIBLE
+}
+
+// ============================================
+// BIDS
+// ============================================
+
+model Bid {
+  id          String    @id @default(cuid())
+  jobId       String
+  job         Job       @relation(fields: [jobId], references: [id])
+  proId       String
+  pro         ProProfile @relation(fields: [proId], references: [id])
+  
+  amount      Int       // in cents
+  amountType  BudgetType @default(ESTIMATE)
+  message     String    @db.Text
+  status      BidStatus @default(PENDING)
+  
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  viewedAt    DateTime?
+  
+  // Relations
+  acceptedJob  Job?      @relation("AcceptedBid")
+  conversation Conversation?
+
+  @@unique([jobId, proId]) // One bid per pro per job
+  @@index([jobId])
+  @@index([proId])
+  @@index([status])
+}
+
+enum BidStatus {
+  PENDING
+  VIEWED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+// ============================================
+// MESSAGING
+// ============================================
+
+model Conversation {
+  id        String    @id @default(cuid())
+  bidId     String    @unique
+  bid       Bid       @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  messages Message[]
+
+  @@index([updatedAt])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  content        String       @db.Text
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+// ============================================
+// REVIEWS
+// ============================================
+
+model Review {
+  id        String     @id @default(cuid())
+  jobId     String     @unique
+  job       Job        @relation(fields: [jobId], references: [id])
+  proId     String
+  pro       ProProfile @relation(fields: [proId], references: [id])
+  
+  rating    Int        // 1-5
+  title     String?
+  content   String     @db.Text
+  
+  // Individual ratings (optional)
+  qualityRating       Int?  // 1-5
+  communicationRating Int?  // 1-5
+  timelinessRating    Int?  // 1-5
+  valueRating         Int?  // 1-5
+  
+  // Pro can respond
+  response    String?  @db.Text
+  respondedAt DateTime?
+  
+  // Moderation
+  verified  Boolean  @default(false)
+  flagged   Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([proId])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+// ============================================
+// NOTIFICATIONS (for future use)
+// ============================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  NEW_LEAD
+  NEW_BID
+  BID_ACCEPTED
+  BID_REJECTED
+  NEW_MESSAGE
+  REVIEW_REQUEST
+  REVIEW_RECEIVED
+  SYSTEM
+}
