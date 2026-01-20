@@ -6,6 +6,7 @@ import { compare } from 'bcryptjs';
 import { z } from 'zod';
 import prisma from './prisma';
 import type { Role } from '@prisma/client';
+import type { Adapter } from 'next-auth/adapters';
 
 // Validation schema for credentials
 const credentialsSchema = z.object({
@@ -14,7 +15,7 @@ const credentialsSchema = z.object({
 });
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as Adapter,
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',
