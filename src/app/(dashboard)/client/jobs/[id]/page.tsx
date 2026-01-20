@@ -86,6 +86,7 @@ async function getJob(id: string, userId: string) {
           },
         },
       },
+      review: true,
     },
   });
 
