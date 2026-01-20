@@ -69,9 +69,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Configure route for file uploads
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Route segment config for App Router (replaces old `export const config`)
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
