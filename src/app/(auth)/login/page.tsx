@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import { Button, Input, Card } from '@/components/ui';
 import { loginSchema, type LoginInput } from '@/lib/validations';
 import { AlertCircle, CheckCircle2, User, Briefcase } from 'lucide-react';
@@ -19,32 +19,12 @@ export default function LoginPage() {
   const isPro = searchParams.get('pro');
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const { data: session, status } = useSession();
 
   useEffect(() => {
     if (registered === 'true') {
       setShowSuccess(true);
     }
   }, [registered]);
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user) {
-      const role = session.user.role;
-      if (callbackUrl) {
-        router.push(callbackUrl);
-      } else {
-        // Redirect based on role
-        const defaultRedirect = role === 'PRO' 
-          ? '/pro/leads' 
-          : role === 'ADMIN' 
-            ? '/admin' 
-            : '/client/jobs';
-        router.push(defaultRedirect);
-      }
-      router.refresh();
-    }
-  }, [status, session, callbackUrl, router]);
 
   const {
     register,
@@ -68,18 +48,23 @@ export default function LoginPage() {
       return;
     }
 
-    // The useEffect above will handle redirect once session updates
+    // If there's a callback URL, use it, otherwise let the server determine redirect
+    // We'll fetch the session to get the role and redirect accordingly
+    const sessionRes = await fetch('/api/auth/session');
+    const session = await sessionRes.json();
+    
+    if (callbackUrl) {
+      router.push(callbackUrl);
+    } else if (session?.user?.role === 'PRO') {
+      router.push('/pro/leads');
+    } else if (session?.user?.role === 'ADMIN') {
+      router.push('/admin');
+    } else {
+      router.push('/client/jobs');
+    }
+    
     router.refresh();
   };
-
-  // Show loading while checking session
-  if (status === 'loading') {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
