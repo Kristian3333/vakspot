@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button, Avatar } from '@/components/ui';
 import {
@@ -25,10 +25,37 @@ interface HeaderProps {
 
 export function Header({ session }: HeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const isLoggedIn = !!session?.user;
   const userRole = session?.user?.role;
+
+  // Handle logout
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      // Call the NextAuth signout endpoint
+      const response = await fetch('/api/auth/signout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      // Clear any client-side state and redirect
+      if (response.redirected) {
+        window.location.href = response.url;
+      } else {
+        window.location.href = '/';
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect anyway
+      window.location.href = '/';
+    }
+  };
 
   // Navigation items based on role
   const getNavItems = () => {
@@ -138,15 +165,15 @@ export function Header({ session }: HeaderProps) {
                       Instellingen
                     </Link>
                     <hr className="my-2 border-surface-200" />
-                    <form action="/api/auth/signout" method="POST">
-                      <button
-                        type="submit"
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-error-600 hover:bg-error-50"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Uitloggen
-                      </button>
-                    </form>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-error-600 hover:bg-error-50 disabled:opacity-50"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      {isLoggingOut ? 'Uitloggen...' : 'Uitloggen'}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -198,6 +225,38 @@ export function Header({ session }: HeaderProps) {
                 {item.label}
               </Link>
             ))}
+            
+            {isLoggedIn && (
+              <>
+                <Link
+                  href={userRole === 'PRO' ? '/pro/profile' : '/profile'}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-surface-600 hover:bg-surface-50"
+                >
+                  <User className="h-5 w-5" />
+                  Profiel
+                </Link>
+                <Link
+                  href="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-surface-600 hover:bg-surface-50"
+                >
+                  <Settings className="h-5 w-5" />
+                  Instellingen
+                </Link>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  disabled={isLoggingOut}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-error-600 hover:bg-error-50 disabled:opacity-50"
+                >
+                  <LogOut className="h-5 w-5" />
+                  {isLoggingOut ? 'Uitloggen...' : 'Uitloggen'}
+                </button>
+              </>
+            )}
             
             {isLoggedIn && userRole === 'CLIENT' && (
               <Link
