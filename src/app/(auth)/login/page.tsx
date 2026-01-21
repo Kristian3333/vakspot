@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { Button, Input, Card } from '@/components/ui';
 import { loginSchema, type LoginInput } from '@/lib/validations';
 import { AlertCircle, CheckCircle2, User, Briefcase } from 'lucide-react';
@@ -14,17 +14,37 @@ import { AlertCircle, CheckCircle2, User, Briefcase } from 'lucide-react';
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/';
+  const callbackUrl = searchParams.get('callbackUrl');
   const registered = searchParams.get('registered');
   const isPro = searchParams.get('pro');
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     if (registered === 'true') {
       setShowSuccess(true);
     }
   }, [registered]);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      const role = session.user.role;
+      if (callbackUrl) {
+        router.push(callbackUrl);
+      } else {
+        // Redirect based on role
+        const defaultRedirect = role === 'PRO' 
+          ? '/pro/leads' 
+          : role === 'ADMIN' 
+            ? '/admin' 
+            : '/client/jobs';
+        router.push(defaultRedirect);
+      }
+      router.refresh();
+    }
+  }, [status, session, callbackUrl, router]);
 
   const {
     register,
@@ -48,9 +68,18 @@ export default function LoginPage() {
       return;
     }
 
-    router.push(callbackUrl);
+    // The useEffect above will handle redirect once session updates
     router.refresh();
   };
+
+  // Show loading while checking session
+  if (status === 'loading') {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">

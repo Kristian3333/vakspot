@@ -135,6 +135,9 @@
 - Added success message on login page after registration
 - Consistent link styling across all auth pages
 - Fixed pro leads detail page not loading (API response format mismatch - now returns `{ job }`)
+- Fixed PRO users being redirected to homepage after login instead of /pro/leads:
+  - Added SessionProvider to Providers component (was missing)
+  - Updated login page to use useSession and redirect based on user role
 
 ### Polish & Performance (2025-01-21)
 - SEO metadata for all pages (title, description, OpenGraph)
