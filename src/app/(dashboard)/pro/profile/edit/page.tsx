@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, Button, Input, Textarea, Avatar, Spinner, Select } from '@/components/ui';
-import { ArrowLeft, Save, Upload, User, Building2, MapPin, Phone, FileText } from 'lucide-react';
+import { ArrowLeft, Save, Upload } from 'lucide-react';
 import Link from 'next/link';
 
 type Category = {
@@ -173,43 +173,31 @@ export default function EditProProfilePage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="label">Naam</label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Uw naam"
-                  leftIcon={<User className="h-4 w-4" />}
-                />
-              </div>
-              <div>
-                <label className="label">Bedrijfsnaam</label>
-                <Input
-                  value={formData.companyName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
-                  placeholder="Uw bedrijfsnaam"
-                  leftIcon={<Building2 className="h-4 w-4" />}
-                />
-              </div>
-              <div>
-                <label className="label">Telefoonnummer</label>
-                <Input
-                  value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                  placeholder="06-12345678"
-                  type="tel"
-                  leftIcon={<Phone className="h-4 w-4" />}
-                />
-              </div>
-              <div>
-                <label className="label">KvK-nummer</label>
-                <Input
-                  value={formData.kvkNumber}
-                  onChange={(e) => setFormData(prev => ({ ...prev, kvkNumber: e.target.value }))}
-                  placeholder="12345678"
-                  leftIcon={<FileText className="h-4 w-4" />}
-                />
-              </div>
+              <Input
+                label="Naam"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Uw naam"
+              />
+              <Input
+                label="Bedrijfsnaam"
+                value={formData.companyName}
+                onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
+                placeholder="Uw bedrijfsnaam"
+              />
+              <Input
+                label="Telefoonnummer"
+                value={formData.phone}
+                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="06-12345678"
+                type="tel"
+              />
+              <Input
+                label="KvK-nummer"
+                value={formData.kvkNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, kvkNumber: e.target.value }))}
+                placeholder="12345678"
+              />
             </div>
           </Card>
 
@@ -218,23 +206,18 @@ export default function EditProProfilePage() {
             <h2 className="text-lg font-semibold text-surface-900 mb-6">Locatie & werkgebied</h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="label">Stad</label>
-                <Input
-                  value={formData.city}
-                  onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                  placeholder="Amsterdam"
-                  leftIcon={<MapPin className="h-4 w-4" />}
-                />
-              </div>
-              <div>
-                <label className="label">Postcode</label>
-                <Input
-                  value={formData.postcode}
-                  onChange={(e) => setFormData(prev => ({ ...prev, postcode: e.target.value }))}
-                  placeholder="1234 AB"
-                />
-              </div>
+              <Input
+                label="Stad"
+                value={formData.city}
+                onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                placeholder="Amsterdam"
+              />
+              <Input
+                label="Postcode"
+                value={formData.postcode}
+                onChange={(e) => setFormData(prev => ({ ...prev, postcode: e.target.value }))}
+                placeholder="1234 AB"
+              />
               <div className="sm:col-span-2">
                 <label className="label">Werkstraal (km)</label>
                 <Select
