@@ -130,6 +130,10 @@
 - Fixed pro profile edit page categories not loading (API returns array, not object)
 - Created missing `/api/profile` endpoint for client profile editing
 - Created missing `/api/pro/profile` endpoint for pro profile editing
+- Fixed "Inloggen" links on registration pages (more prominent with icon)
+- Improved login page clarity (shows both Opdrachtgevers & Vakmensen icons, separate register buttons)
+- Added success message on login page after registration
+- Consistent link styling across all auth pages
 
 ### Polish & Performance (2025-01-21)
 - SEO metadata for all pages (title, description, OpenGraph)

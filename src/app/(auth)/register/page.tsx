@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Input, Card } from '@/components/ui';
 import { registerClientSchema, type RegisterClientInput } from '@/lib/validations';
-import { AlertCircle, User, Briefcase, ArrowRight } from 'lucide-react';
+import { AlertCircle, User, Briefcase, ArrowRight, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type UserType = 'client' | 'pro' | null;
@@ -108,12 +108,19 @@ export default function RegisterPage() {
             </button>
           </div>
 
-          <p className="mt-8 text-center text-sm text-surface-600">
-            Heeft u al een account?{' '}
-            <Link href="/login" className="link font-medium">
-              Inloggen
-            </Link>
-          </p>
+          {/* Login link - more prominent */}
+          <div className="mt-8 p-4 rounded-xl bg-surface-50 border border-surface-200">
+            <p className="text-center text-sm text-surface-600">
+              Heeft u al een account?{' '}
+              <Link 
+                href="/login" 
+                className="inline-flex items-center gap-1 font-semibold text-brand-600 hover:text-brand-700 hover:underline"
+              >
+                <LogIn className="h-4 w-4" />
+                Inloggen
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -126,7 +133,7 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-surface-900">Registreren</h1>
           <p className="mt-2 text-surface-600">
-            Maak een gratis account aan
+            Maak een gratis account aan als opdrachtgever
           </p>
         </div>
 
@@ -194,11 +201,11 @@ export default function RegisterPage() {
 
             <div className="text-sm text-surface-600">
               Door te registreren gaat u akkoord met onze{' '}
-              <Link href="/terms" className="link">
+              <Link href="/terms" className="text-brand-600 hover:text-brand-700 hover:underline">
                 algemene voorwaarden
               </Link>{' '}
               en{' '}
-              <Link href="/privacy" className="link">
+              <Link href="/privacy" className="text-brand-600 hover:text-brand-700 hover:underline">
                 privacybeleid
               </Link>
               .
@@ -209,11 +216,18 @@ export default function RegisterPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-surface-600">
-            Heeft u al een account?{' '}
-            <Link href="/login" className="link font-medium">
-              Inloggen
-            </Link>
+          {/* Login link - more prominent */}
+          <div className="mt-6 pt-6 border-t border-surface-200">
+            <p className="text-center text-sm text-surface-600">
+              Heeft u al een account?{' '}
+              <Link 
+                href="/login" 
+                className="inline-flex items-center gap-1 font-semibold text-brand-600 hover:text-brand-700 hover:underline"
+              >
+                <LogIn className="h-4 w-4" />
+                Inloggen
+              </Link>
+            </p>
           </div>
         </Card>
 

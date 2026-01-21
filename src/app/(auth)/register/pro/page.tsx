@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Input, Card } from '@/components/ui';
 import { registerProSchema, type RegisterProInput } from '@/lib/validations';
-import { AlertCircle, CheckCircle2, Building2, MapPin, Wrench } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Building2, MapPin, Wrench, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Category = {
@@ -190,7 +190,15 @@ export default function ProRegisterPage() {
                 </div>
                 {errors.categories && <p className="text-sm text-error-500">{errors.categories.message}</p>}
                 <div className="text-sm text-surface-600">
-                  Door te registreren gaat u akkoord met onze <Link href="/terms" className="link">algemene voorwaarden</Link> en <Link href="/privacy" className="link">privacybeleid</Link>.
+                  Door te registreren gaat u akkoord met onze{' '}
+                  <Link href="/terms" className="text-brand-600 hover:text-brand-700 hover:underline">
+                    algemene voorwaarden
+                  </Link>{' '}
+                  en{' '}
+                  <Link href="/privacy" className="text-brand-600 hover:text-brand-700 hover:underline">
+                    privacybeleid
+                  </Link>
+                  .
                 </div>
                 <div className="flex gap-3">
                   <Button type="button" variant="outline" onClick={prevStep} className="flex-1">Terug</Button>
@@ -200,9 +208,20 @@ export default function ProRegisterPage() {
             )}
           </form>
         </Card>
-        <p className="mt-6 text-center text-sm text-surface-600">
-          Heeft u al een account? <Link href="/login" className="link font-medium">Inloggen</Link>
-        </p>
+
+        {/* Login link - more prominent */}
+        <div className="mt-6 p-4 rounded-xl bg-surface-50 border border-surface-200">
+          <p className="text-center text-sm text-surface-600">
+            Heeft u al een account?{' '}
+            <Link 
+              href="/login" 
+              className="inline-flex items-center gap-1 font-semibold text-brand-600 hover:text-brand-700 hover:underline"
+            >
+              <LogIn className="h-4 w-4" />
+              Inloggen
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
