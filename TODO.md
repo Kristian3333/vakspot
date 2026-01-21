@@ -18,11 +18,9 @@
 ## Low Priority
 
 ### Polish & UX
-- [ ] SEO metadata for all pages
 - [ ] Image optimization
 
 ### Testing
-- [ ] Unit tests for utilities
 - [ ] Unit tests for API routes
 - [ ] E2E tests for critical flows (registration, job posting, bidding)
 - [ ] Integration tests for auth flow
@@ -30,7 +28,6 @@
 ### Performance
 - [ ] Implement proper caching
 - [ ] Optimize database queries
-- [ ] Add indexes to Prisma schema
 - [ ] Image lazy loading
 
 ### Future Features
@@ -87,6 +84,8 @@
 ### Profiles
 - Client profile edit page
 - Pro profile edit page
+- Client profile API (`/api/profile`)
+- Pro profile API (`/api/pro/profile`)
 
 ### Reviews System
 - Review page with form
@@ -125,3 +124,14 @@
   - Admin dashboard
 - Error boundaries (dashboard & global)
 - 404 Not Found page
+
+### Bug Fixes (2025-01-21)
+- Fixed validation schemas to allow empty strings for optional fields (KVK number, etc.)
+- Fixed pro profile edit page categories not loading (API returns array, not object)
+- Created missing `/api/profile` endpoint for client profile editing
+- Created missing `/api/pro/profile` endpoint for pro profile editing
+
+### Polish & Performance (2025-01-21)
+- SEO metadata for all pages (title, description, OpenGraph)
+- Unit tests for utilities (utils.test.ts with comprehensive coverage)
+- Database indexes in Prisma schema (User, ProProfile, Category, Job, Bid, Message, Review tables)

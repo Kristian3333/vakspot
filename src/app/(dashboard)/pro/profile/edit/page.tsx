@@ -72,7 +72,8 @@ export default function EditProProfilePage() {
             categoryIds: pro?.categories?.map((c: { categoryId: string }) => c.categoryId) || [],
           });
         }
-        setCategories(categoriesData.categories || []);
+        // API returns array directly, handle both array and object format for safety
+        setCategories(Array.isArray(categoriesData) ? categoriesData : categoriesData.categories || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));

@@ -15,9 +15,9 @@ export const registerClientSchema = z.object({
   password: z.string().min(6, 'Wachtwoord moet minimaal 6 tekens zijn'),
   confirmPassword: z.string(),
   name: z.string().min(2, 'Naam moet minimaal 2 tekens zijn'),
-  phone: z.string().optional(),
-  city: z.string().optional(),
-  postcode: z.string().regex(/^[1-9][0-9]{3}\s?[A-Za-z]{2}$/, 'Ongeldige postcode').optional(),
+  phone: z.string().optional().or(z.literal('')),
+  city: z.string().optional().or(z.literal('')),
+  postcode: z.string().regex(/^[1-9][0-9]{3}\s?[A-Za-z]{2}$/, 'Ongeldige postcode').optional().or(z.literal('')),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Wachtwoorden komen niet overeen',
   path: ['confirmPassword'],
@@ -29,7 +29,7 @@ export const registerProSchema = z.object({
   confirmPassword: z.string(),
   name: z.string().min(2, 'Naam moet minimaal 2 tekens zijn'),
   companyName: z.string().min(2, 'Bedrijfsnaam moet minimaal 2 tekens zijn'),
-  kvkNumber: z.string().regex(/^[0-9]{8}$/, 'KVK nummer moet 8 cijfers zijn').optional(),
+  kvkNumber: z.string().regex(/^[0-9]{8}$/, 'KVK nummer moet 8 cijfers zijn').optional().or(z.literal('')),
   phone: z.string().min(10, 'Ongeldig telefoonnummer'),
   city: z.string().min(2, 'Stad is verplicht'),
   postcode: z.string().regex(/^[1-9][0-9]{3}\s?[A-Za-z]{2}$/, 'Ongeldige postcode'),
@@ -54,7 +54,7 @@ const jobSchemaBase = z.object({
   budgetType: z.enum(['FIXED', 'ESTIMATE', 'HOURLY', 'TO_DISCUSS']).default('ESTIMATE'),
   locationCity: z.string().min(2, 'Stad is verplicht'),
   locationPostcode: z.string().regex(/^[1-9][0-9]{3}\s?[A-Za-z]{2}$/, 'Ongeldige postcode'),
-  locationAddress: z.string().optional(),
+  locationAddress: z.string().optional().or(z.literal('')),
   timeline: z.enum(['URGENT', 'THIS_WEEK', 'THIS_MONTH', 'NEXT_MONTH', 'FLEXIBLE']).default('FLEXIBLE'),
   startDate: z.date().optional(),
   images: z.array(z.string()).optional(),
@@ -101,7 +101,7 @@ export const sendMessageSchema = z.object({
 export const createReviewSchema = z.object({
   jobId: z.string().min(1),
   rating: z.number().min(1).max(5),
-  title: z.string().max(100).optional(),
+  title: z.string().max(100).optional().or(z.literal('')),
   content: z.string().min(10, 'Review moet minimaal 10 tekens zijn').max(1000, 'Review mag maximaal 1000 tekens zijn'),
   qualityRating: z.number().min(1).max(5).optional(),
   communicationRating: z.number().min(1).max(5).optional(),
@@ -119,17 +119,17 @@ export const reviewResponseSchema = z.object({
 // ============================================
 
 export const updateClientProfileSchema = z.object({
-  name: z.string().min(2).optional(),
-  phone: z.string().optional(),
-  city: z.string().optional(),
-  postcode: z.string().regex(/^[1-9][0-9]{3}\s?[A-Za-z]{2}$/, 'Ongeldige postcode').optional(),
-  address: z.string().optional(),
+  name: z.string().min(2).optional().or(z.literal('')),
+  phone: z.string().optional().or(z.literal('')),
+  city: z.string().optional().or(z.literal('')),
+  postcode: z.string().regex(/^[1-9][0-9]{3}\s?[A-Za-z]{2}$/, 'Ongeldige postcode').optional().or(z.literal('')),
+  address: z.string().optional().or(z.literal('')),
 });
 
 export const updateProProfileSchema = z.object({
-  companyName: z.string().min(2).optional(),
-  description: z.string().max(1000).optional(),
-  phone: z.string().min(10).optional(),
+  companyName: z.string().min(2).optional().or(z.literal('')),
+  description: z.string().max(1000).optional().or(z.literal('')),
+  phone: z.string().min(10).optional().or(z.literal('')),
   website: z.string().url().optional().or(z.literal('')),
   serviceRadius: z.number().min(5).max(100).optional(),
   categories: z.array(z.string()).min(1).optional(),
