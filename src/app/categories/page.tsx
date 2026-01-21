@@ -14,6 +14,18 @@ import {
   Car,
   Truck,
   Building2,
+  Grid3X3,
+  Warehouse,
+  Blocks,
+  PaintRoller,
+  Layers,
+  HardHat,
+  Ruler,
+  Square,
+  Sparkles,
+  LayoutGrid,
+  Flame,
+  HelpCircle,
 } from 'lucide-react';
 import prisma from '@/lib/prisma';
 import type { Metadata } from 'next';
@@ -38,6 +50,7 @@ async function getCategories() {
 
 // Icon mapping for categories
 const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  // Basic icons
   Paintbrush: Paintbrush,
   Wrench: Wrench,
   Zap: Zap,
@@ -50,6 +63,19 @@ const categoryIcons: Record<string, React.ComponentType<{ className?: string }>>
   Car: Car,
   Truck: Truck,
   Building2: Building2,
+  // Extended icons
+  Grid3X3: Grid3X3,         // Vloeren
+  Warehouse: Warehouse,     // Dakdekker
+  Blocks: Blocks,           // Metselaar
+  PaintRoller: PaintRoller, // Stukadoor
+  Layers: Layers,
+  HardHat: HardHat,
+  Ruler: Ruler,
+  Square: Square,
+  Sparkles: Sparkles,       // Schoonmaak
+  LayoutGrid: LayoutGrid,   // Kozijnen & Glas
+  Flame: Flame,             // CV & Verwarming
+  HelpCircle: HelpCircle,   // Overig
 };
 
 export default async function CategoriesPage() {

@@ -12,6 +12,26 @@ import {
   Wrench,
   Zap,
   Hammer,
+  Home,
+  Droplets,
+  Wind,
+  Shovel,
+  TreeDeciduous,
+  Car,
+  Truck,
+  Building2,
+  Grid3X3,
+  Warehouse,
+  Blocks,
+  PaintRoller,
+  Layers,
+  HardHat,
+  Ruler,
+  Square,
+  Sparkles,
+  LayoutGrid,
+  Flame,
+  HelpCircle,
 } from 'lucide-react';
 import prisma from '@/lib/prisma';
 
@@ -26,10 +46,32 @@ async function getCategories() {
 
 // Icon mapping for categories
 const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  // Basic icons
   Paintbrush: Paintbrush,
   Wrench: Wrench,
   Zap: Zap,
   Hammer: Hammer,
+  Home: Home,
+  Droplets: Droplets,
+  Wind: Wind,
+  Shovel: Shovel,
+  TreeDeciduous: TreeDeciduous,
+  Car: Car,
+  Truck: Truck,
+  Building2: Building2,
+  // Extended icons
+  Grid3X3: Grid3X3,         // Vloeren
+  Warehouse: Warehouse,     // Dakdekker
+  Blocks: Blocks,           // Metselaar
+  PaintRoller: PaintRoller, // Stukadoor
+  Layers: Layers,
+  HardHat: HardHat,
+  Ruler: Ruler,
+  Square: Square,
+  Sparkles: Sparkles,       // Schoonmaak
+  LayoutGrid: LayoutGrid,   // Kozijnen & Glas
+  Flame: Flame,             // CV & Verwarming
+  HelpCircle: HelpCircle,   // Overig
 };
 
 export default async function HomePage() {
