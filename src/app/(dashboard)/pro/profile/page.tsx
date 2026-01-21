@@ -11,10 +11,9 @@ import {
   Building2,
   Star,
   Briefcase,
-  Calendar,
+  Clock,
   Edit,
   CheckCircle2,
-  Clock,
   MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -32,29 +31,33 @@ async function getProfile(userId: string) {
     include: {
       proProfile: {
         include: {
-          categories: true,
-        },
-      },
-      _count: {
-        select: {
-          bids: true,
-          reviewsReceived: true,
+          categories: {
+            include: {
+              category: true,
+            },
+          },
+          _count: {
+            select: {
+              bids: true,
+              reviews: true,
+            },
+          },
         },
       },
     },
   });
 }
 
-async function getStats(userId: string) {
+async function getStats(proProfileId: string) {
   const [completedBids, reviews] = await Promise.all([
     prisma.bid.count({
       where: {
-        proId: userId,
+        proId: proProfileId,
         status: 'ACCEPTED',
       },
     }),
     prisma.review.aggregate({
-      where: { revieweeId: userId },
+      where: { proId: proProfileId },
       _avg: { rating: true },
       _count: true,
     }),
@@ -67,17 +70,9 @@ async function getStats(userId: string) {
   };
 }
 
-async function getReviews(userId: string) {
-  // First get the pro profile to find reviews
-  const proProfile = await prisma.proProfile.findUnique({
-    where: { userId },
-    select: { id: true },
-  });
-
-  if (!proProfile) return [];
-
+async function getReviews(proProfileId: string) {
   return prisma.review.findMany({
-    where: { proId: proProfile.id },
+    where: { proId: proProfileId },
     include: {
       job: {
         select: {
@@ -123,17 +118,21 @@ export default async function ProProfilePage() {
     redirect('/profile');
   }
 
-  const [profile, stats, reviews] = await Promise.all([
-    getProfile(session.user.id),
-    getStats(session.user.id),
-    getReviews(session.user.id),
-  ]);
+  const profile = await getProfile(session.user.id);
 
   if (!profile) {
     redirect('/login');
   }
 
   const proProfile = profile.proProfile;
+
+  // Get stats and reviews only if proProfile exists
+  const [stats, reviews] = proProfile
+    ? await Promise.all([
+        getStats(proProfile.id),
+        getReviews(proProfile.id),
+      ])
+    : [{ completedJobs: 0, avgRating: 0, reviewCount: 0 }, []];
 
   return (
     <div className="min-h-screen bg-surface-50 py-8">
@@ -187,10 +186,10 @@ export default async function ProProfilePage() {
                     {proProfile.phone}
                   </span>
                 )}
-                {(proProfile?.city || proProfile?.postcode) && (
+                {proProfile?.locationCity && (
                   <span className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
-                    {[proProfile.city, proProfile.postcode].filter(Boolean).join(', ')}
+                    {proProfile.locationCity}
                   </span>
                 )}
               </div>
@@ -222,10 +221,10 @@ export default async function ProProfilePage() {
         </div>
 
         {/* Bio */}
-        {proProfile?.bio && (
+        {proProfile?.description && (
           <Card className="mb-6">
             <h3 className="font-semibold text-surface-900 mb-3">Over mij</h3>
-            <p className="text-surface-600 whitespace-pre-wrap">{proProfile.bio}</p>
+            <p className="text-surface-600 whitespace-pre-wrap">{proProfile.description}</p>
           </Card>
         )}
 
@@ -234,12 +233,12 @@ export default async function ProProfilePage() {
           <Card className="mb-6">
             <h3 className="font-semibold text-surface-900 mb-3">Specialisaties</h3>
             <div className="flex flex-wrap gap-2">
-              {proProfile.categories.map((cat) => (
+              {proProfile.categories.map((proCat) => (
                 <span
-                  key={cat.id}
+                  key={proCat.categoryId}
                   className="px-3 py-1 rounded-full bg-brand-100 text-brand-700 text-sm font-medium"
                 >
-                  {cat.name}
+                  {proCat.category.name}
                 </span>
               ))}
             </div>
@@ -247,11 +246,11 @@ export default async function ProProfilePage() {
         )}
 
         {/* Work Area */}
-        {proProfile?.workRadius && (
+        {proProfile?.serviceRadius && (
           <Card className="mb-6">
             <h3 className="font-semibold text-surface-900 mb-3">Werkgebied</h3>
             <p className="text-surface-600">
-              {proProfile.city || 'Uw locatie'} + {proProfile.workRadius} km radius
+              {proProfile.locationCity || 'Uw locatie'} + {proProfile.serviceRadius} km radius
             </p>
           </Card>
         )}
