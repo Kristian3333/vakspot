@@ -34,12 +34,19 @@ export async function GET(request: NextRequest) {
     // Build query filters
     const where: any = {
       status: 'PUBLISHED',
-      categoryId: categoryId ? categoryId : { in: proCategoryIds },
       // Exclude jobs the pro has already bid on
       bids: {
         none: { proId: proProfile.id },
       },
     };
+
+    // Only filter by category if specified or if pro has categories
+    if (categoryId) {
+      where.categoryId = categoryId;
+    } else if (proCategoryIds.length > 0) {
+      where.categoryId = { in: proCategoryIds };
+    }
+    // If no categories specified and pro has no categories, show all published jobs
 
     // Fetch jobs
     const [jobs, total] = await Promise.all([
@@ -65,8 +72,8 @@ export async function GET(request: NextRequest) {
 
     // Filter by distance if pro has location and maxDistance is specified
     let filteredJobs = jobs;
-    if (proProfile.locationLat && proProfile.locationLng) {
-      const maxDist = maxDistance ? parseInt(maxDistance) : proProfile.serviceRadius;
+    if (proProfile.locationLat && proProfile.locationLng && maxDistance) {
+      const maxDist = parseInt(maxDistance);
       
       filteredJobs = jobs.filter(job => {
         if (!job.locationLat || !job.locationLng) return true;
