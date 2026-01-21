@@ -28,10 +28,7 @@ export async function POST(
 
     const proProfile = await prisma.proProfile.update({
       where: { id },
-      data: { 
-        verified,
-        verifiedAt: verified ? new Date() : null,
-      },
+      data: { verified },
       include: {
         user: {
           select: { id: true, name: true, email: true },

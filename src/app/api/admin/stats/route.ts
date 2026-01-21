@@ -89,17 +89,28 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         companyName: true,
-        city: true,
+        locationCity: true,
         createdAt: true,
         user: {
           select: { id: true, name: true, email: true, image: true },
         },
         categories: {
-          select: { name: true },
+          select: {
+            category: {
+              select: { name: true },
+            },
+          },
           take: 3,
         },
       },
     });
+
+    // Transform unverifiedPros to flatten category names
+    const transformedUnverifiedPros = unverifiedPros.map(pro => ({
+      ...pro,
+      city: pro.locationCity,
+      categories: pro.categories.map(c => ({ name: c.category.name })),
+    }));
 
     return NextResponse.json({
       users: {
@@ -127,7 +138,7 @@ export async function GET(request: NextRequest) {
         jobs: recentJobs,
         bids: recentBids,
       },
-      unverifiedPros,
+      unverifiedPros: transformedUnverifiedPros,
     });
   } catch (error) {
     console.error('Admin stats error:', error);

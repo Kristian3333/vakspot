@@ -33,15 +33,28 @@ export async function GET(request: NextRequest) {
           },
         },
         categories: {
-          select: {
-            id: true,
-            name: true,
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
     });
 
-    return NextResponse.json({ pros });
+    // Transform to flatten category data
+    const transformedPros = pros.map(pro => ({
+      ...pro,
+      categories: pro.categories.map(c => ({
+        id: c.category.id,
+        name: c.category.name,
+      })),
+    }));
+
+    return NextResponse.json({ pros: transformedPros });
   } catch (error) {
     console.error('Get pros error:', error);
     return NextResponse.json({ error: 'Er is iets misgegaan' }, { status: 500 });

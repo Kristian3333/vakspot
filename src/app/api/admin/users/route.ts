@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       where.role = role;
     }
 
-    // Get users with counts
+    // Get users with related data
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
@@ -51,16 +51,24 @@ export async function GET(request: NextRequest) {
           role: true,
           emailVerified: true,
           createdAt: true,
+          clientProfile: {
+            select: {
+              _count: {
+                select: {
+                  jobs: true,
+                },
+              },
+            },
+          },
           proProfile: {
             select: {
               companyName: true,
               verified: true,
-            },
-          },
-          _count: {
-            select: {
-              jobs: true,
-              bids: true,
+              _count: {
+                select: {
+                  bids: true,
+                },
+              },
             },
           },
         },
@@ -68,8 +76,27 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where }),
     ]);
 
+    // Transform to flatten counts
+    const transformedUsers = users.map(user => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      image: user.image,
+      role: user.role,
+      emailVerified: user.emailVerified,
+      createdAt: user.createdAt,
+      proProfile: user.proProfile ? {
+        companyName: user.proProfile.companyName,
+        verified: user.proProfile.verified,
+      } : null,
+      _count: {
+        jobs: user.clientProfile?._count?.jobs || 0,
+        bids: user.proProfile?._count?.bids || 0,
+      },
+    }));
+
     return NextResponse.json({
-      users,
+      users: transformedUsers,
       total,
       page,
       limit,
