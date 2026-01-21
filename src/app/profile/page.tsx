@@ -24,21 +24,28 @@ async function getProfile(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
     include: {
-      _count: {
-        select: {
-          jobs: true,
-          reviewsGiven: true,
+      clientProfile: {
+        include: {
+          _count: {
+            select: {
+              jobs: true,
+            },
+          },
         },
       },
     },
   });
 }
 
-async function getStats(userId: string) {
+async function getStats(clientProfileId: string | undefined) {
+  if (!clientProfileId) {
+    return { totalJobs: 0, activeJobs: 0, completedJobs: 0 };
+  }
+
   const [totalJobs, activeJobs, completedJobs] = await Promise.all([
-    prisma.job.count({ where: { clientId: userId } }),
-    prisma.job.count({ where: { clientId: userId, status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
-    prisma.job.count({ where: { clientId: userId, status: 'COMPLETED' } }),
+    prisma.job.count({ where: { clientId: clientProfileId } }),
+    prisma.job.count({ where: { clientId: clientProfileId, status: { in: ['PUBLISHED', 'IN_CONVERSATION', 'IN_PROGRESS'] } } }),
+    prisma.job.count({ where: { clientId: clientProfileId, status: 'COMPLETED' } }),
   ]);
 
   return {
@@ -60,14 +67,13 @@ export default async function ProfilePage() {
     redirect('/pro/profile');
   }
 
-  const [profile, stats] = await Promise.all([
-    getProfile(session.user.id),
-    getStats(session.user.id),
-  ]);
+  const profile = await getProfile(session.user.id);
 
   if (!profile) {
     redirect('/login');
   }
+
+  const stats = await getStats(profile.clientProfile?.id);
 
   return (
     <div className="min-h-screen bg-surface-50 py-8">
