@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import { Header, Footer } from '@/components/layout';
+import { Providers } from '@/components/providers';
 import { auth } from '@/lib/auth';
 import '@/styles/globals.css';
 
@@ -38,9 +39,11 @@ export default async function RootLayout({
   return (
     <html lang="nl" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="min-h-screen flex flex-col antialiased">
-        <Header session={session} />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <Providers>
+          <Header session={session} />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

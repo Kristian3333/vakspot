@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Button, Spinner, Badge } from '@/components/ui';
+import Link from 'next/link';
+import { Card, Button, Spinner, Badge, Avatar } from '@/components/ui';
 import { 
   Users, 
   Briefcase, 
@@ -11,39 +12,80 @@ import {
   TrendingUp,
   Settings,
   ShieldCheck,
-  AlertTriangle
+  AlertTriangle,
+  ChevronRight,
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 
 type Stats = {
   users: { total: number; clients: number; pros: number; admins: number };
   jobs: { total: number; published: number; completed: number; draft: number };
   bids: { total: number; accepted: number; pending: number };
   reviews: { total: number; avgRating: number };
+  unverifiedPros: Array<{
+    id: string;
+    companyName: string;
+    city: string;
+    createdAt: string;
+    user: { id: string; name: string; email: string; image: string | null };
+    categories: Array<{ name: string }>;
+  }>;
+  recentActivity: {
+    jobs: Array<{
+      id: string;
+      title: string;
+      status: string;
+      createdAt: string;
+      client: { user: { name: string } };
+    }>;
+    bids: Array<{
+      id: string;
+      amount: number;
+      status: string;
+      createdAt: string;
+      pro: { companyName: string; user: { name: string } };
+      job: { title: string };
+    }>;
+  };
 };
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Implement /api/admin/stats endpoint
-    // For now, show placeholder data
-    setTimeout(() => {
-      setStats({
-        users: { total: 156, clients: 120, pros: 35, admins: 1 },
-        jobs: { total: 89, published: 45, completed: 32, draft: 12 },
-        bids: { total: 234, accepted: 32, pending: 89 },
-        reviews: { total: 28, avgRating: 4.6 },
+    fetch('/api/admin/stats')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch stats');
+        return res.json();
+      })
+      .then(data => {
+        setStats(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
       });
-      setLoading(false);
-    }, 500);
   }, []);
 
   if (loading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <Card className="text-center py-12">
+          <AlertTriangle className="mx-auto h-12 w-12 text-error-500" />
+          <h3 className="mt-4 text-lg font-medium text-surface-900">Fout bij laden</h3>
+          <p className="mt-2 text-surface-500">{error}</p>
+        </Card>
       </div>
     );
   }
@@ -73,7 +115,7 @@ export default function AdminDashboard() {
     {
       title: 'Reviews',
       value: stats?.reviews.total || 0,
-      subtitle: `Gem. ${stats?.reviews.avgRating.toFixed(1)} sterren`,
+      subtitle: `Gem. ${(stats?.reviews.avgRating || 0).toFixed(1)} sterren`,
       icon: Star,
       color: 'bg-amber-100 text-amber-600',
     },
@@ -116,50 +158,92 @@ export default function AdminDashboard() {
         <h2 className="text-lg font-semibold text-surface-900 mb-4">Snelle acties</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {quickActions.map((action) => (
-            <Button
-              key={action.label}
-              variant="outline"
-              className="justify-start h-auto py-4"
-              onClick={() => alert('Pagina nog niet geïmplementeerd')}
-            >
-              <action.icon className="h-5 w-5 mr-3" />
-              {action.label}
-            </Button>
+            <Link key={action.label} href={action.href}>
+              <Button
+                variant="outline"
+                className="w-full justify-start h-auto py-4"
+              >
+                <action.icon className="h-5 w-5 mr-3" />
+                {action.label}
+              </Button>
+            </Link>
           ))}
         </div>
       </Card>
 
-      {/* Placeholder for more content */}
+      {/* Content Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
+        {/* Recent Activity */}
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-surface-900 mb-4">
-            Recente activiteit
-          </h2>
-          <div className="text-center py-8 text-surface-500">
-            <TrendingUp className="h-10 w-10 mx-auto mb-3 opacity-50" />
-            <p>Activiteitenoverzicht komt binnenkort</p>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-surface-900">
+              Recente klussen
+            </h2>
+            <Link href="/admin/jobs" className="text-sm text-brand-600 hover:text-brand-700">
+              Alles bekijken
+            </Link>
           </div>
+          {stats?.recentActivity.jobs && stats.recentActivity.jobs.length > 0 ? (
+            <div className="space-y-3">
+              {stats.recentActivity.jobs.map((job) => (
+                <div key={job.id} className="flex items-center justify-between p-3 bg-surface-50 rounded-lg">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-surface-900 truncate">{job.title}</p>
+                    <p className="text-sm text-surface-500">
+                      {job.client.user.name} • {formatRelativeTime(job.createdAt)}
+                    </p>
+                  </div>
+                  <Badge variant={job.status === 'PUBLISHED' ? 'success' : 'neutral'}>
+                    {job.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-surface-500">
+              <TrendingUp className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p>Geen recente klussen</p>
+            </div>
+          )}
         </Card>
 
+        {/* Unverified Pros */}
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-surface-900 mb-4">
-            Te verifiëren pro&apos;s
-          </h2>
-          <div className="space-y-3">
-            {/* Placeholder items */}
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-surface-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-surface-200" />
-                  <div>
-                    <p className="font-medium text-surface-900">Placeholder Pro {i}</p>
-                    <p className="text-sm text-surface-500">Loodgieter • Amsterdam</p>
-                  </div>
-                </div>
-                <Badge variant="warning">Wachtend</Badge>
-              </div>
-            ))}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-surface-900">
+              Te verifiëren pro&apos;s
+            </h2>
+            <Link href="/admin/verify" className="text-sm text-brand-600 hover:text-brand-700">
+              Alles bekijken
+            </Link>
           </div>
+          {stats?.unverifiedPros && stats.unverifiedPros.length > 0 ? (
+            <div className="space-y-3">
+              {stats.unverifiedPros.slice(0, 5).map((pro) => (
+                <Link 
+                  key={pro.id} 
+                  href={`/admin/verify?id=${pro.id}`}
+                  className="flex items-center justify-between p-3 bg-surface-50 rounded-lg hover:bg-surface-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar src={pro.user.image} name={pro.user.name} size="sm" />
+                    <div>
+                      <p className="font-medium text-surface-900">{pro.companyName || pro.user.name}</p>
+                      <p className="text-sm text-surface-500">
+                        {pro.categories.map(c => c.name).join(', ') || 'Geen categorie'} • {pro.city || 'Onbekend'}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-surface-400" />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-surface-500">
+              <ShieldCheck className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p>Alle pro&apos;s zijn geverifieerd</p>
+            </div>
+          )}
         </Card>
       </div>
     </div>

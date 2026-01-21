@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { Button, Card, Badge, StatusBadge, Avatar } from '@/components/ui';
+import { BidActions } from '@/components/bids/bid-actions';
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils';
 import { 
   MapPin, 
@@ -13,8 +14,7 @@ import {
   ArrowLeft, 
   MessageSquare,
   Star,
-  Check,
-  X
+  Check
 } from 'lucide-react';
 
 export const metadata = {
@@ -182,6 +182,8 @@ export default async function JobDetailPage({ params }: PageProps) {
                     className={`p-4 rounded-xl border ${
                       bid.status === 'ACCEPTED'
                         ? 'border-success-200 bg-success-50'
+                        : bid.status === 'REJECTED'
+                        ? 'border-surface-200 bg-surface-50 opacity-60'
                         : 'border-surface-200'
                     }`}
                   >
@@ -232,34 +234,27 @@ export default async function JobDetailPage({ params }: PageProps) {
                           {bid.message}
                         </p>
 
-                        {/* Actions */}
-                        {canAcceptBids && bid.status === 'PENDING' && (
-                          <div className="flex gap-2 mt-4">
-                            <form action={`/api/bids/${bid.id}/accept`} method="POST">
-                              <Button
-                                type="submit"
-                                size="sm"
-                                leftIcon={<Check className="h-4 w-4" />}
-                              >
-                                Accepteren
-                              </Button>
-                            </form>
-                            <Link href={`/messages?bid=${bid.id}`}>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                leftIcon={<MessageSquare className="h-4 w-4" />}
-                              >
-                                Bericht
-                              </Button>
-                            </Link>
+                        {/* Actions for pending bids */}
+                        {(bid.status === 'PENDING' || bid.status === 'VIEWED') && (
+                          <div className="mt-4">
+                            <BidActions
+                              bidId={bid.id}
+                              jobId={job.id}
+                              canAccept={canAcceptBids}
+                            />
                           </div>
                         )}
 
+                        {/* Status indicators */}
                         {bid.status === 'ACCEPTED' && (
                           <div className="mt-4 flex items-center gap-2 text-sm text-success-600">
                             <Check className="h-4 w-4" />
                             Geaccepteerd
+                          </div>
+                        )}
+                        {bid.status === 'REJECTED' && (
+                          <div className="mt-4 text-sm text-surface-500">
+                            Afgewezen
                           </div>
                         )}
                       </div>

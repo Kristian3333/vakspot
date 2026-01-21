@@ -161,7 +161,8 @@ export function JobForm({ categories, initialCategorySlug }: JobFormProps) {
         }
 
         const uploadData = await uploadRes.json();
-        uploadedImageUrls = uploadData.urls;
+        // Handle both single file ({ url }) and multiple files ({ urls }) response formats
+        uploadedImageUrls = uploadData.urls || (uploadData.url ? [uploadData.url] : []);
       }
 
       // Create job

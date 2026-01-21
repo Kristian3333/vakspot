@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button, Avatar } from '@/components/ui';
+import { UnreadBadge } from '@/components/messages/unread-badge';
 import {
   Menu,
   X,
@@ -61,31 +62,31 @@ export function Header({ session }: HeaderProps) {
   const getNavItems = () => {
     if (!isLoggedIn) {
       return [
-        { href: '/', label: 'Home', icon: Home },
-        { href: '/how-it-works', label: 'Hoe werkt het?', icon: null },
+        { href: '/', label: 'Home', icon: Home, showBadge: false },
+        { href: '/how-it-works', label: 'Hoe werkt het?', icon: null, showBadge: false },
       ];
     }
 
     if (userRole === 'CLIENT') {
       return [
-        { href: '/client/jobs', label: 'Mijn klussen', icon: Briefcase },
-        { href: '/messages', label: 'Berichten', icon: MessageSquare },
+        { href: '/client/jobs', label: 'Mijn klussen', icon: Briefcase, showBadge: false },
+        { href: '/messages', label: 'Berichten', icon: MessageSquare, showBadge: true },
       ];
     }
 
     if (userRole === 'PRO') {
       return [
-        { href: '/pro/leads', label: 'Leads', icon: Briefcase },
-        { href: '/pro/bids', label: 'Mijn offertes', icon: Briefcase },
-        { href: '/messages', label: 'Berichten', icon: MessageSquare },
+        { href: '/pro/leads', label: 'Leads', icon: Briefcase, showBadge: false },
+        { href: '/pro/bids', label: 'Mijn offertes', icon: Briefcase, showBadge: false },
+        { href: '/messages', label: 'Berichten', icon: MessageSquare, showBadge: true },
       ];
     }
 
     if (userRole === 'ADMIN') {
       return [
-        { href: '/admin', label: 'Dashboard', icon: Shield },
-        { href: '/admin/categories', label: 'Categorieën', icon: Settings },
-        { href: '/admin/users', label: 'Gebruikers', icon: User },
+        { href: '/admin', label: 'Dashboard', icon: Shield, showBadge: false },
+        { href: '/admin/categories', label: 'Categorieën', icon: Settings, showBadge: false },
+        { href: '/admin/users', label: 'Gebruikers', icon: User, showBadge: false },
       ];
     }
 
@@ -112,7 +113,7 @@ export function Header({ session }: HeaderProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                'relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                 pathname === item.href || pathname.startsWith(item.href + '/')
                   ? 'bg-brand-50 text-brand-700'
                   : 'text-surface-600 hover:bg-surface-50 hover:text-surface-900'
@@ -120,6 +121,7 @@ export function Header({ session }: HeaderProps) {
             >
               {item.icon && <item.icon className="h-4 w-4" />}
               {item.label}
+              {item.showBadge && <UnreadBadge className="ml-1" />}
             </Link>
           ))}
         </nav>
@@ -215,7 +217,7 @@ export function Header({ session }: HeaderProps) {
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
-                  'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors',
+                  'relative flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors',
                   pathname === item.href || pathname.startsWith(item.href + '/')
                     ? 'bg-brand-50 text-brand-700'
                     : 'text-surface-600 hover:bg-surface-50'
@@ -223,6 +225,7 @@ export function Header({ session }: HeaderProps) {
               >
                 {item.icon && <item.icon className="h-5 w-5" />}
                 {item.label}
+                {item.showBadge && <UnreadBadge className="ml-auto" />}
               </Link>
             ))}
             

@@ -1,39 +1,129 @@
 # VakSpot 🔧
 
-A modern home services marketplace connecting homeowners with skilled tradespeople. Built with Next.js 14, TypeScript, and Tailwind CSS.
+A modern Dutch home services marketplace connecting homeowners with skilled tradespeople. Similar to Werkspot, built with Next.js 14, TypeScript, and Tailwind CSS.
 
-## Features
+**Live**: [vakspot.vercel.app](https://vakspot.vercel.app)
 
-- **For Homeowners (Clients)**
-  - Post jobs with photos and detailed descriptions
-  - Receive and compare bids from professionals
-  - In-app messaging with tradespeople
-  - Leave reviews after job completion
+## What It Does
 
-- **For Professionals (Pros)**
-  - Browse available leads in your area
-  - Filter by category, distance, and budget
-  - Submit competitive bids
-  - Build reputation through reviews
+**For Homeowners (Clients)**
+- Post jobs with photos and detailed descriptions
+- Receive and compare bids from professionals
+- In-app messaging with tradespeople
+- Leave reviews after job completion
+
+**For Professionals (Pros)**
+- Browse available leads in your area
+- Filter by category, distance, and budget
+- Submit competitive bids
+- Build reputation through reviews
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Database**: PostgreSQL (Neon/Supabase)
-- **ORM**: Prisma
-- **Auth**: NextAuth.js v5
-- **File Storage**: Vercel Blob
-- **Deployment**: Vercel
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS |
+| Database | PostgreSQL (Neon) |
+| ORM | Prisma |
+| Auth | NextAuth.js v5 |
+| File Storage | Vercel Blob |
+| Email | Resend |
+| Testing | Vitest + Playwright |
+| Deployment | Vercel |
+
+## Project Structure
+
+```
+vakspot/
+├── prisma/
+│   ├── schema.prisma          # Database schema
+│   └── seed.ts                # Seed data
+├── src/
+│   ├── app/
+│   │   ├── (auth)/            # Login & registration pages
+│   │   │   ├── login/
+│   │   │   └── register/
+│   │   │       ├── page.tsx   # Client registration
+│   │   │       └── pro/       # Pro registration
+│   │   ├── (dashboard)/       # Protected pages
+│   │   │   ├── admin/         # Admin panel
+│   │   │   ├── client/        # Client dashboard
+│   │   │   │   └── jobs/      # Job management
+│   │   │   ├── messages/      # Messaging
+│   │   │   └── pro/           # Pro dashboard
+│   │   │       ├── bids/      # Bid management
+│   │   │       ├── leads/     # Lead browsing
+│   │   │       └── profile/   # Pro profile
+│   │   ├── api/               # API routes
+│   │   │   ├── auth/          # NextAuth endpoints
+│   │   │   ├── bids/          # Bid CRUD
+│   │   │   ├── categories/    # Category API
+│   │   │   ├── jobs/          # Job CRUD
+│   │   │   ├── leads/         # Leads API
+│   │   │   ├── messages/      # Messages API
+│   │   │   ├── reviews/       # Reviews API
+│   │   │   └── upload/        # File upload
+│   │   ├── categories/        # Category browser
+│   │   ├── contact/           # Contact page
+│   │   ├── cookies/           # Cookie policy
+│   │   ├── faq/               # FAQ page
+│   │   ├── help/              # Help center
+│   │   ├── how-it-works/      # How it works
+│   │   ├── privacy/           # Privacy policy
+│   │   ├── profile/           # User profile
+│   │   ├── settings/          # User settings
+│   │   ├── terms/             # Terms of service
+│   │   ├── layout.tsx         # Root layout
+│   │   └── page.tsx           # Landing page
+│   ├── components/
+│   │   ├── bids/              # Bid components
+│   │   ├── forms/             # Job form, bid form
+│   │   ├── jobs/              # Job cards & lists
+│   │   ├── layout/            # Header, Footer
+│   │   ├── messages/          # Chat components
+│   │   └── ui/                # Button, Input, Card, etc.
+│   ├── lib/
+│   │   ├── auth.ts            # NextAuth config
+│   │   ├── prisma.ts          # Prisma client
+│   │   ├── utils.ts           # Utilities
+│   │   └── validations.ts     # Zod schemas
+│   ├── types/                 # TypeScript types
+│   ├── styles/                # Global styles
+│   └── middleware.ts          # Auth middleware
+├── tests/
+│   ├── unit/
+│   └── setup.ts
+└── public/                    # Static assets
+```
+
+## Current Status: ~85% Complete
+
+### ✅ Completed Features
+- **Auth System**: Login, client registration, pro registration (multi-step), role-based middleware
+- **Client Flow**: Post jobs with multi-step form, image upload, job listing, job details, view incoming bids
+- **Pro Flow**: Browse leads, filter by category/distance, lead details, submit bids, manage bids
+- **Messaging**: Basic message system with conversations
+- **Reviews**: Review submission system
+- **Admin Panel**: Basic admin dashboard
+- **Static Pages**: All footer links working (how-it-works, categories, contact, FAQ, help, privacy, terms, cookies)
+- **Profile & Settings**: User profile and settings pages
+
+### API Routes
+All core API routes are implemented:
+- `/api/auth/*` - Authentication (NextAuth + custom register/signout)
+- `/api/jobs` - Job CRUD operations
+- `/api/leads` - Leads for pros
+- `/api/bids` - Bid management
+- `/api/categories` - Category listing
+- `/api/messages` - Messaging
+- `/api/reviews` - Review submission
+- `/api/upload` - File uploads
 
 ## Quick Start
 
 ```bash
-# Clone the repository
-git clone <your-repo-url>
-cd vakspot
-
 # Install dependencies
 npm install
 
@@ -54,11 +144,29 @@ npm run db:seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the app.
+Open [http://localhost:3000](http://localhost:3000)
+
+## Environment Variables
+
+```env
+# Database (Neon recommended)
+DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."
+
+# Auth
+NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
+NEXTAUTH_URL="http://localhost:3000"
+
+# File Storage (Vercel Blob)
+BLOB_READ_WRITE_TOKEN="..."
+
+# Email (Resend) - optional for MVP
+RESEND_API_KEY="..."
+```
 
 ## Test Accounts
 
-After seeding, you can log in with these test accounts:
+After seeding:
 
 | Role | Email | Password |
 |------|-------|----------|
@@ -68,49 +176,23 @@ After seeding, you can log in with these test accounts:
 | Pro | loodgieter@test.nl | pro123 |
 | Pro | elektricien@test.nl | pro123 |
 
-## Project Structure
-
-```
-vakspot/
-├── prisma/              # Database schema and seeds
-├── src/
-│   ├── app/            # Next.js App Router pages
-│   ├── components/     # React components
-│   ├── lib/           # Utilities, auth, prisma
-│   └── types/         # TypeScript definitions
-├── tests/             # Unit and E2E tests
-└── public/            # Static assets
-```
-
-## Available Scripts
+## Scripts
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npm run test         # Run unit tests
+npm run dev          # Development server
+npm run build        # Production build
+npm run start        # Production server
+npm run lint         # ESLint
+npm run test         # Unit tests
 npm run db:generate  # Generate Prisma client
-npm run db:push      # Push schema to database
-npm run db:migrate   # Run migrations
+npm run db:push      # Push schema
 npm run db:seed      # Seed database
-npm run db:studio    # Open Prisma Studio
+npm run db:studio    # Prisma Studio
 ```
-
-## Environment Variables
-
-See `.env.example` for all required variables:
-
-- `DATABASE_URL` - PostgreSQL connection string
-- `NEXTAUTH_SECRET` - Secret for NextAuth.js
-- `NEXTAUTH_URL` - Your app URL
-- `BLOB_READ_WRITE_TOKEN` - Vercel Blob token (optional)
-- `RESEND_API_KEY` - Email service (optional)
 
 ## Deployment
 
-This project is optimized for Vercel:
-
+Optimized for Vercel:
 1. Push to GitHub
 2. Import in Vercel
 3. Add environment variables

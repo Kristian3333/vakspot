@@ -15,9 +15,11 @@ import {
   Edit,
   CheckCircle2,
   Clock,
+  MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { formatRelativeTime } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: 'Mijn profiel',
@@ -65,6 +67,51 @@ async function getStats(userId: string) {
   };
 }
 
+async function getReviews(userId: string) {
+  // First get the pro profile to find reviews
+  const proProfile = await prisma.proProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!proProfile) return [];
+
+  return prisma.review.findMany({
+    where: { proId: proProfile.id },
+    include: {
+      job: {
+        select: {
+          id: true,
+          title: true,
+          category: { select: { name: true } },
+          client: {
+            select: { user: { select: { name: true, image: true } } },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+  });
+}
+
+function StarRating({ rating }: { rating: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={`h-4 w-4 ${
+            star <= rating
+              ? 'text-warning-500 fill-warning-500'
+              : 'text-surface-300'
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default async function ProProfilePage() {
   const session = await auth();
   
@@ -76,9 +123,10 @@ export default async function ProProfilePage() {
     redirect('/profile');
   }
 
-  const [profile, stats] = await Promise.all([
+  const [profile, stats, reviews] = await Promise.all([
     getProfile(session.user.id),
     getStats(session.user.id),
+    getReviews(session.user.id),
   ]);
 
   if (!profile) {
@@ -207,6 +255,108 @@ export default async function ProProfilePage() {
             </p>
           </Card>
         )}
+
+        {/* Reviews Section */}
+        <Card className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-surface-900">
+              Beoordelingen ({stats.reviewCount})
+            </h3>
+            {stats.reviewCount > 0 && (
+              <div className="flex items-center gap-2">
+                <StarRating rating={Math.round(stats.avgRating)} />
+                <span className="text-sm font-medium text-surface-700">
+                  {stats.avgRating.toFixed(1)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {reviews.length > 0 ? (
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="p-4 rounded-lg border border-surface-200 bg-surface-50"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar
+                        src={review.job.client.user.image}
+                        name={review.job.client.user.name}
+                        size="sm"
+                      />
+                      <div>
+                        <p className="font-medium text-surface-900">
+                          {review.job.client.user.name}
+                        </p>
+                        <p className="text-xs text-surface-500">
+                          {review.job.title} • {review.job.category.name}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <StarRating rating={review.rating} />
+                      <p className="text-xs text-surface-500 mt-1">
+                        {formatRelativeTime(review.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {review.title && (
+                    <h4 className="mt-3 font-medium text-surface-900">
+                      {review.title}
+                    </h4>
+                  )}
+                  
+                  {review.content && (
+                    <p className="mt-2 text-sm text-surface-600">
+                      {review.content}
+                    </p>
+                  )}
+
+                  {/* Detailed ratings */}
+                  {(review.qualityRating || review.communicationRating || review.timelinessRating || review.valueRating) && (
+                    <div className="mt-3 pt-3 border-t border-surface-200 grid grid-cols-2 gap-2 text-xs">
+                      {review.qualityRating && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-surface-500">Kwaliteit</span>
+                          <StarRating rating={review.qualityRating} />
+                        </div>
+                      )}
+                      {review.communicationRating && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-surface-500">Communicatie</span>
+                          <StarRating rating={review.communicationRating} />
+                        </div>
+                      )}
+                      {review.timelinessRating && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-surface-500">Stiptheid</span>
+                          <StarRating rating={review.timelinessRating} />
+                        </div>
+                      )}
+                      {review.valueRating && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-surface-500">Prijs/kwaliteit</span>
+                          <StarRating rating={review.valueRating} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-surface-500">
+              <MessageSquare className="mx-auto h-10 w-10 text-surface-300 mb-3" />
+              <p>Nog geen beoordelingen ontvangen</p>
+              <p className="text-sm mt-1">
+                Beoordelingen verschijnen hier nadat klanten feedback geven
+              </p>
+            </div>
+          )}
+        </Card>
 
         {/* Empty State for new profiles */}
         {!proProfile && (
