@@ -51,7 +51,6 @@
 
 ## Content Needed
 
-- [ ] Real category icons/images
 - [ ] Marketing copy for landing page
 - [ ] FAQ content expansion
 - [ ] Legal review for terms/privacy/cookies
@@ -143,3 +142,15 @@
 - SEO metadata for all pages (title, description, OpenGraph)
 - Unit tests for utilities (utils.test.ts with comprehensive coverage)
 - Database indexes in Prisma schema (User, ProProfile, Category, Job, Bid, Message, Review tables)
+
+### Role-Specific UX (2025-01-21)
+- Homepage shows different content based on user role:
+  - Visitors: "Gratis klus plaatsen" + "Vakman worden" CTAs
+  - Clients: "Nieuwe klus plaatsen" + "Mijn klussen bekijken" CTAs
+  - PROs: "Bekijk beschikbare klussen" + "Mijn offertes" CTAs
+- How-it-works page adapts to user role:
+  - Shows client steps for visitors/clients
+  - Shows pro steps for professionals (Bekijk klussen → Stuur offerte → Aan het werk)
+  - Different benefits and FAQs per role
+- Category icons for all categories (Grid3X3, Warehouse, Blocks, PaintRoller, etc.)
+- Added update-icons.ts script to update category icons in database

@@ -12,7 +12,11 @@ import {
   MessageSquare,
   CreditCard,
   ThumbsUp,
+  Search,
+  Briefcase,
+  Send,
 } from 'lucide-react';
+import { auth } from '@/lib/auth';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -20,8 +24,11 @@ export const metadata: Metadata = {
   description: 'Ontdek hoe VakSpot werkt. In drie simpele stappen vindt u de perfecte vakman voor uw klus.',
 };
 
-export default function HowItWorksPage() {
-  const steps = [
+export default async function HowItWorksPage() {
+  const session = await auth();
+  const userRole = session?.user?.role;
+
+  const clientSteps = [
     {
       number: '1',
       title: 'Plaats uw klus',
@@ -57,7 +64,45 @@ export default function HowItWorksPage() {
     },
   ];
 
-  const benefits = [
+  const proSteps = [
+    {
+      number: '1',
+      title: 'Bekijk beschikbare klussen',
+      description: 'Blader door klussen die passen bij uw expertise en locatie. Filter op categorie en afstand.',
+      icon: Search,
+      details: [
+        'Klussen gefilterd op uw vakgebied',
+        'Zie locatie en budget indicatie',
+        'Foto\'s en beschrijvingen beschikbaar',
+      ],
+    },
+    {
+      number: '2',
+      title: 'Stuur uw offerte',
+      description: 'Reageer met uw beste prijs en een persoonlijke boodschap. Laat zien waarom u de juiste vakman bent.',
+      icon: Send,
+      details: [
+        'Stel uw eigen prijs',
+        'Voeg een persoonlijk bericht toe',
+        'Benadruk uw ervaring en expertise',
+      ],
+    },
+    {
+      number: '3',
+      title: 'Aan het werk',
+      description: 'Bij acceptatie kunt u direct aan de slag. Lever kwaliteit en bouw uw reputatie op met goede reviews.',
+      icon: Briefcase,
+      details: [
+        'Direct contact met opdrachtgever',
+        'Plan de klus op uw eigen tempo',
+        'Ontvang reviews voor toekomstige opdrachten',
+      ],
+    },
+  ];
+
+  const steps = userRole === 'PRO' ? proSteps : clientSteps;
+
+  const clientBenefits = [
     {
       title: 'Gratis voor opdrachtgevers',
       description: 'Het plaatsen van een klus en ontvangen van offertes is volledig gratis.',
@@ -90,7 +135,59 @@ export default function HowItWorksPage() {
     },
   ];
 
-  const faqs = [
+  const proBenefits = [
+    {
+      title: 'Geen vaste kosten',
+      description: 'Betaal alleen voor contactgegevens bij geaccepteerde offertes.',
+      icon: CreditCard,
+    },
+    {
+      title: 'Gekwalificeerde leads',
+      description: 'Alle klussen zijn van echte opdrachtgevers met concrete projecten.',
+      icon: Shield,
+    },
+    {
+      title: 'Klussen bij u in de buurt',
+      description: 'Filter op afstand en werk in uw eigen servicegebied.',
+      icon: Clock,
+    },
+    {
+      title: 'Bouw uw reputatie',
+      description: 'Verzamel reviews en laat uw kwaliteit zien aan nieuwe klanten.',
+      icon: Star,
+    },
+    {
+      title: 'Rechtstreeks contact',
+      description: 'Na acceptatie direct communiceren met de opdrachtgever.',
+      icon: MessageSquare,
+    },
+    {
+      title: 'Flexibel werken',
+      description: 'U bepaalt zelf op welke klussen u reageert en wanneer.',
+      icon: CheckCircle2,
+    },
+  ];
+
+  const benefits = userRole === 'PRO' ? proBenefits : clientBenefits;
+
+  const faqs = userRole === 'PRO' ? [
+    {
+      question: 'Wat kost het om op klussen te reageren?',
+      answer: 'Het bekijken van klussen is gratis. U betaalt alleen een klein bedrag voor de contactgegevens wanneer uw offerte wordt geaccepteerd.',
+    },
+    {
+      question: 'Hoe word ik geverifieerd?',
+      answer: 'Na registratie kunt u uw KvK-nummer en eventuele certificeringen uploaden. Na verificatie krijgt u een badge die vertrouwen wekt bij opdrachtgevers.',
+    },
+    {
+      question: 'Kan ik mijn servicegebied aanpassen?',
+      answer: 'Ja, in uw profiel kunt u uw serviceradius instellen. U ziet alleen klussen binnen dit gebied.',
+    },
+    {
+      question: 'Hoe krijg ik meer opdrachten?',
+      answer: 'Zorg voor een compleet profiel met foto\'s van uw werk, reageer snel op klussen, en lever kwaliteit voor goede reviews.',
+    },
+  ] : [
     {
       question: 'Wat kost het om een klus te plaatsen?',
       answer: 'Het plaatsen van een klus is volledig gratis voor opdrachtgevers. U betaalt alleen als u akkoord gaat met een offerte van een vakman.',
@@ -119,8 +216,10 @@ export default function HowItWorksPage() {
               Hoe werkt <span className="text-gradient">VakSpot</span>?
             </h1>
             <p className="mt-6 text-lg text-surface-600">
-              In drie simpele stappen vindt u de perfecte vakman voor uw klus. 
-              Gratis, snel en betrouwbaar.
+              {userRole === 'PRO'
+                ? 'In drie simpele stappen vindt u nieuwe klanten en groeit uw bedrijf.'
+                : 'In drie simpele stappen vindt u de perfecte vakman voor uw klus. Gratis, snel en betrouwbaar.'
+              }
             </p>
           </div>
         </div>
@@ -180,7 +279,10 @@ export default function HowItWorksPage() {
               Waarom VakSpot?
             </h2>
             <p className="mt-4 text-lg text-surface-600">
-              Ontdek de voordelen van klussen via VakSpot
+              {userRole === 'PRO'
+                ? 'Ontdek de voordelen voor vakmensen'
+                : 'Ontdek de voordelen van klussen via VakSpot'
+              }
             </p>
           </div>
 
@@ -237,27 +339,78 @@ export default function HowItWorksPage() {
             Klaar om te beginnen?
           </h2>
           <p className="mt-4 text-lg text-brand-100">
-            Plaats vandaag nog uw eerste klus en ontvang binnen 24 uur offertes.
+            {userRole === 'PRO'
+              ? 'Bekijk nu de beschikbare klussen en stuur uw eerste offerte.'
+              : userRole === 'CLIENT'
+              ? 'Plaats een klus en ontvang binnen 24 uur offertes van vakmensen.'
+              : 'Plaats vandaag nog uw eerste klus en ontvang binnen 24 uur offertes.'
+            }
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/client/jobs/new">
-              <Button
-                size="lg"
-                className="bg-white text-brand-600 hover:bg-brand-50"
-                rightIcon={<ArrowRight className="h-5 w-5" />}
-              >
-                Gratis klus plaatsen
-              </Button>
-            </Link>
-            <Link href="/register/pro">
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-white text-white hover:bg-white/10"
-              >
-                Aanmelden als vakman
-              </Button>
-            </Link>
+            {userRole === 'PRO' ? (
+              <>
+                <Link href="/pro/leads">
+                  <Button
+                    size="lg"
+                    className="bg-white text-brand-600 hover:bg-brand-50"
+                    rightIcon={<Search className="h-5 w-5" />}
+                  >
+                    Klussen bekijken
+                  </Button>
+                </Link>
+                <Link href="/pro/profile">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="border-white text-white hover:bg-white/10"
+                  >
+                    Profiel bijwerken
+                  </Button>
+                </Link>
+              </>
+            ) : userRole === 'CLIENT' ? (
+              <>
+                <Link href="/client/jobs/new">
+                  <Button
+                    size="lg"
+                    className="bg-white text-brand-600 hover:bg-brand-50"
+                    rightIcon={<ArrowRight className="h-5 w-5" />}
+                  >
+                    Klus plaatsen
+                  </Button>
+                </Link>
+                <Link href="/client/jobs">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="border-white text-white hover:bg-white/10"
+                  >
+                    Mijn klussen
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/client/jobs/new">
+                  <Button
+                    size="lg"
+                    className="bg-white text-brand-600 hover:bg-brand-50"
+                    rightIcon={<ArrowRight className="h-5 w-5" />}
+                  >
+                    Gratis klus plaatsen
+                  </Button>
+                </Link>
+                <Link href="/register/pro">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="border-white text-white hover:bg-white/10"
+                  >
+                    Aanmelden als vakman
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
