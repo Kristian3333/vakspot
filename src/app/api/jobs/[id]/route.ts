@@ -46,23 +46,29 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Check access
     const isOwner = session?.user?.id === job.client.user.id;
     const isAdmin = session?.user?.role === 'ADMIN';
+    const isPro = session?.user?.role === 'PRO';
     const isPublic = job.status === JobStatus.PUBLISHED;
 
     if (!isOwner && !isAdmin && !isPublic) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Hide sensitive info for non-owners
+    // Hide sensitive info for non-owners (pros and public viewers)
     if (!isOwner && !isAdmin) {
-      // Remove client details for public view
-      const { client, ...publicJob } = job;
+      // Remove sensitive client details and bids for public/pro view
+      const { bids, ...jobWithoutBids } = job;
       return NextResponse.json({
-        ...publicJob,
-        client: { user: { name: client.user.name } },
+        job: {
+          ...jobWithoutBids,
+          client: { 
+            city: job.client.city,
+            user: { name: job.client.user.name } 
+          },
+        },
       });
     }
 
-    return NextResponse.json(job);
+    return NextResponse.json({ job });
   } catch (error) {
     console.error('Failed to fetch job:', error);
     return NextResponse.json(
@@ -148,7 +154,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       });
     }
 
-    return NextResponse.json(updatedJob);
+    return NextResponse.json({ job: updatedJob });
   } catch (error) {
     console.error('Failed to update job:', error);
     return NextResponse.json(
@@ -199,7 +205,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       select: { id: true, status: true },
     });
 
-    return NextResponse.json(cancelledJob);
+    return NextResponse.json({ job: cancelledJob });
   } catch (error) {
     console.error('Failed to cancel job:', error);
     return NextResponse.json(

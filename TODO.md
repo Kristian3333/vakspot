@@ -134,6 +134,7 @@
 - Improved login page clarity (shows both Opdrachtgevers & Vakmensen icons, separate register buttons)
 - Added success message on login page after registration
 - Consistent link styling across all auth pages
+- Fixed pro leads detail page not loading (API response format mismatch - now returns `{ job }`)
 
 ### Polish & Performance (2025-01-21)
 - SEO metadata for all pages (title, description, OpenGraph)
