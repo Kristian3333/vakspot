@@ -19,7 +19,7 @@ export const metadata = {
 };
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 const statusConfig: Record<string, { label: string; variant: 'success' | 'warning' | 'error' | 'neutral' }> = {
@@ -67,7 +67,7 @@ async function getJob(id: string, userId: string) {
 
 export default async function JobDetailPage({ params }: PageProps) {
   const session = await auth();
-  const { id } = await params;
+  const { id } = params;
   
   if (!session?.user) {
     redirect(`/login?callbackUrl=/client/jobs/${id}`);

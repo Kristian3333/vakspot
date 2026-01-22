@@ -1,9 +1,9 @@
 // src/app/(dashboard)/messages/[id]/page.tsx
 'use client';
 
-import { useState, useEffect, useRef, use } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Card, Button, Avatar, Spinner, Badge, StatusBadge } from '@/components/ui';
 import { formatCurrency, formatRelativeTime, cn } from '@/lib/utils';
 import {
@@ -115,8 +115,9 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function ConversationPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function ConversationPage() {
+  const params = useParams();
+  const id = params.id as string;
   const router = useRouter();
   const [conversation, setConversation] = useState<ConversationDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,6 +133,8 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
 
   // Load conversation
   useEffect(() => {
+    if (!id) return;
+    
     Promise.all([
       fetch(`/api/messages/${id}`).then(res => res.json()),
       fetch('/api/auth/session').then(res => res.json()),
@@ -148,7 +151,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
 
   // Poll for new messages every 10 seconds
   useEffect(() => {
-    if (!conversation) return;
+    if (!conversation || !id) return;
     
     const interval = setInterval(() => {
       fetch(`/api/messages/${id}`)
@@ -385,8 +388,14 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
               </div>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-surface-900">{formatCurrency(bid.amount)}</p>
-              <p className="text-sm text-surface-500">{AMOUNT_TYPE_LABELS[bid.amountType]}</p>
+              {bid.amount > 0 ? (
+                <>
+                  <p className="text-2xl font-bold text-surface-900">{formatCurrency(bid.amount)}</p>
+                  <p className="text-sm text-surface-500">{AMOUNT_TYPE_LABELS[bid.amountType]}</p>
+                </>
+              ) : (
+                <p className="text-sm text-surface-500">{AMOUNT_TYPE_LABELS[bid.amountType] || 'Prijs nader te bepalen'}</p>
+              )}
               <StatusBadge variant={BID_STATUS_COLORS[bid.status]} size="sm" className="mt-1">
                 {BID_STATUS_LABELS[bid.status]}
               </StatusBadge>
@@ -397,7 +406,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
           <div className="mt-4 pt-4 border-t border-surface-200">
             <p className="text-sm text-surface-600 whitespace-pre-wrap">{bid.message}</p>
             <p className="text-xs text-surface-400 mt-2">
-              Offerte verstuurd {formatRelativeTime(bid.createdAt)}
+              Interesse getoond {formatRelativeTime(bid.createdAt)}
             </p>
           </div>
 
@@ -410,7 +419,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
                 className="flex-1"
               >
                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                Offerte accepteren
+                Accepteren
               </Button>
               <Button
                 variant="outline"
@@ -427,7 +436,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
           {bid.status === 'ACCEPTED' && (
             <div className="mt-4 pt-4 border-t border-success-200 flex items-center gap-2 text-success-700">
               <CheckCircle2 className="h-5 w-5" />
-              <span className="font-medium">Offerte geaccepteerd - U kunt nu de klus plannen via berichten</span>
+              <span className="font-medium">Geaccepteerd - U kunt nu de klus plannen via berichten</span>
             </div>
           )}
         </Card>

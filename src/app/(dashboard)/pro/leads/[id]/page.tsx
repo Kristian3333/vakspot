@@ -1,8 +1,8 @@
 // src/app/(dashboard)/pro/leads/[id]/page.tsx
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { Card, Button, Badge, Textarea, Spinner, Avatar } from '@/components/ui';
 import { formatRelativeTime } from '@/lib/utils';
 import {
@@ -31,8 +31,9 @@ const TIMELINE_LABELS: Record<string, string> = {
   FLEXIBLE: 'Flexibel',
 };
 
-export default function ProLeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function ProLeadDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
   const router = useRouter();
   const [job, setJob] = useState<JobDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,6 +45,8 @@ export default function ProLeadDetailPage({ params }: { params: Promise<{ id: st
   const [selectedImage, setSelectedImage] = useState(0);
 
   useEffect(() => {
+    if (!id) return;
+    
     fetch(`/api/jobs/${id}`)
       .then(res => res.json())
       .then(data => {
@@ -127,7 +130,7 @@ export default function ProLeadDetailPage({ params }: { params: Promise<{ id: st
               Ga naar gesprek
             </Button>
           )}
-          <Button variant="outline" onClick={() => router.push('/pro/leads')}>
+          <Button variant="outline" onClick={() => router.push('/pro/jobs')}>
             Meer klussen bekijken
           </Button>
         </div>

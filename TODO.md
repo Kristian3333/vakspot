@@ -105,7 +105,10 @@ src/app/api/jobs/route.ts                     # Auto-publish jobs
 src/app/api/bids/route.ts                     # Interest system
 src/app/api/pro/profile/route.ts              # Simplified API
 src/lib/validations.ts                        # Simplified schemas + registration fix
-src/app/(dashboard)/pro/leads/[id]/page.tsx   # Interest button
+src/app/(dashboard)/pro/leads/[id]/page.tsx   # Interest button (React 18 fix)
+src/app/(dashboard)/pro/jobs/[id]/page.tsx    # Job detail (React 18 fix)
+src/app/(dashboard)/messages/[id]/page.tsx    # Messages (React 18 fix)
+src/app/(dashboard)/client/jobs/[id]/page.tsx # Client job detail (params fix)
 src/app/(dashboard)/pro/profile/edit/page.tsx # Simplified edit
 src/components/layout/Header.tsx              # Simplified nav
 src/app/faq/page.tsx                          # Enhanced FAQ (consolidated help)
@@ -130,6 +133,18 @@ src/app/help/articles/[slug]/    # Redirects to /faq
 - PRO schema required `postcode` but form only collected `city`
 **Solution**: Made `confirmPassword` and `postcode` optional in server-side schemas
 
+### Job Detail Pages Crash (Fixed) ✅
+**Problem**: PRO clicking on a job showed "Er is iets misgegaan" error
+**Cause**: Pages used React 19's `use(params)` pattern, but project runs on:
+- Next.js 14.2.21
+- React 18.3.1
+**Solution**: Changed to `useParams()` hook from `next/navigation` for client components
+**Files fixed**:
+- `src/app/(dashboard)/pro/jobs/[id]/page.tsx`
+- `src/app/(dashboard)/pro/leads/[id]/page.tsx`
+- `src/app/(dashboard)/messages/[id]/page.tsx`
+- `src/app/(dashboard)/client/jobs/[id]/page.tsx` (server component - removed Promise type)
+
 ---
 
 ## Definition of Done
@@ -142,7 +157,8 @@ src/app/help/articles/[slug]/    # Redirects to /faq
 5. ✅ Landing page has two clear CTAs
 6. ✅ No more than 5 items in main navigation
 7. ✅ Users can register (both client and PRO)
-8. ⬜ Mobile experience is clean and usable (needs testing)
+8. ✅ PRO can view job details and express interest
+9. ⬜ Mobile experience is clean and usable (needs testing)
 
 ---
 
