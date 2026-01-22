@@ -10,34 +10,32 @@ export const loginSchema = z.object({
   password: z.string().min(6, 'Wachtwoord moet minimaal 6 tekens zijn'),
 });
 
+// Server-side schema: confirmPassword is optional since it's validated client-side
 export const registerClientSchema = z.object({
   email: z.string().email('Ongeldig e-mailadres'),
   password: z.string().min(6, 'Wachtwoord moet minimaal 6 tekens zijn'),
-  confirmPassword: z.string(),
+  confirmPassword: z.string().optional(), // Optional on server - validated client-side
   name: z.string().min(2, 'Naam moet minimaal 2 tekens zijn'),
   phone: z.string().optional().or(z.literal('')),
   city: z.string().optional().or(z.literal('')),
   postcode: z.string().regex(/^[1-9][0-9]{3}\s?[A-Za-z]{2}$/, 'Ongeldige postcode').optional().or(z.literal('')),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Wachtwoorden komen niet overeen',
-  path: ['confirmPassword'],
+  role: z.literal('CLIENT').optional(),
 });
 
+// Server-side schema: confirmPassword and postcode are optional
 export const registerProSchema = z.object({
   email: z.string().email('Ongeldig e-mailadres'),
   password: z.string().min(6, 'Wachtwoord moet minimaal 6 tekens zijn'),
-  confirmPassword: z.string(),
+  confirmPassword: z.string().optional(), // Optional on server - validated client-side
   name: z.string().min(2, 'Naam moet minimaal 2 tekens zijn'),
   companyName: z.string().min(2, 'Bedrijfsnaam moet minimaal 2 tekens zijn'),
   kvkNumber: z.string().regex(/^[0-9]{8}$/, 'KVK nummer moet 8 cijfers zijn').optional().or(z.literal('')),
   phone: z.string().min(10, 'Ongeldig telefoonnummer'),
   city: z.string().min(2, 'Stad is verplicht'),
-  postcode: z.string().regex(/^[1-9][0-9]{3}\s?[A-Za-z]{2}$/, 'Ongeldige postcode'),
+  postcode: z.string().regex(/^[1-9][0-9]{3}\s?[A-Za-z]{2}$/, 'Ongeldige postcode').optional().or(z.literal('')),
   categories: z.array(z.string()).min(1, 'Selecteer minimaal één categorie'),
   serviceRadius: z.number().min(5).max(100).default(25),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Wachtwoorden komen niet overeen',
-  path: ['confirmPassword'],
+  role: z.literal('PRO').optional(),
 });
 
 // ============================================
