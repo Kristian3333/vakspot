@@ -22,6 +22,7 @@ import {
   Star,
   Briefcase,
   ExternalLink,
+  AlertCircle,
 } from 'lucide-react';
 
 type Attachment = {
@@ -121,6 +122,7 @@ export default function ConversationPage() {
   const router = useRouter();
   const [conversation, setConversation] = useState<ConversationDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -135,18 +137,40 @@ export default function ConversationPage() {
   useEffect(() => {
     if (!id) return;
     
-    Promise.all([
-      fetch(`/api/messages/${id}`).then(res => res.json()),
-      fetch('/api/auth/session').then(res => res.json()),
-    ]).then(([convData, sessionData]) => {
-      if (convData.conversation) {
-        setConversation(convData.conversation);
+    const loadData = async () => {
+      try {
+        const [convRes, sessionRes] = await Promise.all([
+          fetch(`/api/messages/${id}`),
+          fetch('/api/auth/session'),
+        ]);
+        
+        const sessionData = await sessionRes.json();
+        setCurrentUserId(sessionData?.user?.id || null);
+        setUserRole(sessionData?.user?.role || null);
+        
+        if (!convRes.ok) {
+          const errorData = await convRes.json();
+          setError(errorData.error || `Error: ${convRes.status}`);
+          setLoading(false);
+          return;
+        }
+        
+        const convData = await convRes.json();
+        if (convData.conversation) {
+          setConversation(convData.conversation);
+        } else {
+          setError('Geen gesprek data ontvangen');
+        }
+        setLoading(false);
+        scrollToBottom();
+      } catch (err) {
+        console.error('Failed to load conversation:', err);
+        setError('Kon gesprek niet laden');
+        setLoading(false);
       }
-      setCurrentUserId(sessionData?.user?.id || null);
-      setUserRole(sessionData?.user?.role || null);
-      setLoading(false);
-      scrollToBottom();
-    }).catch(() => setLoading(false));
+    };
+    
+    loadData();
   }, [id]);
 
   // Poll for new messages every 10 seconds
@@ -275,13 +299,18 @@ export default function ConversationPage() {
     );
   }
 
-  if (!conversation) {
+  if (error || !conversation) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8 text-center">
-        <h1 className="text-xl font-bold text-surface-900">Gesprek niet gevonden</h1>
-        <Button onClick={() => router.push('/messages')} className="mt-4">
-          Terug naar berichten
-        </Button>
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        <Card className="text-center py-12">
+          <AlertCircle className="mx-auto h-12 w-12 text-error-400" />
+          <h1 className="mt-4 text-xl font-bold text-surface-900">Gesprek niet gevonden</h1>
+          <p className="mt-2 text-surface-600">{error || 'Het gesprek kon niet worden geladen.'}</p>
+          <p className="mt-1 text-sm text-surface-400">Conversation ID: {id}</p>
+          <Button onClick={() => router.push('/messages')} className="mt-6">
+            Terug naar berichten
+          </Button>
+        </Card>
       </div>
     );
   }

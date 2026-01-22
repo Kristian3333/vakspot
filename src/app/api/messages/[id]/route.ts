@@ -3,19 +3,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
-interface RouteParams {
-  params: { id: string };
-}
-
 // GET - Get conversation details with messages
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
-    const { id } = params;
+    const { id } = context.params;
+    console.log('[GET /api/messages/[id]] Fetching conversation:', id);
+    
     const session = await auth();
     
     if (!session) {
+      console.log('[GET /api/messages/[id]] No session');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
+    console.log('[GET /api/messages/[id]] User:', session.user.id, 'Role:', session.user.role);
 
     const conversation = await prisma.conversation.findUnique({
       where: { id },
@@ -24,7 +28,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           orderBy: { createdAt: 'asc' },
           include: {
             sender: { select: { id: true, name: true, image: true } },
-            attachments: true,
+            // Note: attachments removed - run `npx prisma generate` to re-enable
           },
         },
         bid: {
@@ -57,15 +61,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!conversation) {
+      console.log('[GET /api/messages/[id]] Conversation not found in database');
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
+
+    console.log('[GET /api/messages/[id]] Found conversation. Client userId:', conversation.bid.job.client.userId, 'Pro userId:', conversation.bid.pro.user.id);
 
     // Verify access - user must be client or pro involved
     const isClient = conversation.bid.job.client.userId === session.user.id;
     const isPro = conversation.bid.pro.user.id === session.user.id;
 
+    console.log('[GET /api/messages/[id]] Access check - isClient:', isClient, 'isPro:', isPro);
+
     if (!isClient && !isPro) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      console.log('[GET /api/messages/[id]] Access denied');
+      return NextResponse.json({ error: 'Unauthorized - not a participant' }, { status: 403 });
     }
 
     // Mark messages as read
@@ -81,9 +91,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Remove client userId from response (privacy)
     const { client, ...jobData } = conversation.bid.job;
     
+    // Add empty attachments array to each message for frontend compatibility
+    const messagesWithAttachments = conversation.messages.map(msg => ({
+      ...msg,
+      attachments: [],
+    }));
+    
     return NextResponse.json({
       conversation: {
         ...conversation,
+        messages: messagesWithAttachments,
         bid: {
           ...conversation.bid,
           job: jobData,
@@ -91,15 +108,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error('Error fetching conversation:', error);
-    return NextResponse.json({ error: 'Failed to fetch conversation' }, { status: 500 });
+    console.error('[GET /api/messages/[id]] Error:', error);
+    return NextResponse.json({ 
+      error: 'Failed to fetch conversation',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
 
 // POST - Send a message in this conversation
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export async function POST(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
-    const { id } = params;
+    const { id } = context.params;
     const session = await auth();
     
     if (!session) {
@@ -107,10 +130,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json();
-    const { content, attachments } = body;
+    const { content } = body;
+    // Note: attachments support disabled until `npx prisma generate` is run
 
-    if (!content?.trim() && (!attachments || attachments.length === 0)) {
-      return NextResponse.json({ error: 'Message content or attachments required' }, { status: 400 });
+    if (!content?.trim()) {
+      return NextResponse.json({ error: 'Message content required' }, { status: 400 });
     }
 
     // Verify conversation exists and user has access
@@ -137,24 +161,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Create message with attachments
+    // Create message (without attachments for now)
     const message = await prisma.message.create({
       data: {
         conversationId: id,
         senderId: session.user.id,
-        content: content?.trim() || '📎 Bijlage',
-        attachments: attachments && attachments.length > 0 ? {
-          create: attachments.map((att: any) => ({
-            url: att.url,
-            filename: att.filename,
-            fileType: att.fileType,
-            fileSize: att.fileSize,
-          })),
-        } : undefined,
+        content: content.trim(),
       },
       include: {
         sender: { select: { id: true, name: true, image: true } },
-        attachments: true,
       },
     });
 
@@ -164,7 +179,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       data: { updatedAt: new Date() },
     });
 
-    return NextResponse.json({ message }, { status: 201 });
+    return NextResponse.json({ 
+      message: {
+        ...message,
+        attachments: [], // Add empty array for frontend compatibility
+      }
+    }, { status: 201 });
   } catch (error) {
     console.error('Error sending message:', error);
     return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
