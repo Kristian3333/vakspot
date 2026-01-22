@@ -4,13 +4,13 @@ import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
 interface RouteParams {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 // GET - Get conversation details with messages
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const session = await auth();
     
     if (!session) {
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // POST - Send a message in this conversation
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const session = await auth();
     
     if (!session) {

@@ -6,11 +6,11 @@ import prisma from '@/lib/prisma';
 // Update a category
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await auth();
-    const { id } = await params;
+    const { id } = params;
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 });
@@ -53,11 +53,11 @@ export async function PATCH(
 // Delete a category
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await auth();
-    const { id } = await params;
+    const { id } = params;
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 });

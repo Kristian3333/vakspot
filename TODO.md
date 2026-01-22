@@ -133,17 +133,31 @@ src/app/help/articles/[slug]/    # Redirects to /faq
 - PRO schema required `postcode` but form only collected `city`
 **Solution**: Made `confirmPassword` and `postcode` optional in server-side schemas
 
-### Job Detail Pages Crash (Fixed) ✅
-**Problem**: PRO clicking on a job showed "Er is iets misgegaan" error
-**Cause**: Pages used React 19's `use(params)` pattern, but project runs on:
+### Next.js 14 Params Compatibility (Fixed) ✅
+**Problem**: Multiple pages and API routes crashed with "Gesprek niet gevonden" or similar errors
+**Cause**: Code used Next.js 15/React 19's `Promise<{ id: string }>` params pattern, but project runs on:
 - Next.js 14.2.21
 - React 18.3.1
-**Solution**: Changed to `useParams()` hook from `next/navigation` for client components
-**Files fixed**:
+
+**Solution**: 
+- Client components: Changed from `use(params)` to `useParams()` hook from `next/navigation`
+- Server components: Removed Promise type from params interface
+- API routes: Changed `params: Promise<{ id: string }>` to `params: { id: string }`
+
+**Pages fixed**:
 - `src/app/(dashboard)/pro/jobs/[id]/page.tsx`
 - `src/app/(dashboard)/pro/leads/[id]/page.tsx`
 - `src/app/(dashboard)/messages/[id]/page.tsx`
-- `src/app/(dashboard)/client/jobs/[id]/page.tsx` (server component - removed Promise type)
+- `src/app/(dashboard)/client/jobs/[id]/page.tsx`
+
+**API routes fixed**:
+- `src/app/api/messages/[id]/route.ts`
+- `src/app/api/jobs/[id]/route.ts`
+- `src/app/api/bids/[id]/accept/route.ts`
+- `src/app/api/bids/[id]/reject/route.ts`
+- `src/app/api/admin/categories/[id]/route.ts`
+- `src/app/api/admin/users/[id]/route.ts`
+- `src/app/api/admin/verify/[id]/route.ts`
 
 ---
 
@@ -158,7 +172,8 @@ src/app/help/articles/[slug]/    # Redirects to /faq
 6. ✅ No more than 5 items in main navigation
 7. ✅ Users can register (both client and PRO)
 8. ✅ PRO can view job details and express interest
-9. ⬜ Mobile experience is clean and usable (needs testing)
+9. ✅ Conversations can be opened and messages exchanged
+10. ⬜ Mobile experience is clean and usable (needs testing)
 
 ---
 

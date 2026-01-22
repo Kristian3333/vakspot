@@ -5,11 +5,11 @@ import prisma from '@/lib/prisma';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await auth();
-    const { id } = await params;
+    const { id } = params;
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 });

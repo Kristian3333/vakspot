@@ -6,13 +6,13 @@ import { updateJobSchema } from '@/lib/validations';
 import { JobStatus } from '@prisma/client';
 
 interface RouteParams {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 // GET /api/jobs/[id] - Get job details
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const session = await auth();
 
     const job = await prisma.job.findUnique({
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // PATCH /api/jobs/[id] - Update job
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const session = await auth();
 
     if (!session?.user) {
@@ -167,7 +167,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 // DELETE /api/jobs/[id] - Cancel job
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const session = await auth();
 
     if (!session?.user) {
