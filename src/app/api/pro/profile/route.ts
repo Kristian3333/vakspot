@@ -16,30 +16,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Niet geautoriseerd' }, { status: 403 });
     }
 
-    const proProfile = await prisma.proProfile.findUnique({
-      where: { userId: session.user.id },
-      include: {
-        categories: {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        proProfile: {
           include: {
-            category: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
+            categories: {
+              include: {
+                category: true,
+              },
+            },
           },
         },
       },
     });
 
-    if (!proProfile) {
-      return NextResponse.json({ error: 'Profiel niet gevonden' }, { status: 404 });
+    if (!user) {
+      return NextResponse.json({ error: 'Gebruiker niet gevonden' }, { status: 404 });
     }
 
-    return NextResponse.json({ profile: proProfile });
+    // Return in a format the edit form expects
+    return NextResponse.json(user);
   } catch (error) {
     console.error('Get pro profile error:', error);
     return NextResponse.json({ error: 'Er is iets misgegaan' }, { status: 500 });
@@ -61,24 +62,12 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
     const {
-      name,
       companyName,
       phone,
-      city,
-      postcode,
-      bio,
-      kvkNumber,
-      workRadius,
-      categoryIds,
+      description,
+      serviceRadius,
+      categories,
     } = body;
-
-    // Update user name if provided
-    if (name) {
-      await prisma.user.update({
-        where: { id: session.user.id },
-        data: { name },
-      });
-    }
 
     // Find existing pro profile
     const existingProfile = await prisma.proProfile.findUnique({
@@ -93,26 +82,24 @@ export async function PUT(request: NextRequest) {
     const proProfile = await prisma.proProfile.update({
       where: { id: existingProfile.id },
       data: {
-        companyName: companyName || existingProfile.companyName,
-        phone: phone || existingProfile.phone,
-        locationCity: city || existingProfile.locationCity,
-        kvkNumber: kvkNumber || existingProfile.kvkNumber,
-        description: bio || existingProfile.description,
-        serviceRadius: workRadius || existingProfile.serviceRadius,
+        ...(companyName !== undefined && { companyName }),
+        ...(phone !== undefined && { phone }),
+        ...(description !== undefined && { description }),
+        ...(serviceRadius !== undefined && { serviceRadius }),
       },
     });
 
     // Update categories if provided
-    if (categoryIds && Array.isArray(categoryIds)) {
+    if (categories && Array.isArray(categories)) {
       // Delete existing category relations
       await prisma.proCategory.deleteMany({
         where: { proId: existingProfile.id },
       });
 
       // Create new category relations
-      if (categoryIds.length > 0) {
+      if (categories.length > 0) {
         await prisma.proCategory.createMany({
-          data: categoryIds.map((categoryId: string) => ({
+          data: categories.map((categoryId: string) => ({
             proId: existingProfile.id,
             categoryId,
           })),

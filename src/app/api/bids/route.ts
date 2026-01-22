@@ -1,10 +1,13 @@
 // src/app/api/bids/route.ts
+// This API handles "interests" - PROs expressing interest in a job
+// The Bid model is reused but simplified: amount is optional, focus is on messaging
+
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { createBidSchema } from '@/lib/validations';
 
-// GET - List bids (for pro: their bids, for client: bids on their jobs)
+// GET - List interests (for pro: their interests, for client: interests on their jobs)
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -17,7 +20,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
 
     if (session.user.role === 'PRO') {
-      // Get pro's bids
+      // Get pro's interests
       const proProfile = await prisma.proProfile.findUnique({
         where: { userId: session.user.id },
       });
@@ -44,6 +47,9 @@ export async function GET(request: NextRequest) {
               images: { select: { url: true }, take: 1 },
             },
           },
+          conversation: {
+            select: { id: true },
+          },
         },
         orderBy: { createdAt: 'desc' },
       });
@@ -52,7 +58,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (session.user.role === 'CLIENT') {
-      // Get bids on client's jobs
+      // Get interests on client's jobs
       if (!jobId) {
         return NextResponse.json({ error: 'Job ID required' }, { status: 400 });
       }
@@ -80,6 +86,9 @@ export async function GET(request: NextRequest) {
               },
             },
           },
+          conversation: {
+            select: { id: true },
+          },
         },
         orderBy: { createdAt: 'asc' },
       });
@@ -89,12 +98,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid role' }, { status: 403 });
   } catch (error) {
-    console.error('Error fetching bids:', error);
-    return NextResponse.json({ error: 'Failed to fetch bids' }, { status: 500 });
+    console.error('Error fetching interests:', error);
+    return NextResponse.json({ error: 'Failed to fetch interests' }, { status: 500 });
   }
 }
 
-// POST - Create a bid (pro only)
+// POST - Express interest in a job (pro only)
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -112,7 +121,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { jobId, amount, amountType, message } = parsed.data;
+    const { jobId, message, amount, amountType } = parsed.data;
 
     // Get pro profile
     const proProfile = await prisma.proProfile.findUnique({
@@ -129,10 +138,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!job || job.status !== 'PUBLISHED') {
-      return NextResponse.json({ error: 'Job not available for bidding' }, { status: 400 });
+      return NextResponse.json({ error: 'Job not available' }, { status: 400 });
     }
 
-    // Check if pro already bid on this job
+    // Check if pro already expressed interest
     const existingBid = await prisma.bid.findUnique({
       where: {
         jobId_proId: { jobId, proId: proProfile.id },
@@ -140,16 +149,16 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingBid) {
-      return NextResponse.json({ error: 'You have already bid on this job' }, { status: 400 });
+      return NextResponse.json({ error: 'U heeft al interesse getoond in deze klus' }, { status: 400 });
     }
 
-    // Create bid and conversation
+    // Create interest (bid) and conversation together
     const bid = await prisma.bid.create({
       data: {
         jobId,
         proId: proProfile.id,
-        amount,
-        amountType,
+        amount: amount || 0, // Default to 0 (price to be discussed)
+        amountType: amountType || 'TO_DISCUSS',
         message,
         conversation: {
           create: {},
@@ -163,18 +172,29 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Update job status if first bid
-    const bidCount = await prisma.bid.count({ where: { jobId } });
-    if (bidCount === 1) {
-      await prisma.job.update({
-        where: { id: jobId },
-        data: { status: 'IN_CONVERSATION' },
+    // Create initial message in conversation
+    if (bid.conversation) {
+      await prisma.message.create({
+        data: {
+          conversationId: bid.conversation.id,
+          senderId: session.user.id,
+          content: message,
+        },
       });
     }
 
-    return NextResponse.json({ bid }, { status: 201 });
+    // Update job status to show it has interested pros
+    await prisma.job.update({
+      where: { id: jobId },
+      data: { status: 'IN_CONVERSATION' },
+    });
+
+    return NextResponse.json({ 
+      bid,
+      conversationId: bid.conversation?.id,
+    }, { status: 201 });
   } catch (error) {
-    console.error('Error creating bid:', error);
-    return NextResponse.json({ error: 'Failed to create bid' }, { status: 500 });
+    console.error('Error expressing interest:', error);
+    return NextResponse.json({ error: 'Failed to express interest' }, { status: 500 });
   }
 }

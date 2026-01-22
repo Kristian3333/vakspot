@@ -326,9 +326,25 @@ model Message {
   read           Boolean      @default(false)
   createdAt      DateTime     @default(now())
 
+  // Attachments
+  attachments    MessageAttachment[]
+
   @@index([conversationId])
   @@index([senderId])
   @@index([createdAt])
+}
+
+model MessageAttachment {
+  id        String   @id @default(cuid())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  url       String
+  filename  String
+  fileType  String   // mime type
+  fileSize  Int      // bytes
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
 }
 
 // ============================================

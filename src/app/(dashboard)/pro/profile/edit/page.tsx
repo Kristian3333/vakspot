@@ -20,11 +20,9 @@ type ProProfile = {
   proProfile?: {
     companyName: string | null;
     phone: string | null;
-    city: string | null;
-    postcode: string | null;
-    bio: string | null;
-    kvkNumber: string | null;
-    workRadius: number | null;
+    description: string | null;
+    locationCity: string | null;
+    serviceRadius: number | null;
     categories: { categoryId: string }[];
   } | null;
 };
@@ -39,40 +37,29 @@ export default function EditProProfilePage() {
   const [success, setSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: '',
     companyName: '',
     phone: '',
-    city: '',
-    postcode: '',
-    bio: '',
-    kvkNumber: '',
-    workRadius: 25,
-    categoryIds: [] as string[],
+    description: '',
+    serviceRadius: 25,
+    categories: [] as string[],
   });
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/auth/session').then(res => res.json()),
+      fetch('/api/pro/profile').then(res => res.json()),
       fetch('/api/categories').then(res => res.json()),
     ])
-      .then(([sessionData, categoriesData]) => {
-        if (sessionData?.user) {
-          const user = sessionData.user;
-          const pro = user.proProfile;
-          setProfile(user);
+      .then(([profileData, categoriesData]) => {
+        if (profileData && !profileData.error) {
+          setProfile(profileData);
           setFormData({
-            name: user.name || '',
-            companyName: pro?.companyName || '',
-            phone: pro?.phone || '',
-            city: pro?.city || '',
-            postcode: pro?.postcode || '',
-            bio: pro?.bio || '',
-            kvkNumber: pro?.kvkNumber || '',
-            workRadius: pro?.workRadius || 25,
-            categoryIds: pro?.categories?.map((c: { categoryId: string }) => c.categoryId) || [],
+            companyName: profileData.proProfile?.companyName || '',
+            phone: profileData.proProfile?.phone || '',
+            description: profileData.proProfile?.description || '',
+            serviceRadius: profileData.proProfile?.serviceRadius || 25,
+            categories: profileData.proProfile?.categories?.map((c: { categoryId: string }) => c.categoryId) || [],
           });
         }
-        // API returns array directly, handle both array and object format for safety
         setCategories(Array.isArray(categoriesData) ? categoriesData : categoriesData.categories || []);
         setLoading(false);
       })
@@ -82,9 +69,9 @@ export default function EditProProfilePage() {
   const handleCategoryToggle = (categoryId: string) => {
     setFormData(prev => ({
       ...prev,
-      categoryIds: prev.categoryIds.includes(categoryId)
-        ? prev.categoryIds.filter(id => id !== categoryId)
-        : [...prev.categoryIds, categoryId],
+      categories: prev.categories.includes(categoryId)
+        ? prev.categories.filter(id => id !== categoryId)
+        : [...prev.categories, categoryId],
     }));
   };
 
@@ -139,22 +126,24 @@ export default function EditProProfilePage() {
           Terug naar profiel
         </Link>
 
+        <h1 className="text-2xl font-bold text-surface-900 mb-6">Profiel bewerken</h1>
+
         <form onSubmit={handleSubmit}>
+          {error && (
+            <div className="mb-6 p-4 bg-error-50 border border-error-200 rounded-xl text-error-700">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-6 p-4 bg-success-50 border border-success-200 rounded-xl text-success-700">
+              Profiel opgeslagen! U wordt doorgestuurd...
+            </div>
+          )}
+
           {/* Basic Info */}
           <Card className="mb-6">
-            <h2 className="text-lg font-semibold text-surface-900 mb-6">Persoonlijke gegevens</h2>
-
-            {error && (
-              <div className="mb-6 p-4 bg-error-50 border border-error-200 rounded-xl text-error-700">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="mb-6 p-4 bg-success-50 border border-success-200 rounded-xl text-success-700">
-                Profiel opgeslagen! U wordt doorgestuurd...
-              </div>
-            )}
+            <h2 className="text-lg font-semibold text-surface-900 mb-6">Bedrijfsgegevens</h2>
 
             {/* Profile picture */}
             <div className="flex items-center gap-6 mb-6">
@@ -175,16 +164,11 @@ export default function EditProProfilePage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Input
-                label="Naam"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Uw naam"
-              />
-              <Input
                 label="Bedrijfsnaam"
                 value={formData.companyName}
                 onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
                 placeholder="Uw bedrijfsnaam"
+                required
               />
               <Input
                 label="Telefoonnummer"
@@ -192,64 +176,41 @@ export default function EditProProfilePage() {
                 onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="06-12345678"
                 type="tel"
-              />
-              <Input
-                label="KvK-nummer"
-                value={formData.kvkNumber}
-                onChange={(e) => setFormData(prev => ({ ...prev, kvkNumber: e.target.value }))}
-                placeholder="12345678"
+                required
               />
             </div>
           </Card>
 
-          {/* Location */}
+          {/* Service Area */}
           <Card className="mb-6">
-            <h2 className="text-lg font-semibold text-surface-900 mb-6">Locatie & werkgebied</h2>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Input
-                label="Stad"
-                value={formData.city}
-                onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                placeholder="Amsterdam"
-              />
-              <Input
-                label="Postcode"
-                value={formData.postcode}
-                onChange={(e) => setFormData(prev => ({ ...prev, postcode: e.target.value }))}
-                placeholder="1234 AB"
-              />
-              <div className="sm:col-span-2">
-                <label className="label">Werkstraal (km)</label>
-                <Select
-                  options={[
-                    { value: '10', label: '10 km' },
-                    { value: '25', label: '25 km' },
-                    { value: '50', label: '50 km' },
-                    { value: '75', label: '75 km' },
-                    { value: '100', label: '100 km' },
-                  ]}
-                  value={formData.workRadius.toString()}
-                  onChange={(e) => setFormData(prev => ({ ...prev, workRadius: parseInt(e.target.value) }))}
-                />
-                <p className="text-xs text-surface-500 mt-1">
-                  U ontvangt leads binnen deze afstand van uw locatie.
-                </p>
-              </div>
-            </div>
+            <h2 className="text-lg font-semibold text-surface-900 mb-4">Werkgebied</h2>
+            <p className="text-sm text-surface-600 mb-4">
+              U ontvangt klussen binnen deze afstand van uw locatie.
+            </p>
+            <Select
+              options={[
+                { value: '10', label: '10 km' },
+                { value: '25', label: '25 km' },
+                { value: '50', label: '50 km' },
+                { value: '75', label: '75 km' },
+                { value: '100', label: '100 km' },
+              ]}
+              value={formData.serviceRadius.toString()}
+              onChange={(e) => setFormData(prev => ({ ...prev, serviceRadius: parseInt(e.target.value) }))}
+            />
           </Card>
 
-          {/* Bio */}
+          {/* Description */}
           <Card className="mb-6">
-            <h2 className="text-lg font-semibold text-surface-900 mb-4">Over u</h2>
+            <h2 className="text-lg font-semibold text-surface-900 mb-4">Over uw bedrijf</h2>
             <Textarea
-              value={formData.bio}
-              onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-              placeholder="Vertel iets over uzelf, uw ervaring en specialisaties..."
-              rows={5}
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Vertel iets over uw bedrijf, ervaring, certificeringen en specialisaties. Bijvoorbeeld: jaren ervaring, diploma's, verzekeringen, etc."
+              rows={6}
             />
             <p className="text-xs text-surface-500 mt-2">
-              Een goed profiel helpt u meer opdrachten te krijgen.
+              Een uitgebreide beschrijving helpt opdrachtgevers u te kiezen.
             </p>
           </Card>
 
@@ -257,21 +218,21 @@ export default function EditProProfilePage() {
           <Card className="mb-6">
             <h2 className="text-lg font-semibold text-surface-900 mb-4">Specialisaties</h2>
             <p className="text-sm text-surface-600 mb-4">
-              Selecteer de categorieën waarin u werkzaam bent.
+              Selecteer de categorieën waarin u werkzaam bent. U ziet alleen klussen in deze categorieën.
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {categories.map((category) => (
                 <label
                   key={category.id}
                   className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-colors ${
-                    formData.categoryIds.includes(category.id)
+                    formData.categories.includes(category.id)
                       ? 'border-brand-500 bg-brand-50 text-brand-700'
                       : 'border-surface-200 hover:border-surface-300'
                   }`}
                 >
                   <input
                     type="checkbox"
-                    checked={formData.categoryIds.includes(category.id)}
+                    checked={formData.categories.includes(category.id)}
                     onChange={() => handleCategoryToggle(category.id)}
                     className="sr-only"
                   />
@@ -279,11 +240,21 @@ export default function EditProProfilePage() {
                 </label>
               ))}
             </div>
+            {formData.categories.length === 0 && (
+              <p className="text-sm text-warning-600 mt-2">
+                Selecteer minimaal één categorie om klussen te ontvangen.
+              </p>
+            )}
           </Card>
 
           {/* Submit */}
           <div className="flex gap-3">
-            <Button type="submit" isLoading={saving} leftIcon={<Save className="h-4 w-4" />}>
+            <Button 
+              type="submit" 
+              isLoading={saving} 
+              leftIcon={<Save className="h-4 w-4" />}
+              disabled={formData.categories.length === 0}
+            >
               Opslaan
             </Button>
             <Link href="/pro/profile">

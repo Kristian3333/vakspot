@@ -1,7 +1,6 @@
 // src/middleware.ts
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 
 // Routes that require authentication
 const protectedRoutes = [
@@ -9,12 +8,10 @@ const protectedRoutes = [
   '/pro',
   '/admin',
   '/messages',
-  '/settings',
-  '/profile',
 ];
 
 // Routes that require specific roles
-const roleRoutes = {
+const roleRoutes: Record<string, string[]> = {
   '/client': ['CLIENT', 'ADMIN'],
   '/pro': ['PRO', 'ADMIN'],
   '/admin': ['ADMIN'],
@@ -43,21 +40,28 @@ export default auth((req) => {
       if (nextUrl.pathname.startsWith(route)) {
         if (!allowedRoles.includes(userRole)) {
           // Redirect to appropriate dashboard based on role
-          const redirectUrl = userRole === 'PRO' ? '/pro/leads' : '/client/jobs';
+          const redirectUrl = userRole === 'PRO' ? '/pro/jobs' : '/client/jobs';
           return NextResponse.redirect(new URL(redirectUrl, nextUrl.origin));
         }
       }
     }
   }
 
-  // Redirect authenticated users away from auth pages
-  if (isLoggedIn && (nextUrl.pathname === '/login' || nextUrl.pathname === '/register')) {
-    const redirectUrl = userRole === 'PRO' 
-      ? '/pro/leads' 
-      : userRole === 'ADMIN' 
-        ? '/admin' 
-        : '/client/jobs';
-    return NextResponse.redirect(new URL(redirectUrl, nextUrl.origin));
+  // Redirect authenticated users away from auth pages and home
+  if (isLoggedIn) {
+    const isAuthPage = nextUrl.pathname === '/login' || 
+                       nextUrl.pathname === '/register' ||
+                       nextUrl.pathname.startsWith('/register/');
+    const isHomePage = nextUrl.pathname === '/';
+    
+    if (isAuthPage || isHomePage) {
+      const redirectUrl = userRole === 'PRO' 
+        ? '/pro/jobs' 
+        : userRole === 'ADMIN' 
+          ? '/admin' 
+          : '/client/jobs';
+      return NextResponse.redirect(new URL(redirectUrl, nextUrl.origin));
+    }
   }
 
   return NextResponse.next();
@@ -65,14 +69,6 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     * - api routes (handled separately)
-     */
     '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
   ],
 };

@@ -44,30 +44,30 @@ async function main() {
   if (process.env.NODE_ENV !== 'production') {
     console.log('👤 Creating test users...');
 
+    const password = await hash('test123', 12);
+
     // Admin user
-    const adminPassword = await hash('admin123', 12);
     const admin = await prisma.user.upsert({
       where: { email: 'admin@vakspot.nl' },
       update: {},
       create: {
         email: 'admin@vakspot.nl',
-        name: 'Admin User',
-        passwordHash: adminPassword,
+        name: 'Admin',
+        passwordHash: password,
         role: Role.ADMIN,
         emailVerified: new Date(),
       },
     });
-    console.log(`✅ Admin: ${admin.email}`);
+    console.log(`✅ Admin: ${admin.email} (wachtwoord: test123)`);
 
     // Client user
-    const clientPassword = await hash('client123', 12);
     const client = await prisma.user.upsert({
       where: { email: 'klant@test.nl' },
       update: {},
       create: {
         email: 'klant@test.nl',
         name: 'Jan de Vries',
-        passwordHash: clientPassword,
+        passwordHash: password,
         role: Role.CLIENT,
         emailVerified: new Date(),
         clientProfile: {
@@ -79,112 +79,46 @@ async function main() {
         },
       },
     });
-    console.log(`✅ Client: ${client.email}`);
+    console.log(`✅ Client: ${client.email} (wachtwoord: test123)`);
 
-    // Pro users
-    const proPassword = await hash('pro123', 12);
-    
+    // PRO user
     const paintingCategory = await prisma.category.findUnique({ where: { slug: 'painting' } });
     const plumbingCategory = await prisma.category.findUnique({ where: { slug: 'plumbing' } });
-    const electricalCategory = await prisma.category.findUnique({ where: { slug: 'electrical' } });
 
-    const pro1 = await prisma.user.upsert({
-      where: { email: 'schilder@test.nl' },
+    const pro = await prisma.user.upsert({
+      where: { email: 'vakman@test.nl' },
       update: {},
       create: {
-        email: 'schilder@test.nl',
+        email: 'vakman@test.nl',
         name: 'Pieter Bakker',
-        passwordHash: proPassword,
+        passwordHash: password,
         role: Role.PRO,
         emailVerified: new Date(),
         proProfile: {
           create: {
-            companyName: 'Bakker Schilderwerken',
-            kvkNumber: '12345678',
-            description: 'Vakkundig schilderwerk met 15 jaar ervaring. Gespecialiseerd in binnen- en buitenschilderwerk.',
+            companyName: 'Bakker & Zonen',
+            description: 'Vakkundig schilderwerk en loodgieterswerk. Meer dan 15 jaar ervaring.',
             phone: '06-87654321',
             serviceRadius: 30,
             locationCity: 'Amsterdam',
             locationLat: 52.3676,
             locationLng: 4.9041,
-            avgRating: 4.7,
-            totalReviews: 23,
-            responseRate: 95,
-            verified: true,
-            categories: {
-              create: paintingCategory ? [{ categoryId: paintingCategory.id, yearsExp: 15 }] : [],
-            },
-          },
-        },
-      },
-    });
-    console.log(`✅ Pro: ${pro1.email}`);
-
-    const pro2 = await prisma.user.upsert({
-      where: { email: 'loodgieter@test.nl' },
-      update: {},
-      create: {
-        email: 'loodgieter@test.nl',
-        name: 'Klaas Jansen',
-        passwordHash: proPassword,
-        role: Role.PRO,
-        emailVerified: new Date(),
-        proProfile: {
-          create: {
-            companyName: 'Jansen Loodgieters',
-            kvkNumber: '87654321',
-            description: 'Betrouwbare loodgieter voor al uw sanitair problemen. 24/7 beschikbaar voor noodgevallen.',
-            phone: '06-11223344',
-            serviceRadius: 25,
-            locationCity: 'Utrecht',
-            locationLat: 52.0907,
-            locationLng: 5.1214,
-            avgRating: 4.9,
-            totalReviews: 45,
-            responseRate: 98,
-            verified: true,
-            categories: {
-              create: plumbingCategory ? [{ categoryId: plumbingCategory.id, yearsExp: 20 }] : [],
-            },
-          },
-        },
-      },
-    });
-    console.log(`✅ Pro: ${pro2.email}`);
-
-    const pro3 = await prisma.user.upsert({
-      where: { email: 'elektricien@test.nl' },
-      update: {},
-      create: {
-        email: 'elektricien@test.nl',
-        name: 'Tom Visser',
-        passwordHash: proPassword,
-        role: Role.PRO,
-        emailVerified: new Date(),
-        proProfile: {
-          create: {
-            companyName: 'Visser Elektra',
-            kvkNumber: '55667788',
-            description: 'Gecertificeerd elektricien. NEN 1010, NEN 3140. Installaties, storingen en inspecties.',
-            phone: '06-55667788',
-            serviceRadius: 40,
-            locationCity: 'Rotterdam',
-            locationLat: 51.9244,
-            locationLng: 4.4777,
-            avgRating: 4.5,
+            avgRating: 4.8,
             totalReviews: 12,
-            responseRate: 88,
-            verified: false,
+            verified: true,
             categories: {
-              create: electricalCategory ? [{ categoryId: electricalCategory.id, yearsExp: 8 }] : [],
+              create: [
+                ...(paintingCategory ? [{ categoryId: paintingCategory.id, yearsExp: 15 }] : []),
+                ...(plumbingCategory ? [{ categoryId: plumbingCategory.id, yearsExp: 10 }] : []),
+              ],
             },
           },
         },
       },
     });
-    console.log(`✅ Pro: ${pro3.email}`);
+    console.log(`✅ PRO: ${pro.email} (wachtwoord: test123)`);
 
-    // Sample job
+    // Sample job (simplified - no budget, timeline flexible)
     const clientProfile = await prisma.clientProfile.findUnique({ where: { userId: client.id } });
     
     if (clientProfile && paintingCategory) {
@@ -194,26 +128,29 @@ async function main() {
         create: {
           id: 'sample-job-1',
           title: 'Woonkamer schilderen',
-          description: 'Ik zoek een schilder om mijn woonkamer (30m²) te schilderen. De muren zijn in goede staat en hoeven alleen geschilderd te worden. Kleur: gebroken wit. Plafond mag ook.',
+          description: 'Ik zoek een schilder om mijn woonkamer te schilderen. De muren zijn in goede staat en hoeven alleen geschilderd te worden. Kleur: gebroken wit.',
           categoryId: paintingCategory.id,
           clientId: clientProfile.id,
           status: JobStatus.PUBLISHED,
-          budgetMin: 50000, // €500
-          budgetMax: 100000, // €1000
-          budgetType: BudgetType.ESTIMATE,
+          budgetType: BudgetType.TO_DISCUSS,
           locationCity: 'Amsterdam',
           locationPostcode: '1012AB',
           locationLat: 52.3702,
           locationLng: 4.8952,
-          timeline: Timeline.THIS_MONTH,
+          timeline: Timeline.FLEXIBLE,
           publishedAt: new Date(),
         },
       });
       console.log(`✅ Sample job: ${job.title}`);
     }
+
+    console.log('\n📋 Test accounts:');
+    console.log('   Klant: klant@test.nl / test123');
+    console.log('   Vakman: vakman@test.nl / test123');
+    console.log('   Admin: admin@vakspot.nl / test123');
   }
 
-  console.log('✨ Seeding complete!');
+  console.log('\n✨ Seeding complete!');
 }
 
 main()

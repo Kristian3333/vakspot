@@ -1,118 +1,75 @@
 // src/app/(dashboard)/messages/page.tsx
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Card, Button, Avatar, Spinner, Input } from '@/components/ui';
-import { formatRelativeTime } from '@/lib/utils';
-import { Send, MessageSquare, ArrowLeft } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Card, Avatar, Spinner, Badge } from '@/components/ui';
+import { formatRelativeTime, cn } from '@/lib/utils';
+import { MessageSquare, ChevronRight, Briefcase } from 'lucide-react';
 
 type Message = {
   id: string;
   content: string;
-  read: boolean;
   createdAt: string;
-  sender: { id: string; name: string | null; image: string | null };
+  sender: { id: string; name: string | null };
 };
 
 type Conversation = {
   id: string;
   updatedAt: string;
   bid: {
-    job: { id: string; title: string; status: string };
-    pro: { user: { id: string; name: string | null; image: string | null } };
+    status: string;
+    job: { 
+      id: string; 
+      title: string; 
+      status: string;
+      images?: { url: string }[];
+      client?: {
+        user: { id: string; name: string | null; image: string | null };
+      };
+    };
+    pro: { 
+      companyName: string;
+      user: { id: string; name: string | null; image: string | null } 
+    };
   };
   messages: Message[];
   _count: { messages: number };
 };
 
-type ConversationDetail = Conversation & {
-  messages: Message[];
+const BID_STATUS_COLORS: Record<string, string> = {
+  PENDING: 'bg-warning-100 text-warning-700',
+  VIEWED: 'bg-brand-100 text-brand-700',
+  ACCEPTED: 'bg-success-100 text-success-700',
+  REJECTED: 'bg-error-100 text-error-700',
+  WITHDRAWN: 'bg-surface-100 text-surface-700',
+};
+
+const BID_STATUS_LABELS: Record<string, string> = {
+  PENDING: 'In afwachting',
+  VIEWED: 'Bekeken',
+  ACCEPTED: 'Geaccepteerd',
+  REJECTED: 'Afgewezen',
+  WITHDRAWN: 'Ingetrokken',
 };
 
 export default function MessagesPage() {
-  const searchParams = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [conversation, setConversation] = useState<ConversationDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [newMessage, setNewMessage] = useState('');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
-  // Load conversations
   useEffect(() => {
-    fetch('/api/messages')
-      .then(res => res.json())
-      .then(data => {
-        setConversations(data.conversations || []);
-        setLoading(false);
-        
-        // Auto-select from URL param
-        const bidId = searchParams.get('bid');
-        if (bidId && data.conversations) {
-          const conv = data.conversations.find((c: Conversation) => c.bid.job.id === bidId);
-          if (conv) setSelectedId(conv.id);
-        }
-      })
-      .catch(() => setLoading(false));
-
-    // Get current user ID from session
-    fetch('/api/auth/session')
-      .then(res => res.json())
-      .then(data => setCurrentUserId(data?.user?.id || null))
-      .catch(() => {});
-  }, [searchParams]);
-
-  // Load selected conversation
-  useEffect(() => {
-    if (!selectedId) {
-      setConversation(null);
-      return;
-    }
-
-    fetch(`/api/messages?conversationId=${selectedId}`)
-      .then(res => res.json())
-      .then(data => {
-        setConversation(data.conversation);
-        scrollToBottom();
-      });
-  }, [selectedId]);
-
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
-
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !selectedId || sending) return;
-
-    setSending(true);
-    try {
-      const res = await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId: selectedId, content: newMessage }),
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        setConversation(prev => prev ? {
-          ...prev,
-          messages: [...prev.messages, data.message],
-        } : null);
-        setNewMessage('');
-        scrollToBottom();
-      }
-    } catch (err) {
-      console.error('Failed to send message:', err);
-    }
-    setSending(false);
-  };
+    Promise.all([
+      fetch('/api/messages').then(res => res.json()),
+      fetch('/api/auth/session').then(res => res.json()),
+    ]).then(([convData, sessionData]) => {
+      setConversations(convData.conversations || []);
+      setCurrentUserId(sessionData?.user?.id || null);
+      setUserRole(sessionData?.user?.role || null);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
 
   if (loading) {
     return (
@@ -123,157 +80,110 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-bold text-surface-900 mb-6">Berichten</h1>
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-surface-900">Berichten</h1>
+        <p className="mt-1 text-surface-600">
+          {userRole === 'PRO' 
+            ? 'Uw gesprekken met opdrachtgevers'
+            : 'Uw gesprekken met vakmensen'
+          }
+        </p>
+      </div>
 
-      <div className="grid gap-6 lg:grid-cols-3" style={{ height: 'calc(100vh - 250px)' }}>
-        {/* Conversation list */}
-        <div className={cn(
-          'lg:col-span-1 overflow-hidden rounded-2xl border border-surface-200 bg-white',
-          selectedId && 'hidden lg:block'
-        )}>
-          <div className="p-4 border-b border-surface-200">
-            <h2 className="font-semibold text-surface-900">Gesprekken</h2>
-          </div>
-          
-          {conversations.length === 0 ? (
-            <div className="p-8 text-center">
-              <MessageSquare className="mx-auto h-10 w-10 text-surface-300" />
-              <p className="mt-3 text-sm text-surface-500">Geen gesprekken</p>
-            </div>
-          ) : (
-            <div className="overflow-y-auto" style={{ height: 'calc(100% - 60px)' }}>
-              {conversations.map((conv) => {
-                const otherUser = conv.bid.pro?.user;
-                const lastMessage = conv.messages[0];
-                const unread = conv._count.messages > 0;
+      {conversations.length === 0 ? (
+        <Card className="text-center py-12">
+          <MessageSquare className="mx-auto h-12 w-12 text-surface-300" />
+          <h3 className="mt-4 text-lg font-medium text-surface-900">Geen gesprekken</h3>
+          <p className="mt-1 text-surface-500">
+            {userRole === 'PRO'
+              ? 'Zodra u offertes verstuurt, verschijnen uw gesprekken hier'
+              : 'Zodra vakmensen reageren op uw klussen, verschijnen uw gesprekken hier'
+            }
+          </p>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {conversations.map((conv) => {
+            const isPro = userRole === 'PRO';
+            const otherUser = isPro ? conv.bid.job.client?.user : conv.bid.pro.user;
+            const otherName = isPro 
+              ? (conv.bid.job.client?.user?.name || 'Opdrachtgever')
+              : (conv.bid.pro.companyName || conv.bid.pro.user.name || 'Vakman');
+            const lastMessage = conv.messages[0];
+            const unreadCount = conv._count.messages;
+            const jobImage = conv.bid.job.images?.[0]?.url;
 
-                return (
-                  <button
-                    key={conv.id}
-                    onClick={() => setSelectedId(conv.id)}
-                    className={cn(
-                      'w-full p-4 text-left border-b border-surface-100 hover:bg-surface-50 transition-colors',
-                      selectedId === conv.id && 'bg-brand-50 hover:bg-brand-50'
+            return (
+              <Link key={conv.id} href={`/messages/${conv.id}`}>
+                <Card hover className="group">
+                  <div className="flex gap-4">
+                    {/* Job image or avatar */}
+                    {jobImage ? (
+                      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-surface-100">
+                        <img src={jobImage} alt="" className="h-full w-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-surface-100">
+                        <Briefcase className="h-6 w-6 text-surface-300" />
+                      </div>
                     )}
-                  >
-                    <div className="flex gap-3">
-                      <Avatar src={otherUser?.image} name={otherUser?.name} size="md" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-surface-900 truncate">
-                            {otherUser?.name || 'Onbekend'}
-                          </span>
-                          {unread && (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-xs text-white">
-                              {conv._count.messages}
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-surface-900 truncate group-hover:text-brand-600 transition-colors">
+                            {conv.bid.job.title}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <Avatar 
+                              src={otherUser?.image} 
+                              name={otherName} 
+                              size="xs" 
+                            />
+                            <span className="text-sm text-surface-600 truncate">
+                              {otherName}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          {unreadCount > 0 && (
+                            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand-500 px-1.5 text-xs font-medium text-white">
+                              {unreadCount}
                             </span>
                           )}
+                          <span className={cn(
+                            'text-xs px-2 py-0.5 rounded-full',
+                            BID_STATUS_COLORS[conv.bid.status] || 'bg-surface-100 text-surface-600'
+                          )}>
+                            {BID_STATUS_LABELS[conv.bid.status] || conv.bid.status}
+                          </span>
                         </div>
-                        <p className="text-sm text-surface-600 truncate">
-                          {conv.bid.job.title}
+                      </div>
+
+                      {/* Last message preview */}
+                      {lastMessage && (
+                        <p className="mt-2 text-sm text-surface-500 line-clamp-1">
+                          {lastMessage.sender.id === currentUserId ? 'U: ' : ''}
+                          {lastMessage.content}
                         </p>
-                        {lastMessage && (
-                          <p className="text-xs text-surface-400 truncate mt-1">
-                            {lastMessage.content}
-                          </p>
-                        )}
+                      )}
+
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-xs text-surface-400">
+                          {formatRelativeTime(conv.updatedAt)}
+                        </span>
+                        <ChevronRight className="h-4 w-4 text-surface-400 group-hover:text-brand-500 transition-colors" />
                       </div>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+                  </div>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
-
-        {/* Chat area */}
-        <div className={cn(
-          'lg:col-span-2 flex flex-col overflow-hidden rounded-2xl border border-surface-200 bg-white',
-          !selectedId && 'hidden lg:flex'
-        )}>
-          {!selectedId || !conversation ? (
-            <div className="flex-1 flex items-center justify-center text-center p-8">
-              <div>
-                <MessageSquare className="mx-auto h-12 w-12 text-surface-300" />
-                <p className="mt-4 text-surface-500">Selecteer een gesprek om te beginnen</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Chat header */}
-              <div className="flex items-center gap-3 p-4 border-b border-surface-200">
-                <button
-                  onClick={() => setSelectedId(null)}
-                  className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-surface-100"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </button>
-                <Avatar
-                  src={conversation.bid.pro?.user?.image}
-                  name={conversation.bid.pro?.user?.name}
-                  size="sm"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-surface-900">
-                    {conversation.bid.pro?.user?.name || 'Onbekend'}
-                  </p>
-                  <p className="text-sm text-surface-500 truncate">
-                    {conversation.bid.job.title}
-                  </p>
-                </div>
-              </div>
-
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {conversation.messages.map((msg) => {
-                  const isOwn = msg.sender.id === currentUserId;
-                  return (
-                    <div
-                      key={msg.id}
-                      className={cn('flex gap-2', isOwn && 'flex-row-reverse')}
-                    >
-                      <Avatar src={msg.sender.image} name={msg.sender.name} size="sm" />
-                      <div
-                        className={cn(
-                          'max-w-[70%] rounded-2xl px-4 py-2',
-                          isOwn
-                            ? 'bg-brand-500 text-white rounded-br-md'
-                            : 'bg-surface-100 text-surface-900 rounded-bl-md'
-                        )}
-                      >
-                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                        <p className={cn(
-                          'text-xs mt-1',
-                          isOwn ? 'text-brand-200' : 'text-surface-400'
-                        )}>
-                          {formatRelativeTime(msg.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Input */}
-              <form onSubmit={handleSend} className="p-4 border-t border-surface-200">
-                <div className="flex gap-2">
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Typ een bericht..."
-                    className="flex-1"
-                  />
-                  <Button type="submit" isLoading={sending} disabled={!newMessage.trim()}>
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </form>
-            </>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

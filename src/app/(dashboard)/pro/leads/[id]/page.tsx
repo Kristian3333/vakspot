@@ -1,28 +1,21 @@
 // src/app/(dashboard)/pro/leads/[id]/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Card, Button, Badge, Input, Textarea, Spinner, Avatar } from '@/components/ui';
-import { createBidSchema, type CreateBidInput } from '@/lib/validations';
-import { formatCurrency, formatRelativeTime, formatDate } from '@/lib/utils';
+import { Card, Button, Badge, Textarea, Spinner, Avatar } from '@/components/ui';
+import { formatRelativeTime } from '@/lib/utils';
 import {
-  MapPin, Clock, Euro, Calendar, ArrowLeft, CheckCircle2, AlertCircle, User, Image as ImageIcon
+  MapPin, Clock, ArrowLeft, CheckCircle2, AlertCircle, MessageSquare, Heart
 } from 'lucide-react';
 
 type JobDetail = {
   id: string;
   title: string;
   description: string;
-  budgetMin: number | null;
-  budgetMax: number | null;
-  budgetType: string;
   locationCity: string;
   locationPostcode: string;
   timeline: string;
-  startDate: string | null;
   publishedAt: string;
   category: { id: string; name: string };
   client: { city: string | null; user: { name: string | null } };
@@ -31,45 +24,41 @@ type JobDetail = {
 };
 
 const TIMELINE_LABELS: Record<string, string> = {
-  URGENT: 'Urgent - Binnen enkele dagen',
+  URGENT: 'Urgent',
   THIS_WEEK: 'Deze week',
   THIS_MONTH: 'Deze maand',
   NEXT_MONTH: 'Volgende maand',
-  FLEXIBLE: 'Flexibel - Geen haast',
+  FLEXIBLE: 'Flexibel',
 };
 
-export default function ProLeadDetailPage({ params }: { params: { id: string } }) {
+export default function ProLeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const [job, setJob] = useState<JobDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState(0);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<CreateBidInput>({
-    resolver: zodResolver(createBidSchema),
-    defaultValues: {
-      jobId: params.id,
-      amountType: 'ESTIMATE',
-    },
-  });
-
   useEffect(() => {
-    fetch(`/api/jobs/${params.id}`)
+    fetch(`/api/jobs/${id}`)
       .then(res => res.json())
       .then(data => {
         if (data.job) setJob(data.job);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [params.id]);
+  }, [id]);
 
-  const onSubmit = async (data: CreateBidInput) => {
+  const handleInterest = async () => {
+    if (message.length < 10) {
+      setError('Bericht moet minimaal 10 tekens zijn');
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -77,7 +66,11 @@ export default function ProLeadDetailPage({ params }: { params: { id: string } }
       const response = await fetch('/api/bids', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, amount: Math.round(data.amount * 100) }), // Convert to cents
+        body: JSON.stringify({ 
+          jobId: id, 
+          message,
+          // amount and amountType will default in the API
+        }),
       });
 
       const result = await response.json();
@@ -88,6 +81,9 @@ export default function ProLeadDetailPage({ params }: { params: { id: string } }
         return;
       }
 
+      if (result.conversationId || result.bid?.conversation?.id) {
+        setConversationId(result.conversationId || result.bid.conversation.id);
+      }
       setSubmitted(true);
     } catch (err) {
       setError('Er is iets misgegaan. Probeer het opnieuw.');
@@ -120,16 +116,19 @@ export default function ProLeadDetailPage({ params }: { params: { id: string } }
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success-50">
           <CheckCircle2 className="h-8 w-8 text-success-500" />
         </div>
-        <h1 className="mt-6 text-2xl font-bold text-surface-900">Offerte verzonden!</h1>
+        <h1 className="mt-6 text-2xl font-bold text-surface-900">Interesse verstuurd!</h1>
         <p className="mt-2 text-surface-600">
-          Uw offerte is succesvol verzonden naar de opdrachtgever. U ontvangt een bericht zodra er een reactie is.
+          De opdrachtgever kan nu uw bericht zien. U kunt direct verder chatten om details te bespreken.
         </p>
-        <div className="mt-8 flex justify-center gap-4">
-          <Button onClick={() => router.push('/pro/leads')}>
+        <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+          {conversationId && (
+            <Button onClick={() => router.push(`/messages/${conversationId}`)}>
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Ga naar gesprek
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => router.push('/pro/leads')}>
             Meer klussen bekijken
-          </Button>
-          <Button variant="outline" onClick={() => router.push('/pro/bids')}>
-            Mijn offertes
           </Button>
         </div>
       </div>
@@ -150,7 +149,6 @@ export default function ProLeadDetailPage({ params }: { params: { id: string } }
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Job details */}
           <Card>
             <Badge variant="neutral" size="md" className="mb-3">
               {job.category.name}
@@ -164,24 +162,8 @@ export default function ProLeadDetailPage({ params }: { params: { id: string } }
               </span>
               <span className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4 text-surface-400" />
-                {TIMELINE_LABELS[job.timeline]}
+                {TIMELINE_LABELS[job.timeline] || 'Flexibel'}
               </span>
-              {(job.budgetMin || job.budgetMax) && (
-                <span className="flex items-center gap-1.5">
-                  <Euro className="h-4 w-4 text-surface-400" />
-                  {job.budgetMin && job.budgetMax
-                    ? `${formatCurrency(job.budgetMin)} - ${formatCurrency(job.budgetMax)}`
-                    : job.budgetMax
-                    ? `Tot ${formatCurrency(job.budgetMax)}`
-                    : `Vanaf ${formatCurrency(job.budgetMin!)}`}
-                </span>
-              )}
-              {job.startDate && (
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4 text-surface-400" />
-                  Start: {formatDate(job.startDate)}
-                </span>
-              )}
             </div>
 
             <hr className="my-6 border-surface-200" />
@@ -229,10 +211,13 @@ export default function ProLeadDetailPage({ params }: { params: { id: string } }
           </Card>
         </div>
 
-        {/* Bid form */}
+        {/* Interest form - simplified */}
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
-            <h2 className="text-lg font-semibold text-surface-900 mb-4">Offerte plaatsen</h2>
+            <h2 className="text-lg font-semibold text-surface-900 mb-2">Interesse tonen</h2>
+            <p className="text-sm text-surface-600 mb-4">
+              Stuur een bericht naar de opdrachtgever om de klus te bespreken.
+            </p>
 
             {error && (
               <div className="mb-4 flex items-center gap-2 rounded-lg bg-error-50 p-3 text-sm text-error-600">
@@ -241,57 +226,35 @@ export default function ProLeadDetailPage({ params }: { params: { id: string } }
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <input type="hidden" {...register('jobId')} value={params.id} />
-
-              <div>
-                <label className="label">Uw prijs (€)</label>
-                <Input
-                  type="number"
-                  min={1}
-                  step={1}
-                  placeholder="500"
-                  error={errors.amount?.message}
-                  {...register('amount', { valueAsNumber: true })}
-                />
-                <p className="mt-1 text-xs text-surface-500">
-                  Voer het totaalbedrag in (excl. BTW)
-                </p>
-              </div>
-
-              <div>
-                <label className="label">Prijstype</label>
-                <select
-                  className="input"
-                  {...register('amountType')}
-                >
-                  <option value="ESTIMATE">Schatting</option>
-                  <option value="FIXED">Vaste prijs</option>
-                  <option value="HOURLY">Uurtarief</option>
-                </select>
-              </div>
-
+            <div className="space-y-4">
               <div>
                 <label className="label">Uw bericht</label>
                 <Textarea
                   rows={5}
-                  placeholder="Introduceer uzelf en leg uit waarom u de juiste vakman voor deze klus bent..."
-                  error={errors.message?.message}
-                  {...register('message')}
+                  placeholder="Hallo! Ik ben geïnteresseerd in deze klus. Ik heb ruime ervaring met dit soort werk en kan binnenkort beginnen..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                 />
                 <p className="mt-1 text-xs text-surface-500">
-                  Minimaal 20 tekens
+                  Introduceer uzelf en stel eventuele vragen
                 </p>
               </div>
 
-              <Button type="submit" className="w-full" isLoading={submitting}>
-                Offerte versturen
+              <Button 
+                onClick={handleInterest} 
+                className="w-full" 
+                isLoading={submitting}
+              >
+                <Heart className="h-4 w-4 mr-2" />
+                Ik ben geïnteresseerd
               </Button>
-            </form>
+            </div>
 
-            <p className="mt-4 text-center text-xs text-surface-500">
-              Na acceptatie kunt u direct met de opdrachtgever communiceren
-            </p>
+            <div className="mt-4 p-3 rounded-lg bg-surface-50 text-sm text-surface-600">
+              <p>
+                💬 Na het versturen kunt u direct chatten met de opdrachtgever om prijs en details te bespreken.
+              </p>
+            </div>
           </Card>
         </div>
       </div>

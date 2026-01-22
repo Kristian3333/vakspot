@@ -16,15 +16,15 @@ export default function FAQPage() {
       faqs: [
         {
           question: 'Wat is VakSpot?',
-          answer: 'VakSpot is een online platform dat opdrachtgevers verbindt met betrouwbare vakmensen. Via ons platform kunt u gratis een klus plaatsen en offertes ontvangen van gekwalificeerde vakmensen in uw buurt.',
+          answer: 'VakSpot is een online platform dat opdrachtgevers verbindt met betrouwbare vakmensen. Plaats gratis een klus en ontvang reacties van gekwalificeerde vakmensen in uw buurt.',
         },
         {
           question: 'Is VakSpot gratis?',
-          answer: 'Voor opdrachtgevers is VakSpot volledig gratis. U betaalt geen kosten voor het plaatsen van een klus of het ontvangen van offertes. Vakmensen betalen een kleine vergoeding per lead.',
+          answer: 'Voor opdrachtgevers is VakSpot volledig gratis. U betaalt geen kosten voor het plaatsen van een klus of het ontvangen van reacties. Vakmensen betalen een kleine vergoeding per lead.',
         },
         {
           question: 'Hoe werkt VakSpot?',
-          answer: 'Het is eenvoudig: 1) Plaats uw klus met een beschrijving en eventuele foto\'s, 2) Ontvang binnen 24 uur offertes van vakmensen, 3) Vergelijk de offertes en kies de beste match voor uw klus.',
+          answer: '1) Plaats uw klus met een beschrijving, 2) Vakmensen tonen interesse en sturen een bericht, 3) Chat met geïnteresseerde vakmensen en kies de beste match.',
         },
       ],
     },
@@ -33,23 +33,27 @@ export default function FAQPage() {
       faqs: [
         {
           question: 'Hoe plaats ik een klus?',
-          answer: 'Klik op "Klus plaatsen" en vul het formulier in met de details van uw klus. Hoe meer informatie u geeft, hoe beter de offertes die u ontvangt. U kunt ook foto\'s toevoegen.',
+          answer: 'Klik op "Klus plaatsen" en vul het formulier in met de details van uw klus. Hoe meer informatie u geeft, hoe beter vakmensen kunnen reageren. U kunt ook foto\'s toevoegen.',
         },
         {
-          question: 'Hoeveel offertes ontvang ik?',
-          answer: 'Gemiddeld ontvangt u 3-5 offertes per klus. Dit kan variëren afhankelijk van het type klus en uw locatie.',
+          question: 'Hoe krijg ik goede reacties?',
+          answer: 'Wees specifiek in uw beschrijving, voeg foto\'s toe, en geef duidelijk aan wat u nodig heeft. Hoe meer details, hoe beter vakmensen kunnen inschatten of zij u kunnen helpen.',
         },
         {
-          question: 'Ben ik verplicht een offerte te accepteren?',
-          answer: 'Nee, u bent nergens toe verplicht. U kunt alle offertes vergelijken en zelf beslissen of u met een vakman in zee gaat.',
+          question: 'Hoe kies ik de juiste vakman?',
+          answer: 'Vergelijk de berichten die u ontvangt, bekijk profielen en reviews, en chat met vakmensen om een indruk te krijgen. Kies degene die het beste bij uw klus past.',
         },
         {
-          question: 'Hoe weet ik of een vakman betrouwbaar is?',
-          answer: 'Alle vakmensen op VakSpot worden geverifieerd. U kunt reviews van andere klanten lezen en de profielinformatie bekijken voordat u een keuze maakt.',
+          question: 'Ben ik verplicht iemand te kiezen?',
+          answer: 'Nee, u bent nergens toe verplicht. U kunt alle reacties vergelijken en zelf beslissen of u met een vakman in zee gaat.',
         },
         {
-          question: 'Wat als ik niet tevreden ben over het werk?',
-          answer: 'We raden aan om problemen eerst direct met de vakman te bespreken. Komt u er niet uit? Neem dan contact op met onze klantenservice. We helpen graag bij het vinden van een oplossing.',
+          question: 'Kan ik mijn klus annuleren?',
+          answer: 'Ja, u kunt uw klus op elk moment annuleren via "Mijn klussen". Na annulering worden vakmensen automatisch op de hoogte gesteld.',
+        },
+        {
+          question: 'Wat als ik niet tevreden ben?',
+          answer: 'Bespreek problemen eerst direct met de vakman. Komt u er niet uit? Neem dan contact op met onze klantenservice voor bemiddeling.',
         },
       ],
     },
@@ -58,19 +62,23 @@ export default function FAQPage() {
       faqs: [
         {
           question: 'Hoe meld ik mij aan als vakman?',
-          answer: 'Klik op "Vakman worden" en maak een account aan. Vul uw profiel zo volledig mogelijk in met uw ervaring, specialisaties en werkgebied. Na verificatie kunt u direct beginnen met reageren op leads.',
+          answer: 'Klik op "Aanmelden als vakman" en maak een account aan. Vul uw profiel in met uw specialisaties en werkgebied. Na verificatie kunt u direct reageren op klussen.',
         },
         {
-          question: 'Wat kost het om leads te ontvangen?',
-          answer: 'U betaalt alleen voor de leads waarop u reageert. De kosten variëren per categorie en worden duidelijk weergegeven voordat u reageert.',
+          question: 'Hoe reageer ik op klussen?',
+          answer: 'Bekijk beschikbare klussen in uw regio, klik op "Ik ben geïnteresseerd" en stuur direct een persoonlijk bericht naar de opdrachtgever.',
         },
         {
-          question: 'Hoe kan ik mijn profiel verbeteren?',
-          answer: 'Zorg voor een complete profielbeschrijving, voeg foto\'s toe van uw werk, vraag klanten om reviews en reageer snel op leads. Een compleet profiel wekt meer vertrouwen.',
+          question: 'Wat kost het voor vakmensen?',
+          answer: 'Registratie is gratis. U betaalt alleen voor de leads waarop u reageert. De kosten variëren per categorie en worden duidelijk getoond.',
+        },
+        {
+          question: 'Hoe verbeter ik mijn profiel?',
+          answer: 'Voeg een profielfoto toe, schrijf een goede beschrijving, en vraag tevreden klanten om reviews. Een compleet profiel wekt meer vertrouwen.',
         },
         {
           question: 'Kan ik mijn werkgebied aanpassen?',
-          answer: 'Ja, u kunt in uw profiel uw werkgebied instellen door een straal rond uw locatie te kiezen. U ontvangt alleen leads binnen dit gebied.',
+          answer: 'Ja, in uw profiel kunt u uw werkgebied instellen. U ziet alleen klussen binnen dit gebied.',
         },
       ],
     },
@@ -79,19 +87,36 @@ export default function FAQPage() {
       faqs: [
         {
           question: 'Hoe wijzig ik mijn wachtwoord?',
-          answer: 'Ga naar Instellingen > Wachtwoord. Voer uw huidige wachtwoord in en kies een nieuw wachtwoord.',
+          answer: 'Ga naar Instellingen > Beveiliging. Vul uw huidige wachtwoord in en kies een nieuw wachtwoord.',
         },
         {
           question: 'Hoe verwijder ik mijn account?',
-          answer: 'U kunt uw account verwijderen via Instellingen > Account verwijderen. Let op: deze actie is permanent en kan niet ongedaan worden gemaakt.',
+          answer: 'U kunt uw account verwijderen via Instellingen > Account verwijderen. Let op: deze actie is permanent.',
         },
         {
           question: 'Hoe gaat VakSpot om met mijn gegevens?',
-          answer: 'Uw privacy is belangrijk voor ons. We verzamelen alleen de gegevens die nodig zijn voor het functioneren van het platform. Lees ons privacybeleid voor meer informatie.',
+          answer: 'Uw privacy is belangrijk. We verzamelen alleen gegevens die nodig zijn voor het platform en verkopen nooit aan derden. Lees ons privacybeleid voor meer informatie.',
         },
         {
-          question: 'Wordt mijn adres gedeeld met vakmensen?',
-          answer: 'Uw exacte adres wordt pas gedeeld nadat u een offerte heeft geaccepteerd. Vakmensen zien alleen uw stad/regio om te bepalen of de klus binnen hun werkgebied valt.',
+          question: 'Wordt mijn adres gedeeld?',
+          answer: 'Uw exacte adres wordt niet gedeeld. Vakmensen zien alleen uw stad/regio om te bepalen of de klus binnen hun werkgebied valt.',
+        },
+      ],
+    },
+    {
+      title: 'Veiligheid',
+      faqs: [
+        {
+          question: 'Hoe weet ik of een vakman betrouwbaar is?',
+          answer: 'Bekijk het profiel, lees reviews van andere klanten, en chat eerst via het platform voordat u afspraken maakt.',
+        },
+        {
+          question: 'Hoe meld ik verdacht gedrag?',
+          answer: 'Klik op "Melden" op het profiel of in het berichtenvenster. Ons team onderzoekt alle meldingen binnen 24 uur.',
+        },
+        {
+          question: 'Tips voor veilig contact?',
+          answer: 'Communiceer via het platform, maak duidelijke schriftelijke afspraken, betaal niet het volledige bedrag vooruit, en vertrouw op uw gevoel.',
         },
       ],
     },
@@ -153,15 +178,10 @@ export default function FAQPage() {
           <p className="mt-4 text-lg text-surface-600">
             Neem gerust contact met ons op. We helpen u graag verder.
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-8">
             <Link href="/contact">
               <Button size="lg" rightIcon={<ArrowRight className="h-5 w-5" />}>
                 Neem contact op
-              </Button>
-            </Link>
-            <Link href="/help">
-              <Button variant="outline" size="lg">
-                Help center
               </Button>
             </Link>
           </div>

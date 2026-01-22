@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/jobs - Create a new job
+// POST /api/jobs - Create a new job (auto-publish)
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
       images,
     } = parsed.data;
 
-    // Create the job
+    // Create the job (auto-publish)
     const job = await prisma.job.create({
       data: {
         title,
@@ -174,13 +174,14 @@ export async function POST(request: NextRequest) {
         clientId: clientProfile.id,
         budgetMin: budgetMin || null,
         budgetMax: budgetMax || null,
-        budgetType,
+        budgetType: budgetType || 'TO_DISCUSS',
         locationCity,
         locationPostcode,
         locationAddress: locationAddress || null,
-        timeline,
+        timeline: timeline || 'FLEXIBLE',
         startDate: startDate || null,
-        status: JobStatus.DRAFT,
+        status: JobStatus.PUBLISHED,
+        publishedAt: new Date(),
         // Create images if provided
         ...(images && images.length > 0 && {
           images: {

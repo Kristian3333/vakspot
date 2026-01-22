@@ -41,48 +41,45 @@ export const registerProSchema = z.object({
 });
 
 // ============================================
-// JOB SCHEMAS
+// JOB SCHEMAS (Simplified)
 // ============================================
 
-// Base schema without refinements (for .partial() support)
-const jobSchemaBase = z.object({
+// Simplified job schema - budget and timeline are optional
+export const createJobSchema = z.object({
   title: z.string().min(5, 'Titel moet minimaal 5 tekens zijn').max(100, 'Titel mag maximaal 100 tekens zijn'),
-  description: z.string().min(20, 'Beschrijving moet minimaal 20 tekens zijn').max(2000, 'Beschrijving mag maximaal 2000 tekens zijn'),
+  description: z.string().min(20, 'Beschrijving moet minimaal 20 tekens zijn').max(5000, 'Beschrijving mag maximaal 5000 tekens zijn'),
   categoryId: z.string().min(1, 'Selecteer een categorie'),
-  budgetMin: z.number().min(0).optional(),
-  budgetMax: z.number().min(0).optional(),
-  budgetType: z.enum(['FIXED', 'ESTIMATE', 'HOURLY', 'TO_DISCUSS']).default('ESTIMATE'),
   locationCity: z.string().min(2, 'Stad is verplicht'),
-  locationPostcode: z.string().regex(/^[1-9][0-9]{3}\s?[A-Za-z]{2}$/, 'Ongeldige postcode'),
+  locationPostcode: z.string().min(4, 'Postcode is verplicht'),
   locationAddress: z.string().optional().or(z.literal('')),
-  timeline: z.enum(['URGENT', 'THIS_WEEK', 'THIS_MONTH', 'NEXT_MONTH', 'FLEXIBLE']).default('FLEXIBLE'),
-  startDate: z.date().optional(),
+  // Optional fields (with defaults applied in API)
+  budgetMin: z.number().min(0).optional().nullable(),
+  budgetMax: z.number().min(0).optional().nullable(),
+  budgetType: z.enum(['FIXED', 'ESTIMATE', 'HOURLY', 'TO_DISCUSS']).optional().default('TO_DISCUSS'),
+  timeline: z.enum(['URGENT', 'THIS_WEEK', 'THIS_MONTH', 'NEXT_MONTH', 'FLEXIBLE']).optional().default('FLEXIBLE'),
+  startDate: z.date().optional().nullable(),
   images: z.array(z.string()).optional(),
 });
 
-// Full create schema with refinements
-export const createJobSchema = jobSchemaBase.refine((data) => {
-  if (data.budgetMin && data.budgetMax) {
-    return data.budgetMax >= data.budgetMin;
-  }
-  return true;
-}, {
-  message: 'Maximum budget moet hoger zijn dan minimum',
-  path: ['budgetMax'],
+// Partial schema for updates
+export const updateJobSchema = createJobSchema.partial();
+
+// ============================================
+// BID/INTEREST SCHEMAS (Simplified)
+// ============================================
+
+// Simplified: PRO expresses interest with just a message
+export const createInterestSchema = z.object({
+  jobId: z.string().min(1),
+  message: z.string().min(10, 'Bericht moet minimaal 10 tekens zijn').max(1000, 'Bericht mag maximaal 1000 tekens zijn'),
 });
 
-// Partial schema for updates (uses base without refinements)
-export const updateJobSchema = jobSchemaBase.partial();
-
-// ============================================
-// BID SCHEMAS
-// ============================================
-
+// Legacy bid schema (for backward compatibility)
 export const createBidSchema = z.object({
   jobId: z.string().min(1),
-  amount: z.number().min(100, 'Minimaal €1').max(10000000, 'Maximum €100.000'),
-  amountType: z.enum(['FIXED', 'ESTIMATE', 'HOURLY', 'TO_DISCUSS']).default('ESTIMATE'),
-  message: z.string().min(20, 'Bericht moet minimaal 20 tekens zijn').max(1000, 'Bericht mag maximaal 1000 tekens zijn'),
+  amount: z.number().min(0).optional().default(0),
+  amountType: z.enum(['FIXED', 'ESTIMATE', 'HOURLY', 'TO_DISCUSS']).optional().default('TO_DISCUSS'),
+  message: z.string().min(10, 'Bericht moet minimaal 10 tekens zijn').max(1000, 'Bericht mag maximaal 1000 tekens zijn'),
 });
 
 // ============================================
@@ -95,7 +92,7 @@ export const sendMessageSchema = z.object({
 });
 
 // ============================================
-// REVIEW SCHEMAS
+// REVIEW SCHEMAS (Simplified)
 // ============================================
 
 export const createReviewSchema = z.object({
@@ -103,6 +100,7 @@ export const createReviewSchema = z.object({
   rating: z.number().min(1).max(5),
   title: z.string().max(100).optional().or(z.literal('')),
   content: z.string().min(10, 'Review moet minimaal 10 tekens zijn').max(1000, 'Review mag maximaal 1000 tekens zijn'),
+  // Sub-ratings are optional
   qualityRating: z.number().min(1).max(5).optional(),
   communicationRating: z.number().min(1).max(5).optional(),
   timelinessRating: z.number().min(1).max(5).optional(),
@@ -133,6 +131,8 @@ export const updateProProfileSchema = z.object({
   website: z.string().url().optional().or(z.literal('')),
   serviceRadius: z.number().min(5).max(100).optional(),
   categories: z.array(z.string()).min(1).optional(),
+  // Credentials (new)
+  credentials: z.string().max(500).optional().or(z.literal('')),
 });
 
 // ============================================
@@ -144,6 +144,7 @@ export type RegisterClientInput = z.infer<typeof registerClientSchema>;
 export type RegisterProInput = z.infer<typeof registerProSchema>;
 export type CreateJobInput = z.infer<typeof createJobSchema>;
 export type UpdateJobInput = z.infer<typeof updateJobSchema>;
+export type CreateInterestInput = z.infer<typeof createInterestSchema>;
 export type CreateBidInput = z.infer<typeof createBidSchema>;
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
 export type CreateReviewInput = z.infer<typeof createReviewSchema>;
