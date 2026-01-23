@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const categoryId = searchParams.get('categoryId');
     const maxDistance = searchParams.get('maxDistance');
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const limit = parseInt(searchParams.get('limit') || '20');
 
     // Get pro profile with categories
     const proProfile = await prisma.proProfile.findUnique({
@@ -32,8 +32,10 @@ export async function GET(request: NextRequest) {
     const proCategoryIds = proProfile.categories.map(c => c.categoryId);
 
     // Build query filters
+    // Show PUBLISHED jobs (available) and IN_CONVERSATION (for backward compat)
+    // Exclude ACCEPTED, COMPLETED, CANCELLED jobs
     const where: any = {
-      status: 'PUBLISHED',
+      status: { in: ['PUBLISHED', 'IN_CONVERSATION'] },
       // Exclude jobs the pro has already bid on
       bids: {
         none: { proId: proProfile.id },
@@ -46,9 +48,9 @@ export async function GET(request: NextRequest) {
     } else if (proCategoryIds.length > 0) {
       where.categoryId = { in: proCategoryIds };
     }
-    // If no categories specified and pro has no categories, show all published jobs
+    // If no categories specified and pro has no categories, show all available jobs
 
-    // Fetch jobs
+    // Fetch jobs with interest count
     const [jobs, total] = await Promise.all([
       prisma.job.findMany({
         where,
@@ -70,35 +72,31 @@ export async function GET(request: NextRequest) {
       prisma.job.count({ where }),
     ]);
 
-    // Filter by distance if pro has location and maxDistance is specified
-    let filteredJobs = jobs;
+    // Calculate distance and add interest count
+    let processedJobs = jobs.map(job => ({
+      ...job,
+      interestCount: job._count.bids,
+      distance: (proProfile.locationLat && proProfile.locationLng && job.locationLat && job.locationLng)
+        ? Math.round(calculateDistance(
+            proProfile.locationLat,
+            proProfile.locationLng,
+            job.locationLat,
+            job.locationLng
+          ))
+        : null,
+    }));
+
+    // Filter by distance if maxDistance is specified
     if (proProfile.locationLat && proProfile.locationLng && maxDistance) {
       const maxDist = parseInt(maxDistance);
-      
-      filteredJobs = jobs.filter(job => {
-        if (!job.locationLat || !job.locationLng) return true;
-        const distance = calculateDistance(
-          proProfile.locationLat!,
-          proProfile.locationLng!,
-          job.locationLat,
-          job.locationLng
-        );
-        return distance <= maxDist;
-      }).map(job => ({
-        ...job,
-        distance: job.locationLat && job.locationLng
-          ? Math.round(calculateDistance(
-              proProfile.locationLat!,
-              proProfile.locationLng!,
-              job.locationLat,
-              job.locationLng
-            ))
-          : null,
-      }));
+      processedJobs = processedJobs.filter(job => {
+        if (job.distance === null) return true; // Include jobs without location
+        return job.distance <= maxDist;
+      });
     }
 
     return NextResponse.json({
-      leads: filteredJobs,
+      leads: processedJobs,
       total,
       page,
       pageSize: limit,

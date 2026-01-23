@@ -24,6 +24,7 @@ No complex bidding, no price competition, no elaborate workflows.
 - [x] Update `/api/bids` to work as interest system
 - [x] Update PRO leads detail page with new "Interest" button
 - [x] Client job detail shows "Geïnteresseerde vakmensen"
+- [x] **Jobs stay visible to other PROs** until client accepts someone
 
 ### 1.3 Simplify Messaging ✅
 - [x] Conversation starts on interest (works)
@@ -96,34 +97,6 @@ No complex bidding, no price competition, no elaborate workflows.
 
 ---
 
-## Files Changed
-
-### Modified ✅
-```
-src/app/page.tsx                              # New minimal landing page
-src/app/api/jobs/route.ts                     # Auto-publish jobs
-src/app/api/bids/route.ts                     # Interest system
-src/app/api/pro/profile/route.ts              # Simplified API
-src/lib/validations.ts                        # Simplified schemas + registration fix
-src/app/(dashboard)/pro/leads/[id]/page.tsx   # Interest button (React 18 fix)
-src/app/(dashboard)/pro/jobs/[id]/page.tsx    # Job detail (React 18 fix)
-src/app/(dashboard)/messages/[id]/page.tsx    # Messages (React 18 fix)
-src/app/(dashboard)/client/jobs/[id]/page.tsx # Client job detail (params fix)
-src/app/(dashboard)/pro/profile/edit/page.tsx # Simplified edit
-src/components/layout/Header.tsx              # Simplified nav
-src/app/faq/page.tsx                          # Enhanced FAQ (consolidated help)
-```
-
-### Redirected (Phase 2.3) ✅
-```
-src/app/how-it-works/page.tsx    # Redirects to /
-src/app/categories/page.tsx       # Redirects to /client/jobs/new
-src/app/help/page.tsx            # Redirects to /faq
-src/app/help/articles/[slug]/    # Redirects to /faq
-```
-
----
-
 ## Bug Fixes
 
 ### Registration Validation Error (Fixed)
@@ -159,6 +132,42 @@ src/app/help/articles/[slug]/    # Redirects to /faq
 - `src/app/api/admin/users/[id]/route.ts`
 - `src/app/api/admin/verify/[id]/route.ts`
 
+### Prisma Client Out of Sync (Fixed) ✅
+**Problem**: Messages API crashed with "Unknown field `attachments`"
+**Cause**: Prisma client not regenerated after schema changes
+**Solution**: Removed `attachments` include temporarily; run `npx prisma generate` to fully fix
+
+### Job Visibility After Interest (Fixed) ✅
+**Problem**: Jobs became invisible to other PROs after first PRO showed interest
+**Cause**: `/api/bids` POST changed job status to `IN_CONVERSATION` immediately
+**Solution**: 
+- Removed automatic status change on interest
+- Jobs stay `PUBLISHED` until client accepts someone
+- Status changes to `ACCEPTED` only when client accepts
+- Interest count shown on job cards ("X geïnteresseerd")
+- PROs see "Vakman gekozen" badge on accepted jobs
+
+---
+
+## Current Job Flow
+
+```
+Client posts job → status: PUBLISHED
+                         ↓
+PRO shows interest → status: PUBLISHED (stays visible!)
+                         ↓
+More PROs can show interest → status: PUBLISHED
+                         ↓
+Client accepts PRO → status: ACCEPTED (hidden from listings)
+```
+
+**Key behaviors:**
+- Multiple PROs can show interest in the same job
+- Job stays visible in PRO listings until client accepts someone
+- Interest count shown: "3 geïnteresseerd"
+- Accepted jobs show "Vakman gekozen" badge
+- PRO can see if they already expressed interest
+
 ---
 
 ## Definition of Done
@@ -173,7 +182,8 @@ src/app/help/articles/[slug]/    # Redirects to /faq
 7. ✅ Users can register (both client and PRO)
 8. ✅ PRO can view job details and express interest
 9. ✅ Conversations can be opened and messages exchanged
-10. ⬜ Mobile experience is clean and usable (needs testing)
+10. ✅ Jobs stay visible until client accepts (multiple PROs can express interest)
+11. ⬜ Mobile experience is clean and usable (needs testing)
 
 ---
 
@@ -183,8 +193,9 @@ src/app/help/articles/[slug]/    # Redirects to /faq
 
 1. **Client** posts a job (single form, auto-published)
 2. **PRO** sees jobs → clicks "Ik ben geïnteresseerd" → sends message
-3. **Both** chat freely to discuss details and pricing
-4. **Client** picks someone from interested PROs
+3. **Multiple PROs** can express interest - job stays visible
+4. **Both** chat freely to discuss details and pricing
+5. **Client** picks someone → job marked as "Vakman gekozen"
 
 No more complex bidding, amounts, or price competition. Just simple matchmaking.
 
@@ -198,3 +209,4 @@ No more complex bidding, amounts, or price competition. Just simple matchmaking.
 - Remove unused components
 - Update seed data
 - Mobile responsiveness testing
+- Run `npx prisma generate` to re-enable message attachments

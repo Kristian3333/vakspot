@@ -132,12 +132,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Pro profile not found' }, { status: 404 });
     }
 
-    // Verify job exists and is published
+    // Verify job exists and is available (PUBLISHED or already has interests but not yet accepted)
     const job = await prisma.job.findUnique({
       where: { id: jobId },
     });
 
-    if (!job || job.status !== 'PUBLISHED') {
+    // Allow interest on PUBLISHED jobs (not ACCEPTED, COMPLETED, CANCELLED, etc.)
+    const availableStatuses = ['PUBLISHED', 'IN_CONVERSATION'];
+    if (!job || !availableStatuses.includes(job.status)) {
       return NextResponse.json({ error: 'Job not available' }, { status: 400 });
     }
 
@@ -183,11 +185,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Update job status to show it has interested pros
-    await prisma.job.update({
-      where: { id: jobId },
-      data: { status: 'IN_CONVERSATION' },
-    });
+    // DON'T change job status here - keep it PUBLISHED so other PROs can see it
+    // Status only changes to ACCEPTED when client accepts a PRO
 
     return NextResponse.json({ 
       bid,

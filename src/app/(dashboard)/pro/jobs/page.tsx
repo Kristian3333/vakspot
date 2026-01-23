@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, Badge, Select, Spinner } from '@/components/ui';
 import { formatRelativeTime } from '@/lib/utils';
-import { MapPin, ChevronRight, Briefcase, AlertCircle, RefreshCw } from 'lucide-react';
+import { MapPin, ChevronRight, Briefcase, AlertCircle, RefreshCw, Users } from 'lucide-react';
 
 type Job = {
   id: string;
@@ -14,6 +14,7 @@ type Job = {
   locationCity: string;
   publishedAt: string;
   distance?: number | null;
+  interestCount?: number;
   category: { id: string; name: string };
   images: { url: string }[];
 };
@@ -160,6 +161,12 @@ export default function ProJobsPage() {
                         {job.distance != null && ` • ${job.distance} km`}
                       </span>
                       <span>{formatRelativeTime(job.publishedAt)}</span>
+                      {job.interestCount && job.interestCount > 0 && (
+                        <span className="flex items-center gap-1 text-brand-600">
+                          <Users className="h-3 w-3" />
+                          {job.interestCount} geïnteresseerd
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

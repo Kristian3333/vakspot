@@ -6,19 +6,21 @@ import { useRouter, useParams } from 'next/navigation';
 import { Card, Button, Badge, Textarea, Spinner, Avatar } from '@/components/ui';
 import { formatRelativeTime } from '@/lib/utils';
 import {
-  MapPin, ArrowLeft, CheckCircle2, AlertCircle, MessageSquare, Send
+  MapPin, ArrowLeft, CheckCircle2, AlertCircle, MessageSquare, Send, Users, XCircle
 } from 'lucide-react';
 
 type JobDetail = {
   id: string;
   title: string;
   description: string;
+  status: string;
   locationCity: string;
   locationPostcode: string;
   publishedAt: string;
   category: { id: string; name: string };
   client: { city: string | null; user: { name: string | null } };
   images: { id: string; url: string }[];
+  _count?: { bids: number };
 };
 
 export default function ProJobDetailPage() {
@@ -33,10 +35,13 @@ export default function ProJobDetailPage() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [alreadyInterested, setAlreadyInterested] = useState(false);
+  const [existingConversationId, setExistingConversationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     
+    // Fetch job details
     fetch(`/api/jobs/${id}`)
       .then(res => res.json())
       .then(data => {
@@ -44,6 +49,20 @@ export default function ProJobDetailPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    // Check if PRO already expressed interest
+    fetch('/api/bids')
+      .then(res => res.json())
+      .then(data => {
+        if (data.bids) {
+          const existingBid = data.bids.find((b: any) => b.jobId === id);
+          if (existingBid) {
+            setAlreadyInterested(true);
+            setExistingConversationId(existingBid.conversation?.id || null);
+          }
+        }
+      })
+      .catch(() => {});
   }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,13 +76,12 @@ export default function ProJobDetailPage() {
     setError(null);
 
     try {
-      // Create a "bid" with 0 amount (we're repurposing the bid system as "interest")
       const response = await fetch('/api/bids', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           jobId: id,
-          amount: 0, // No price, just interest
+          amount: 0,
           amountType: 'TO_DISCUSS',
           message: message.trim(),
         }),
@@ -104,7 +122,11 @@ export default function ProJobDetailPage() {
     );
   }
 
-  // Success state
+  // Check if job is still available
+  const isAvailable = ['PUBLISHED', 'IN_CONVERSATION'].includes(job.status);
+  const isAccepted = job.status === 'ACCEPTED';
+
+  // Success state after submitting interest
   if (submitted) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
@@ -143,12 +165,25 @@ export default function ProJobDetailPage() {
 
       {/* Job details */}
       <Card className="mb-6">
-        <Badge variant="neutral" size="md" className="mb-3">{job.category.name}</Badge>
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <Badge variant="neutral" size="md">{job.category.name}</Badge>
+          {isAccepted && (
+            <Badge variant="warning" size="md">Vakman gekozen</Badge>
+          )}
+        </div>
         <h1 className="text-2xl font-bold text-surface-900">{job.title}</h1>
         
-        <div className="mt-3 flex items-center gap-2 text-sm text-surface-600">
-          <MapPin className="h-4 w-4 text-surface-400" />
-          {job.locationCity}, {job.locationPostcode}
+        <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-surface-600">
+          <span className="flex items-center gap-1">
+            <MapPin className="h-4 w-4 text-surface-400" />
+            {job.locationCity}, {job.locationPostcode}
+          </span>
+          {job._count && job._count.bids > 0 && (
+            <span className="flex items-center gap-1 text-brand-600">
+              <Users className="h-4 w-4" />
+              {job._count.bids} geïnteresseerd
+            </span>
+          )}
         </div>
 
         <hr className="my-5 border-surface-200" />
@@ -191,44 +226,87 @@ export default function ProJobDetailPage() {
         </div>
       </Card>
 
-      {/* Interest form */}
-      <Card>
-        <h2 className="text-lg font-semibold text-surface-900 mb-4">
-          Geïnteresseerd? Stuur een bericht
-        </h2>
-
-        {error && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg bg-error-50 p-3 text-sm text-error-600">
-            <AlertCircle className="h-4 w-4 flex-shrink-0" />
-            {error}
+      {/* Already interested - show link to conversation */}
+      {alreadyInterested && (
+        <Card className="border-brand-200 bg-brand-50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100">
+              <CheckCircle2 className="h-5 w-5 text-brand-600" />
+            </div>
+            <div className="flex-1">
+              <h2 className="font-semibold text-surface-900">U heeft al interesse getoond</h2>
+              <p className="text-sm text-surface-600">Bekijk het gesprek met de opdrachtgever</p>
+            </div>
+            {existingConversationId && (
+              <Button onClick={() => router.push(`/messages/${existingConversationId}`)}>
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Ga naar gesprek
+              </Button>
+            )}
           </div>
-        )}
+        </Card>
+      )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Textarea
-              placeholder="Stel uzelf voor en vertel waarom u geschikt bent voor deze klus..."
-              rows={4}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-            />
-            <p className="mt-1 text-xs text-surface-500">Minimaal 10 tekens</p>
+      {/* Job no longer available */}
+      {!isAvailable && !alreadyInterested && (
+        <Card className="border-warning-200 bg-warning-50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-warning-100">
+              <XCircle className="h-5 w-5 text-warning-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-surface-900">Klus niet meer beschikbaar</h2>
+              <p className="text-sm text-surface-600">
+                De opdrachtgever heeft al een vakman gekozen voor deze klus.
+              </p>
+            </div>
           </div>
-
-          <Button 
-            type="submit" 
-            className="w-full" 
-            isLoading={submitting}
-            leftIcon={<Send className="h-4 w-4" />}
-          >
-            Ik ben geïnteresseerd
+          <Button variant="outline" onClick={() => router.push('/pro/jobs')} className="mt-4 w-full">
+            Bekijk andere klussen
           </Button>
-        </form>
+        </Card>
+      )}
 
-        <p className="mt-4 text-xs text-surface-500 text-center">
-          Na verzenden kunt u direct chatten met de opdrachtgever
-        </p>
-      </Card>
+      {/* Interest form - only show if job is available and not already interested */}
+      {isAvailable && !alreadyInterested && (
+        <Card>
+          <h2 className="text-lg font-semibold text-surface-900 mb-4">
+            Geïnteresseerd? Stuur een bericht
+          </h2>
+
+          {error && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg bg-error-50 p-3 text-sm text-error-600">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Textarea
+                placeholder="Stel uzelf voor en vertel waarom u geschikt bent voor deze klus..."
+                rows={4}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+              <p className="mt-1 text-xs text-surface-500">Minimaal 10 tekens</p>
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full" 
+              isLoading={submitting}
+              leftIcon={<Send className="h-4 w-4" />}
+            >
+              Ik ben geïnteresseerd
+            </Button>
+          </form>
+
+          <p className="mt-4 text-xs text-surface-500 text-center">
+            Na verzenden kunt u direct chatten met de opdrachtgever
+          </p>
+        </Card>
+      )}
     </div>
   );
 }
