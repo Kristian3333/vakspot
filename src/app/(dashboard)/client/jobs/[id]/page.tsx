@@ -256,7 +256,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                       <div className="mt-3 flex flex-wrap items-center gap-3">
                         {interest.conversation && (
                           <Link href={`/messages/${interest.conversation.id}`}>
-                            <Button size="sm" variant={canAcceptPros && !isRejected ? 'outline' : 'default'}>
+                            <Button size="sm" variant={canAcceptPros && !isRejected ? 'outline' : 'primary'}>
                               <MessageSquare className="h-4 w-4 mr-2" />
                               Bekijk gesprek
                             </Button>
