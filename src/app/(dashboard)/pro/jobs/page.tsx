@@ -4,17 +4,19 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, Badge, Select, Spinner } from '@/components/ui';
-import { formatRelativeTime } from '@/lib/utils';
-import { MapPin, ChevronRight, Briefcase, AlertCircle, RefreshCw, Users } from 'lucide-react';
+import { formatRelativeTime, cn } from '@/lib/utils';
+import { MapPin, ChevronRight, Briefcase, AlertCircle, RefreshCw, Users, CheckCircle2 } from 'lucide-react';
 
 type Job = {
   id: string;
   title: string;
   description: string;
+  status: string;
   locationCity: string;
   publishedAt: string;
   distance?: number | null;
   interestCount?: number;
+  isAccepted?: boolean;
   category: { id: string; name: string };
   images: { url: string }[];
 };
@@ -66,6 +68,10 @@ export default function ProJobsPage() {
   useEffect(() => {
     fetchJobs();
   }, [selectedCategory]);
+
+  // Split jobs into available and accepted
+  const availableJobs = jobs.filter(j => !j.isAccepted);
+  const acceptedJobs = jobs.filter(j => j.isAccepted);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
@@ -120,61 +126,109 @@ export default function ProJobsPage() {
         </Card>
       )}
 
-      {/* Jobs list */}
-      {!loading && !error && jobs.length > 0 && (
-        <div className="space-y-3">
-          {jobs.map((job) => (
-            <Link key={job.id} href={`/pro/jobs/${job.id}`}>
-              <Card hover className="group">
-                <div className="flex gap-4">
-                  {/* Thumbnail */}
-                  {job.images?.[0] ? (
-                    <div className="h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-surface-100">
-                      <img src={job.images[0].url} alt="" className="h-full w-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="h-20 w-20 flex-shrink-0 rounded-lg bg-surface-100 flex items-center justify-center">
-                      <Briefcase className="h-6 w-6 text-surface-300" />
-                    </div>
-                  )}
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <Badge variant="neutral" size="sm">{job.category?.name}</Badge>
-                        <h3 className="mt-1 font-semibold text-surface-900 group-hover:text-brand-600 transition-colors">
-                          {job.title}
-                        </h3>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-surface-400 group-hover:text-brand-500 flex-shrink-0" />
-                    </div>
-
-                    <p className="mt-1 text-sm text-surface-600 line-clamp-1">
-                      {job.description}
-                    </p>
-
-                    <div className="mt-2 flex items-center gap-4 text-xs text-surface-500">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {job.locationCity}
-                        {job.distance != null && ` • ${job.distance} km`}
-                      </span>
-                      <span>{formatRelativeTime(job.publishedAt)}</span>
-                      {job.interestCount && job.interestCount > 0 && (
-                        <span className="flex items-center gap-1 text-brand-600">
-                          <Users className="h-3 w-3" />
-                          {job.interestCount} geïnteresseerd
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </Link>
+      {/* Available Jobs */}
+      {!loading && !error && availableJobs.length > 0 && (
+        <div className="space-y-3 mb-8">
+          {availableJobs.map((job) => (
+            <JobCard key={job.id} job={job} />
           ))}
         </div>
       )}
+
+      {/* Accepted Jobs Section */}
+      {!loading && !error && acceptedJobs.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-4 mt-8">
+            <div className="h-px flex-1 bg-surface-200" />
+            <span className="text-sm text-surface-500 px-2">Vakman al gekozen</span>
+            <div className="h-px flex-1 bg-surface-200" />
+          </div>
+          <div className="space-y-3">
+            {acceptedJobs.map((job) => (
+              <JobCard key={job.id} job={job} accepted />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function JobCard({ job, accepted = false }: { job: Job; accepted?: boolean }) {
+  return (
+    <Link href={`/pro/jobs/${job.id}`}>
+      <Card 
+        hover={!accepted} 
+        className={cn(
+          'group',
+          accepted && 'opacity-60 bg-surface-50'
+        )}
+      >
+        <div className="flex gap-4">
+          {/* Thumbnail */}
+          {job.images?.[0] ? (
+            <div className={cn(
+              "h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-surface-100",
+              accepted && "grayscale"
+            )}>
+              <img src={job.images[0].url} alt="" className="h-full w-full object-cover" />
+            </div>
+          ) : (
+            <div className="h-20 w-20 flex-shrink-0 rounded-lg bg-surface-100 flex items-center justify-center">
+              <Briefcase className="h-6 w-6 text-surface-300" />
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="neutral" size="sm">{job.category?.name}</Badge>
+                  {accepted && (
+                    <Badge variant="warning" size="sm" className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Bezet
+                    </Badge>
+                  )}
+                </div>
+                <h3 className={cn(
+                  "mt-1 font-semibold text-surface-900 transition-colors",
+                  !accepted && "group-hover:text-brand-600"
+                )}>
+                  {job.title}
+                </h3>
+              </div>
+              <ChevronRight className={cn(
+                "h-5 w-5 text-surface-400 flex-shrink-0",
+                !accepted && "group-hover:text-brand-500"
+              )} />
+            </div>
+
+            <p className="mt-1 text-sm text-surface-600 line-clamp-1">
+              {job.description}
+            </p>
+
+            <div className="mt-2 flex items-center gap-4 text-xs text-surface-500">
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {job.locationCity}
+                {job.distance != null && ` • ${job.distance} km`}
+              </span>
+              <span>{formatRelativeTime(job.publishedAt)}</span>
+              {job.interestCount && job.interestCount > 0 && (
+                <span className={cn(
+                  "flex items-center gap-1",
+                  accepted ? "text-surface-500" : "text-brand-600"
+                )}>
+                  <Users className="h-3 w-3" />
+                  {job.interestCount} geïnteresseerd
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </Card>
+    </Link>
   );
 }

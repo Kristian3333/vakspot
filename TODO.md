@@ -24,7 +24,7 @@ No complex bidding, no price competition, no elaborate workflows.
 - [x] Update `/api/bids` to work as interest system
 - [x] Update PRO leads detail page with new "Interest" button
 - [x] Client job detail shows "Geïnteresseerde vakmensen"
-- [x] **Jobs stay visible to other PROs** until client accepts someone
+- [x] **Jobs always visible** - accepted jobs shown greyed out with "Bezet" badge
 
 ### 1.3 Simplify Messaging ✅
 - [x] Conversation starts on interest (works)
@@ -158,15 +158,26 @@ PRO shows interest → status: PUBLISHED (stays visible!)
                          ↓
 More PROs can show interest → status: PUBLISHED
                          ↓
-Client accepts PRO → status: ACCEPTED (hidden from listings)
+Client accepts PRO → status: ACCEPTED (still visible, but greyed out)
 ```
 
+**PRO Job Listing Display:**
+
+| Available Jobs | (normal appearance) |
+|----------------|---------------------|
+| Job 1          | "2 geïnteresseerd"  |
+| Job 2          | "5 geïnteresseerd"  |
+| ──────────── **Vakman al gekozen** ──────────── |
+| Job 3 (grey)   | "Bezet" badge       |
+| Job 4 (grey)   | "Bezet" badge       |
+
 **Key behaviors:**
-- Multiple PROs can show interest in the same job
-- Job stays visible in PRO listings until client accepts someone
-- Interest count shown: "3 geïnteresseerd"
-- Accepted jobs show "Vakman gekozen" badge
-- PRO can see if they already expressed interest
+- All jobs ALWAYS visible in PRO listings
+- Available jobs shown first (normal appearance)
+- Accepted jobs shown below divider (greyed out, "Bezet" badge)
+- Interest count shown on all jobs
+- PRO can click on accepted jobs to see details (but can't express interest)
+- Jobs PRO already expressed interest in are excluded (shown in their leads list)
 
 ---
 
@@ -182,7 +193,7 @@ Client accepts PRO → status: ACCEPTED (hidden from listings)
 7. ✅ Users can register (both client and PRO)
 8. ✅ PRO can view job details and express interest
 9. ✅ Conversations can be opened and messages exchanged
-10. ✅ Jobs stay visible until client accepts (multiple PROs can express interest)
+10. ✅ Jobs always visible (accepted shown greyed out)
 11. ⬜ Mobile experience is clean and usable (needs testing)
 
 ---
@@ -192,10 +203,11 @@ Client accepts PRO → status: ACCEPTED (hidden from listings)
 **Core simplification is COMPLETE.** The app now follows a simpler flow:
 
 1. **Client** posts a job (single form, auto-published)
-2. **PRO** sees jobs → clicks "Ik ben geïnteresseerd" → sends message
-3. **Multiple PROs** can express interest - job stays visible
-4. **Both** chat freely to discuss details and pricing
-5. **Client** picks someone → job marked as "Vakman gekozen"
+2. **PRO** sees all jobs (available + accepted for market insight)
+3. **PRO** clicks "Ik ben geïnteresseerd" → sends message
+4. **Multiple PROs** can express interest - job stays visible
+5. **Both** chat freely to discuss details and pricing
+6. **Client** picks someone → job shown greyed out with "Bezet" badge
 
 No more complex bidding, amounts, or price competition. Just simple matchmaking.
 

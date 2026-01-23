@@ -32,11 +32,11 @@ export async function GET(request: NextRequest) {
     const proCategoryIds = proProfile.categories.map(c => c.categoryId);
 
     // Build query filters
-    // Show PUBLISHED jobs (available) and IN_CONVERSATION (for backward compat)
-    // Exclude ACCEPTED, COMPLETED, CANCELLED jobs
+    // Show all jobs that are available or accepted (not cancelled/completed)
+    // This lets PROs see the market even for taken jobs
     const where: any = {
-      status: { in: ['PUBLISHED', 'IN_CONVERSATION'] },
-      // Exclude jobs the pro has already bid on
+      status: { in: ['PUBLISHED', 'IN_CONVERSATION', 'ACCEPTED', 'IN_PROGRESS'] },
+      // Exclude jobs the pro has already bid on (they'll see those in their own list)
       bids: {
         none: { proId: proProfile.id },
       },
@@ -48,7 +48,6 @@ export async function GET(request: NextRequest) {
     } else if (proCategoryIds.length > 0) {
       where.categoryId = { in: proCategoryIds };
     }
-    // If no categories specified and pro has no categories, show all available jobs
 
     // Fetch jobs with interest count
     const [jobs, total] = await Promise.all([
@@ -65,7 +64,11 @@ export async function GET(request: NextRequest) {
           },
           _count: { select: { bids: true } },
         },
-        orderBy: { publishedAt: 'desc' },
+        orderBy: [
+          // Show available jobs first, then accepted ones
+          { status: 'asc' },
+          { publishedAt: 'desc' },
+        ],
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -76,6 +79,7 @@ export async function GET(request: NextRequest) {
     let processedJobs = jobs.map(job => ({
       ...job,
       interestCount: job._count.bids,
+      isAccepted: ['ACCEPTED', 'IN_PROGRESS', 'COMPLETED'].includes(job.status),
       distance: (proProfile.locationLat && proProfile.locationLng && job.locationLat && job.locationLng)
         ? Math.round(calculateDistance(
             proProfile.locationLat,
@@ -90,7 +94,7 @@ export async function GET(request: NextRequest) {
     if (proProfile.locationLat && proProfile.locationLng && maxDistance) {
       const maxDist = parseInt(maxDistance);
       processedJobs = processedJobs.filter(job => {
-        if (job.distance === null) return true; // Include jobs without location
+        if (job.distance === null) return true;
         return job.distance <= maxDist;
       });
     }
