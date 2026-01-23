@@ -23,6 +23,14 @@ type JobDetail = {
   _count?: { bids: number };
 };
 
+type ExistingBid = {
+  id: string;
+  status: string;
+  jobId: string;
+  job?: { id: string };
+  conversation?: { id: string } | null;
+};
+
 export default function ProJobDetailPage() {
   const params = useParams();
   const id = params.id as string;
@@ -35,8 +43,7 @@ export default function ProJobDetailPage() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [alreadyInterested, setAlreadyInterested] = useState(false);
-  const [existingConversationId, setExistingConversationId] = useState<string | null>(null);
+  const [existingBid, setExistingBid] = useState<ExistingBid | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -55,10 +62,12 @@ export default function ProJobDetailPage() {
       .then(res => res.json())
       .then(data => {
         if (data.bids) {
-          const existingBid = data.bids.find((b: any) => b.jobId === id);
-          if (existingBid) {
-            setAlreadyInterested(true);
-            setExistingConversationId(existingBid.conversation?.id || null);
+          // Check both jobId and job.id for compatibility
+          const bid = data.bids.find((b: ExistingBid) => 
+            b.jobId === id || b.job?.id === id
+          );
+          if (bid) {
+            setExistingBid(bid);
           }
         }
       })
@@ -95,8 +104,8 @@ export default function ProJobDetailPage() {
         return;
       }
 
-      if (result.bid?.conversation?.id) {
-        setConversationId(result.bid.conversation.id);
+      if (result.conversationId) {
+        setConversationId(result.conversationId);
       }
       setSubmitted(true);
     } catch (err) {
@@ -122,9 +131,13 @@ export default function ProJobDetailPage() {
     );
   }
 
-  // Check if job is still available
+  // Determine states
+  const alreadyInterested = !!existingBid;
+  const isAcceptedByMe = existingBid?.status === 'ACCEPTED';
+  const isRejected = existingBid?.status === 'REJECTED';
   const isAvailable = ['PUBLISHED', 'IN_CONVERSATION'].includes(job.status);
-  const isAccepted = job.status === 'ACCEPTED';
+  const isJobAccepted = job.status === 'ACCEPTED';
+  const existingConversationId = existingBid?.conversation?.id || null;
 
   // Success state after submitting interest
   if (submitted) {
@@ -167,8 +180,11 @@ export default function ProJobDetailPage() {
       <Card className="mb-6">
         <div className="flex items-start justify-between gap-2 mb-3">
           <Badge variant="neutral" size="md">{job.category.name}</Badge>
-          {isAccepted && (
+          {isJobAccepted && !isAcceptedByMe && (
             <Badge variant="warning" size="md">Vakman gekozen</Badge>
+          )}
+          {isAcceptedByMe && (
+            <Badge variant="success" size="md">U bent gekozen!</Badge>
           )}
         </div>
         <h1 className="text-2xl font-bold text-surface-900">{job.title}</h1>
@@ -226,8 +242,47 @@ export default function ProJobDetailPage() {
         </div>
       </Card>
 
-      {/* Already interested - show link to conversation */}
-      {alreadyInterested && (
+      {/* PRO accepted for this job - show success message */}
+      {isAcceptedByMe && (
+        <Card className="border-success-200 bg-success-50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success-100">
+              <CheckCircle2 className="h-5 w-5 text-success-600" />
+            </div>
+            <div className="flex-1">
+              <h2 className="font-semibold text-surface-900">U bent gekozen voor deze klus!</h2>
+              <p className="text-sm text-surface-600">Neem contact op met de opdrachtgever om de details te bespreken.</p>
+            </div>
+            {existingConversationId && (
+              <Button onClick={() => router.push(`/messages/${existingConversationId}`)}>
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Ga naar gesprek
+              </Button>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* PRO rejected for this job */}
+      {isRejected && (
+        <Card className="border-surface-200 bg-surface-50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-200">
+              <XCircle className="h-5 w-5 text-surface-500" />
+            </div>
+            <div className="flex-1">
+              <h2 className="font-semibold text-surface-900">Helaas, niet gekozen</h2>
+              <p className="text-sm text-surface-600">De opdrachtgever heeft een andere vakman gekozen voor deze klus.</p>
+            </div>
+          </div>
+          <Button variant="outline" onClick={() => router.push('/pro/jobs')} className="mt-4 w-full">
+            Bekijk andere klussen
+          </Button>
+        </Card>
+      )}
+
+      {/* Already interested but pending - show link to conversation */}
+      {alreadyInterested && !isAcceptedByMe && !isRejected && (
         <Card className="border-brand-200 bg-brand-50">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100">
@@ -247,7 +302,7 @@ export default function ProJobDetailPage() {
         </Card>
       )}
 
-      {/* Job no longer available */}
+      {/* Job no longer available - didn't express interest */}
       {!isAvailable && !alreadyInterested && (
         <Card className="border-warning-200 bg-warning-50">
           <div className="flex items-center gap-3">

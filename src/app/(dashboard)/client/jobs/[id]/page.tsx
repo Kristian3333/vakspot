@@ -5,13 +5,16 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { Button, Card, Badge, Avatar } from '@/components/ui';
+import { DeleteJobButton } from '@/components/jobs/delete-job-button';
+import { AcceptProButton } from '@/components/jobs/accept-pro-button';
 import { formatDate, formatRelativeTime } from '@/lib/utils';
 import { 
   MapPin, 
   ArrowLeft, 
   MessageSquare,
   Star,
-  User
+  User,
+  CheckCircle2
 } from 'lucide-react';
 
 export const metadata = {
@@ -81,6 +84,9 @@ export default async function JobDetailPage({ params }: PageProps) {
 
   const status = statusConfig[job.status] || statusConfig.DRAFT;
   const interestedPros = job.bids;
+  const canDelete = !['COMPLETED', 'REVIEWED'].includes(job.status);
+  const canAcceptPros = ['PUBLISHED', 'IN_CONVERSATION'].includes(job.status);
+  const acceptedBid = interestedPros.find(b => b.status === 'ACCEPTED');
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
@@ -131,76 +137,146 @@ export default async function JobDetailPage({ params }: PageProps) {
           </span>
           <span>{formatDate(job.createdAt)}</span>
         </div>
+
+        {/* Delete button */}
+        {canDelete && (
+          <div className="mt-4 pt-4 border-t border-surface-200">
+            <DeleteJobButton jobId={job.id} jobTitle={job.title} />
+          </div>
+        )}
       </Card>
+
+      {/* Accepted pro - show prominently if someone is chosen */}
+      {acceptedBid && (
+        <Card className="mb-6 border-success-200 bg-success-50/30">
+          <div className="flex items-center gap-2 mb-4">
+            <CheckCircle2 className="h-5 w-5 text-success-600" />
+            <h2 className="text-lg font-semibold text-surface-900">Gekozen vakman</h2>
+          </div>
+          <div className="flex items-start gap-4">
+            <Avatar
+              src={acceptedBid.pro.user.image}
+              name={acceptedBid.pro.user.name}
+              size="lg"
+            />
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-surface-900">
+                {acceptedBid.pro.companyName || acceptedBid.pro.user.name}
+              </h3>
+              {acceptedBid.pro.companyName && (
+                <p className="text-sm text-surface-500">{acceptedBid.pro.user.name}</p>
+              )}
+              {acceptedBid.pro.avgRating > 0 && (
+                <span className="flex items-center gap-1 mt-1 text-sm text-surface-500">
+                  <Star className="h-4 w-4 text-warning-500 fill-warning-500" />
+                  {acceptedBid.pro.avgRating.toFixed(1)}
+                </span>
+              )}
+              {acceptedBid.conversation && (
+                <Link href={`/messages/${acceptedBid.conversation.id}`} className="mt-3 inline-block">
+                  <Button size="sm">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Ga naar gesprek
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Interested pros */}
       <Card>
         <h2 className="text-lg font-semibold text-surface-900 mb-4">
-          Geïnteresseerde vakmensen ({interestedPros.length})
+          {acceptedBid ? 'Andere reacties' : 'Geïnteresseerde vakmensen'} ({interestedPros.filter(b => b.status !== 'ACCEPTED').length})
         </h2>
 
-        {interestedPros.length > 0 ? (
+        {interestedPros.filter(b => b.status !== 'ACCEPTED').length > 0 ? (
           <div className="space-y-4">
-            {interestedPros.map((interest) => (
-              <div
-                key={interest.id}
-                className="p-4 rounded-xl border border-surface-200 hover:border-surface-300 transition-colors"
-              >
-                <div className="flex items-start gap-4">
-                  <Avatar
-                    src={interest.pro.user.image}
-                    name={interest.pro.user.name}
-                    size="lg"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h3 className="font-medium text-surface-900">
-                          {interest.pro.companyName || interest.pro.user.name}
-                        </h3>
-                        {interest.pro.companyName && (
-                          <p className="text-sm text-surface-500">{interest.pro.user.name}</p>
+            {interestedPros.filter(b => b.status !== 'ACCEPTED').map((interest) => {
+              const isRejected = interest.status === 'REJECTED';
+              
+              return (
+                <div
+                  key={interest.id}
+                  className={`p-4 rounded-xl border transition-colors ${
+                    isRejected 
+                      ? 'border-surface-200 bg-surface-50 opacity-60' 
+                      : 'border-surface-200 hover:border-surface-300'
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <Avatar
+                      src={interest.pro.user.image}
+                      name={interest.pro.user.name}
+                      size="lg"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-medium text-surface-900">
+                            {interest.pro.companyName || interest.pro.user.name}
+                          </h3>
+                          {interest.pro.companyName && (
+                            <p className="text-sm text-surface-500">{interest.pro.user.name}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isRejected && (
+                            <Badge variant="neutral" size="sm">Afgewezen</Badge>
+                          )}
+                          <span className="text-xs text-surface-400">
+                            {formatRelativeTime(interest.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Pro info */}
+                      <div className="flex items-center gap-3 mt-2 text-sm text-surface-500">
+                        {interest.pro.avgRating > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Star className="h-4 w-4 text-warning-500 fill-warning-500" />
+                            {interest.pro.avgRating.toFixed(1)}
+                          </span>
+                        )}
+                        {interest.pro.locationCity && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {interest.pro.locationCity}
+                          </span>
                         )}
                       </div>
-                      <span className="text-xs text-surface-400">
-                        {formatRelativeTime(interest.createdAt)}
-                      </span>
+
+                      {/* Message preview */}
+                      <p className="mt-3 text-sm text-surface-600 line-clamp-2">
+                        {interest.message}
+                      </p>
+
+                      {/* Actions */}
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
+                        {interest.conversation && (
+                          <Link href={`/messages/${interest.conversation.id}`}>
+                            <Button size="sm" variant={canAcceptPros && !isRejected ? 'outline' : 'default'}>
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Bekijk gesprek
+                            </Button>
+                          </Link>
+                        )}
+                        
+                        {/* Accept button - only show if job can accept and bid isn't rejected */}
+                        {canAcceptPros && !isRejected && (
+                          <AcceptProButton 
+                            bidId={interest.id} 
+                            proName={interest.pro.companyName || interest.pro.user.name || 'deze vakman'}
+                            jobTitle={job.title}
+                          />
+                        )}
+                      </div>
                     </div>
-
-                    {/* Pro info */}
-                    <div className="flex items-center gap-3 mt-2 text-sm text-surface-500">
-                      {interest.pro.avgRating > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Star className="h-4 w-4 text-warning-500 fill-warning-500" />
-                          {interest.pro.avgRating.toFixed(1)}
-                        </span>
-                      )}
-                      {interest.pro.locationCity && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {interest.pro.locationCity}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Message preview */}
-                    <p className="mt-3 text-sm text-surface-600 line-clamp-2">
-                      {interest.message}
-                    </p>
-
-                    {/* Action */}
-                    {interest.conversation && (
-                      <Link href={`/messages/${interest.conversation.id}`} className="mt-3 inline-block">
-                        <Button size="sm">
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Bekijk gesprek
-                        </Button>
-                      </Link>
-                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-8 text-surface-500">

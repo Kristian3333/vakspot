@@ -47,15 +47,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const isOwner = session?.user?.id === job.client.user.id;
     const isAdmin = session?.user?.role === 'ADMIN';
     const isPro = session?.user?.role === 'PRO';
-    const isPublic = job.status === JobStatus.PUBLISHED;
+    const isAvailable = ['PUBLISHED', 'IN_CONVERSATION'].includes(job.status);
 
-    if (!isOwner && !isAdmin && !isPublic) {
+    // PROs can view available jobs
+    if (!isOwner && !isAdmin && !isAvailable) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     // Hide sensitive info for non-owners (pros and public viewers)
     if (!isOwner && !isAdmin) {
-      // Remove sensitive client details and bids for public/pro view
       const { bids, ...jobWithoutBids } = job;
       return NextResponse.json({
         job: {
@@ -122,15 +122,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Extract and transform data for Prisma
     const { categoryId, images, ...directFields } = parsed.data;
 
-    // Build update data with proper Prisma syntax
     const updateData: Parameters<typeof prisma.job.update>[0]['data'] = {
       ...directFields,
     };
 
-    // Handle category relation properly
     if (categoryId) {
       updateData.category = { connect: { id: categoryId } };
     }
@@ -141,9 +138,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       select: { id: true, title: true, status: true },
     });
 
-    // Handle images separately if provided
     if (images && images.length > 0) {
-      // Delete existing images and create new ones
       await prisma.jobImage.deleteMany({ where: { jobId: id } });
       await prisma.jobImage.createMany({
         data: images.map((url, index) => ({
@@ -164,7 +159,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// DELETE /api/jobs/[id] - Cancel job
+// DELETE /api/jobs/[id] - Delete or cancel job
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = params;
@@ -178,6 +173,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       where: { id },
       include: {
         client: { include: { user: true } },
+        bids: { select: { id: true } },
       },
     });
 
@@ -189,27 +185,41 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Can't cancel completed or already cancelled jobs
-    const nonCancellableStatuses: JobStatus[] = [JobStatus.COMPLETED, JobStatus.CANCELLED, JobStatus.REVIEWED];
-    if (nonCancellableStatuses.includes(job.status)) {
+    // Can't delete completed or already cancelled jobs
+    const nonDeletableStatuses: JobStatus[] = [JobStatus.COMPLETED, JobStatus.REVIEWED];
+    if (nonDeletableStatuses.includes(job.status)) {
       return NextResponse.json(
-        { error: 'Cannot cancel this job' },
+        { error: 'Deze klus kan niet meer worden verwijderd' },
         { status: 400 }
       );
     }
 
-    // Mark as cancelled instead of deleting
+    // If job has no bids, delete it completely
+    if (job.bids.length === 0) {
+      // Delete related records first (images)
+      await prisma.jobImage.deleteMany({ where: { jobId: id } });
+      
+      // Delete the job
+      await prisma.job.delete({ where: { id } });
+
+      return NextResponse.json({ deleted: true, message: 'Klus verwijderd' });
+    }
+
+    // If job has bids/conversations, mark as cancelled instead
     const cancelledJob = await prisma.job.update({
       where: { id },
       data: { status: JobStatus.CANCELLED },
       select: { id: true, status: true },
     });
 
-    return NextResponse.json({ job: cancelledJob });
+    return NextResponse.json({ 
+      job: cancelledJob, 
+      message: 'Klus geannuleerd (had al reacties)' 
+    });
   } catch (error) {
-    console.error('Failed to cancel job:', error);
+    console.error('Failed to delete job:', error);
     return NextResponse.json(
-      { error: 'Failed to cancel job' },
+      { error: 'Failed to delete job' },
       { status: 500 }
     );
   }

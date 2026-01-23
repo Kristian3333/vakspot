@@ -15,6 +15,7 @@ import {
   LogOut,
   PlusCircle,
   Briefcase,
+  ClipboardList,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { Session } from 'next-auth';
@@ -48,7 +49,7 @@ export function Header({ session }: HeaderProps) {
     }
   };
 
-  // Simplified navigation - max 5 items
+  // Simplified navigation
   const getNavItems = () => {
     if (!isLoggedIn) return [];
 
@@ -61,7 +62,8 @@ export function Header({ session }: HeaderProps) {
 
     if (userRole === 'PRO') {
       return [
-        { href: '/pro/leads', label: 'Klussen', icon: Search },
+        { href: '/pro/jobs', label: 'Zoeken', icon: Search },
+        { href: '/pro/leads', label: 'Mijn klussen', icon: ClipboardList },
         { href: '/messages', label: 'Berichten', icon: MessageSquare, showBadge: true },
         { href: '/pro/profile', label: 'Profiel', icon: User },
       ];
@@ -78,11 +80,22 @@ export function Header({ session }: HeaderProps) {
 
   const navItems = getNavItems();
 
+  // Check if current path matches nav item
+  const isActiveLink = (href: string) => {
+    if (href === '/pro/jobs') {
+      return pathname === '/pro/jobs' || pathname.startsWith('/pro/jobs/');
+    }
+    if (href === '/pro/leads') {
+      return pathname === '/pro/leads' || pathname.startsWith('/pro/leads/');
+    }
+    return pathname === href || pathname.startsWith(href + '/');
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-surface-200 bg-white/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href={isLoggedIn ? (userRole === 'PRO' ? '/pro/leads' : '/client/jobs') : '/'} className="flex items-center gap-2">
+        <Link href={isLoggedIn ? (userRole === 'PRO' ? '/pro/jobs' : '/client/jobs') : '/'} className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500">
             <span className="text-lg font-bold text-white">V</span>
           </div>
@@ -98,7 +111,7 @@ export function Header({ session }: HeaderProps) {
                 href={item.href}
                 className={cn(
                   'relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                  pathname === item.href || pathname.startsWith(item.href + '/')
+                  isActiveLink(item.href)
                     ? 'bg-brand-50 text-brand-700'
                     : 'text-surface-600 hover:bg-surface-50 hover:text-surface-900'
                 )}
@@ -192,7 +205,7 @@ export function Header({ session }: HeaderProps) {
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors',
-                  pathname === item.href || pathname.startsWith(item.href + '/')
+                  isActiveLink(item.href)
                     ? 'bg-brand-50 text-brand-700'
                     : 'text-surface-600 hover:bg-surface-50'
                 )}

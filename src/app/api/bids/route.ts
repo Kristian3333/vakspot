@@ -54,7 +54,13 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
       });
 
-      return NextResponse.json({ bids });
+      // Add jobId directly for easier access
+      const bidsWithJobId = bids.map(bid => ({
+        ...bid,
+        jobId: bid.job.id,
+      }));
+
+      return NextResponse.json({ bids: bidsWithJobId });
     }
 
     if (session.user.role === 'CLIENT') {
@@ -190,6 +196,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       bid,
+      jobId: bid.jobId,
       conversationId: bid.conversation?.id,
     }, { status: 201 });
   } catch (error) {
