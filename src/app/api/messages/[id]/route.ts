@@ -28,7 +28,7 @@ export async function GET(
           orderBy: { createdAt: 'asc' },
           include: {
             sender: { select: { id: true, name: true, image: true } },
-            // Note: attachments removed - run `npx prisma generate` to re-enable
+            attachments: true,
           },
         },
         bid: {
@@ -91,16 +91,9 @@ export async function GET(
     // Remove client userId from response (privacy)
     const { client, ...jobData } = conversation.bid.job;
     
-    // Add empty attachments array to each message for frontend compatibility
-    const messagesWithAttachments = conversation.messages.map(msg => ({
-      ...msg,
-      attachments: [],
-    }));
-    
     return NextResponse.json({
       conversation: {
         ...conversation,
-        messages: messagesWithAttachments,
         bid: {
           ...conversation.bid,
           job: jobData,
@@ -130,11 +123,10 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { content } = body;
-    // Note: attachments support disabled until `npx prisma generate` is run
+    const { content, attachments } = body;
 
-    if (!content?.trim()) {
-      return NextResponse.json({ error: 'Message content required' }, { status: 400 });
+    if (!content?.trim() && (!attachments || attachments.length === 0)) {
+      return NextResponse.json({ error: 'Message content or attachments required' }, { status: 400 });
     }
 
     // Verify conversation exists and user has access
@@ -161,15 +153,24 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Create message (without attachments for now)
+    // Create message with attachments
     const message = await prisma.message.create({
       data: {
         conversationId: id,
         senderId: session.user.id,
-        content: content.trim(),
+        content: content?.trim() || '📎 Bijlage verstuurd',
+        attachments: attachments && attachments.length > 0 ? {
+          create: attachments.map((att: { url: string; filename: string; fileType: string; fileSize: number }) => ({
+            url: att.url,
+            filename: att.filename,
+            fileType: att.fileType,
+            fileSize: att.fileSize,
+          })),
+        } : undefined,
       },
       include: {
         sender: { select: { id: true, name: true, image: true } },
+        attachments: true,
       },
     });
 
@@ -179,12 +180,7 @@ export async function POST(
       data: { updatedAt: new Date() },
     });
 
-    return NextResponse.json({ 
-      message: {
-        ...message,
-        attachments: [], // Add empty array for frontend compatibility
-      }
-    }, { status: 201 });
+    return NextResponse.json({ message }, { status: 201 });
   } catch (error) {
     console.error('Error sending message:', error);
     return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
