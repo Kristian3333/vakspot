@@ -319,6 +319,9 @@ export default function ConversationPage() {
   const { job, pro } = bid;
   const isClient = userRole === 'CLIENT';
   const canAcceptReject = isClient && (bid.status === 'PENDING' || bid.status === 'VIEWED');
+  
+  // Job detail link based on user role
+  const jobDetailLink = isClient ? `/client/jobs/${job.id}` : `/pro/jobs/${job.id}`;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
@@ -332,65 +335,62 @@ export default function ConversationPage() {
       </Link>
 
       <div className="space-y-4">
-        {/* Job Summary Card */}
-        <Card className="border-brand-100 bg-gradient-to-r from-brand-50/50 to-transparent">
-          <div className="flex gap-4">
-            {job.images?.[0] ? (
-              <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-surface-100">
-                <img src={job.images[0].url} alt="" className="h-full w-full object-cover" />
-              </div>
-            ) : (
-              <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-surface-100">
-                <Briefcase className="h-8 w-8 text-surface-300" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <Badge variant="neutral" size="sm" className="mb-1">
-                    {job.category.name}
-                  </Badge>
-                  <h2 className="font-semibold text-surface-900">{job.title}</h2>
+        {/* Job Summary Card - Clickable for both clients and PROs */}
+        <Link href={jobDetailLink}>
+          <Card className="border-brand-100 bg-gradient-to-r from-brand-50/50 to-transparent hover:shadow-md hover:border-brand-200 transition-all cursor-pointer group">
+            <div className="flex gap-4">
+              {job.images?.[0] ? (
+                <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-surface-100">
+                  <img src={job.images[0].url} alt="" className="h-full w-full object-cover" />
                 </div>
-                <StatusBadge variant={job.status === 'ACCEPTED' ? 'success' : 'primary'} size="sm">
-                  {job.status === 'PUBLISHED' ? 'Gepubliceerd' : 
-                   job.status === 'ACCEPTED' ? 'Geaccepteerd' :
-                   job.status === 'IN_CONVERSATION' ? 'In gesprek' : job.status}
-                </StatusBadge>
-              </div>
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-surface-500">
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {job.locationCity}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" />
-                  {TIMELINE_LABELS[job.timeline] || job.timeline}
-                </span>
-                {(job.budgetMin || job.budgetMax) && (
-                  <span className="flex items-center gap-1">
-                    <Euro className="h-3.5 w-3.5" />
-                    {job.budgetMin && job.budgetMax
-                      ? `${formatCurrency(job.budgetMin)} - ${formatCurrency(job.budgetMax)}`
-                      : job.budgetMax
-                      ? `Tot ${formatCurrency(job.budgetMax)}`
-                      : `Vanaf ${formatCurrency(job.budgetMin!)}`}
-                  </span>
-                )}
-              </div>
-              {/* Job details link for client */}
-              {isClient && (
-                <Link 
-                  href={`/client/jobs/${job.id}`}
-                  className="inline-flex items-center gap-1 mt-2 text-sm text-brand-600 hover:text-brand-700"
-                >
-                  Bekijk klus details
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Link>
+              ) : (
+                <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-surface-100">
+                  <Briefcase className="h-8 w-8 text-surface-300" />
+                </div>
               )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <Badge variant="neutral" size="sm" className="mb-1">
+                      {job.category.name}
+                    </Badge>
+                    <h2 className="font-semibold text-surface-900 group-hover:text-brand-600 transition-colors">{job.title}</h2>
+                  </div>
+                  <StatusBadge variant={job.status === 'ACCEPTED' ? 'success' : 'primary'} size="sm">
+                    {job.status === 'PUBLISHED' ? 'Gepubliceerd' : 
+                     job.status === 'ACCEPTED' ? 'Geaccepteerd' :
+                     job.status === 'IN_CONVERSATION' ? 'In gesprek' : job.status}
+                  </StatusBadge>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-surface-500">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {job.locationCity}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" />
+                    {TIMELINE_LABELS[job.timeline] || job.timeline}
+                  </span>
+                  {(job.budgetMin || job.budgetMax) && (
+                    <span className="flex items-center gap-1">
+                      <Euro className="h-3.5 w-3.5" />
+                      {job.budgetMin && job.budgetMax
+                        ? `${formatCurrency(job.budgetMin)} - ${formatCurrency(job.budgetMax)}`
+                        : job.budgetMax
+                        ? `Tot ${formatCurrency(job.budgetMax)}`
+                        : `Vanaf ${formatCurrency(job.budgetMin!)}`}
+                    </span>
+                  )}
+                </div>
+                {/* View details hint */}
+                <span className="inline-flex items-center gap-1 mt-2 text-sm text-brand-600 group-hover:text-brand-700">
+                  Bekijk volledige klus details
+                  <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
 
         {/* Bid Details Card */}
         <Card className={cn(

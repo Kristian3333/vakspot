@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { sendBidAcceptedEmail, sendBidRejectedEmail } from '@/lib/email';
 
 export async function POST(
   request: NextRequest,
@@ -26,6 +27,9 @@ export async function POST(
             },
           },
         },
+        pro: {
+          include: { user: true },
+        },
       },
     });
 
@@ -38,8 +42,8 @@ export async function POST(
       return NextResponse.json({ error: 'Niet geautoriseerd' }, { status: 403 });
     }
 
-    // Check if job can accept bids
-    if (!['PUBLISHED', 'IN_CONVERSATION'].includes(bid.job.status)) {
+    // Check if job can accept bids (must be PUBLISHED)
+    if (bid.job.status !== 'PUBLISHED') {
       return NextResponse.json(
         { error: 'Deze klus kan geen offertes meer accepteren' },
         { status: 400 }
@@ -54,8 +58,23 @@ export async function POST(
       );
     }
 
+    // Get all other bids for this job (to send rejection messages)
+    const otherBids = await prisma.bid.findMany({
+      where: {
+        jobId: bid.jobId,
+        id: { not: bidId },
+        status: { in: ['PENDING', 'VIEWED'] },
+      },
+      include: {
+        conversation: true,
+        pro: {
+          include: { user: true },
+        },
+      },
+    });
+
     // Accept the bid and update job status in a transaction
-    const [updatedBid, updatedJob] = await prisma.$transaction([
+    await prisma.$transaction([
       // Accept this bid
       prisma.bid.update({
         where: { id: bidId },
@@ -80,27 +99,96 @@ export async function POST(
       }),
     ]);
 
-    // Create a conversation if one doesn't exist
-    const existingConversation = await prisma.conversation.findFirst({
+    // Send acceptance message to the chosen PRO
+    const acceptedConversation = await prisma.conversation.findFirst({
       where: { bidId: bidId },
     });
 
-    if (!existingConversation) {
-      await prisma.conversation.create({
+    if (acceptedConversation) {
+      await prisma.message.create({
         data: {
-          bidId: bidId,
-          messages: {
-            create: {
-              senderId: session.user.id,
-              content: `Uw offerte van €${(bid.amount / 100).toFixed(2)} is geaccepteerd! U kunt nu direct contact opnemen.`,
-            },
-          },
+          conversationId: acceptedConversation.id,
+          senderId: session.user.id,
+          content: `🎉 Goed nieuws! U bent gekozen voor deze klus. Neem gerust contact op om de details te bespreken.`,
         },
+      });
+      
+      // Update conversation timestamp
+      await prisma.conversation.update({
+        where: { id: acceptedConversation.id },
+        data: { updatedAt: new Date() },
       });
     }
 
-    // Redirect back to the job page
-    return NextResponse.redirect(new URL(`/client/jobs/${bid.jobId}`, request.url));
+    // Send rejection messages to all other PROs
+    const rejectionMessage = `Bedankt voor uw interesse in "${bid.job.title}". Helaas heeft de opdrachtgever gekozen voor een andere vakman. We wensen u veel succes bij volgende klussen!`;
+
+    for (const otherBid of otherBids) {
+      if (otherBid.conversation) {
+        await prisma.message.create({
+          data: {
+            conversationId: otherBid.conversation.id,
+            senderId: session.user.id,
+            content: rejectionMessage,
+          },
+        });
+
+        // Update conversation timestamp
+        await prisma.conversation.update({
+          where: { id: otherBid.conversation.id },
+          data: { updatedAt: new Date() },
+        });
+      }
+
+      // Send rejection email to this PRO (fire-and-forget)
+      if (otherBid.pro.user.email) {
+        sendBidRejectedEmail({
+          to: otherBid.pro.user.email,
+          jobTitle: bid.job.title,
+        }).catch(console.error);
+
+        // Create in-app notification
+        prisma.notification.create({
+          data: {
+            userId: otherBid.pro.userId,
+            type: 'BID_REJECTED',
+            title: 'Andere vakman gekozen',
+            message: `Helaas is een andere vakman gekozen voor "${bid.job.title}"`,
+            link: `/pro/leads`,
+          },
+        }).catch(console.error);
+      }
+    }
+
+    // Send acceptance email to the chosen PRO (fire-and-forget)
+    if (bid.pro.user.email) {
+      sendBidAcceptedEmail({
+        to: bid.pro.user.email,
+        clientName: bid.job.client.user.name || 'Klant',
+        jobTitle: bid.job.title,
+        conversationUrl: acceptedConversation ? `/messages/${acceptedConversation.id}` : `/pro/leads`,
+      }).catch(console.error);
+
+      // Create in-app notification for accepted PRO
+      prisma.notification.create({
+        data: {
+          userId: bid.pro.userId,
+          type: 'BID_ACCEPTED',
+          title: 'Gefeliciteerd! Je bent gekozen!',
+          message: `Je bent gekozen voor "${bid.job.title}"`,
+          link: acceptedConversation ? `/messages/${acceptedConversation.id}` : `/pro/leads`,
+        },
+      }).catch(console.error);
+    }
+
+    // Return JSON response instead of redirect (better for client-side handling)
+    return NextResponse.json({ 
+      success: true,
+      message: 'Vakman geaccepteerd',
+      jobId: bid.jobId,
+      acceptedProName: bid.pro.companyName || bid.pro.user.name,
+      rejectedCount: otherBids.length,
+    });
   } catch (error) {
     console.error('Accept bid error:', error);
     return NextResponse.json(

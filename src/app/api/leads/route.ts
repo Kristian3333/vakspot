@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get('categoryId');
+    const showAll = searchParams.get('showAll') === 'true';
     const maxDistance = searchParams.get('maxDistance');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -35,19 +36,24 @@ export async function GET(request: NextRequest) {
     // Show all jobs that are available or accepted (not cancelled/completed)
     // This lets PROs see the market even for taken jobs
     const where: any = {
-      status: { in: ['PUBLISHED', 'IN_CONVERSATION', 'ACCEPTED', 'IN_PROGRESS'] },
+      status: { in: ['PUBLISHED', 'ACCEPTED'] },
       // Exclude jobs the pro has already bid on (they'll see those in their own list)
       bids: {
         none: { proId: proProfile.id },
       },
     };
 
-    // Only filter by category if specified or if pro has categories
+    // Category filtering logic:
+    // - If specific categoryId is provided, use that
+    // - If showAll=true, don't filter by category at all
+    // - Otherwise (recommended), use PRO's categories
     if (categoryId) {
       where.categoryId = categoryId;
-    } else if (proCategoryIds.length > 0) {
+    } else if (!showAll && proCategoryIds.length > 0) {
+      // Only filter by pro's categories when NOT showing all
       where.categoryId = { in: proCategoryIds };
     }
+    // If showAll=true and no categoryId, don't add category filter (show everything)
 
     // Fetch jobs with interest count
     const [jobs, total] = await Promise.all([
@@ -64,11 +70,8 @@ export async function GET(request: NextRequest) {
           },
           _count: { select: { bids: true } },
         },
-        orderBy: [
-          // Show available jobs first, then accepted ones
-          { status: 'asc' },
-          { publishedAt: 'desc' },
-        ],
+        // Fetch more and sort in JS to handle sponsored + status properly
+        orderBy: { publishedAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -76,10 +79,12 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Calculate distance and add interest count
+    const now = new Date();
     let processedJobs = jobs.map(job => ({
       ...job,
       interestCount: job._count.bids,
-      isAccepted: ['ACCEPTED', 'IN_PROGRESS', 'COMPLETED'].includes(job.status),
+      isAccepted: ['ACCEPTED', 'COMPLETED'].includes(job.status),
+      isSponsored: job.sponsoredUntil && new Date(job.sponsoredUntil) > now,
       distance: (proProfile.locationLat && proProfile.locationLng && job.locationLat && job.locationLng)
         ? Math.round(calculateDistance(
             proProfile.locationLat,
@@ -89,6 +94,28 @@ export async function GET(request: NextRequest) {
           ))
         : null,
     }));
+
+    // Sort: sponsored jobs first, then by accepted status, then by date
+    processedJobs.sort((a, b) => {
+      // 1. Sponsored jobs first
+      if (a.isSponsored && !b.isSponsored) return -1;
+      if (!a.isSponsored && b.isSponsored) return 1;
+
+      // 2. If both sponsored, higher sponsor level first
+      if (a.isSponsored && b.isSponsored) {
+        if ((a.sponsorLevel || 0) !== (b.sponsorLevel || 0)) {
+          return (b.sponsorLevel || 0) - (a.sponsorLevel || 0);
+        }
+      }
+
+      // 3. Available jobs before accepted
+      if (a.isAccepted !== b.isAccepted) {
+        return a.isAccepted ? 1 : -1;
+      }
+
+      // 4. Newer jobs first
+      return new Date(b.publishedAt || b.createdAt).getTime() - new Date(a.publishedAt || a.createdAt).getTime();
+    });
 
     // Filter by distance if maxDistance is specified
     if (proProfile.locationLat && proProfile.locationLng && maxDistance) {

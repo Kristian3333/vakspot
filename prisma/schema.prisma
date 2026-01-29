@@ -127,9 +127,10 @@ model ProProfile {
   updatedAt DateTime @updatedAt
 
   // Relations
-  categories ProCategory[]
-  bids       Bid[]
-  reviews    Review[]
+  categories       ProCategory[]
+  bids             Bid[]
+  reviews          Review[]
+  servicePurchases ServicePurchase[]
 
   @@index([locationLat, locationLng])
   @@index([avgRating])
@@ -207,6 +208,10 @@ model Job {
   publishedAt DateTime?
   completedAt DateTime?
 
+  // Sponsored placement
+  sponsoredUntil DateTime?
+  sponsorLevel   Int       @default(0) // 0=none, 1=basic, 2=premium
+
   // Relations
   images      JobImage[]
   bids        Bid[]
@@ -238,11 +243,8 @@ model JobImage {
 enum JobStatus {
   DRAFT
   PUBLISHED
-  IN_CONVERSATION
   ACCEPTED
-  IN_PROGRESS
   COMPLETED
-  CANCELLED
   REVIEWED
 }
 
@@ -361,13 +363,7 @@ model Review {
   rating    Int        // 1-5
   title     String?
   content   String     @db.Text
-  
-  // Individual ratings (optional)
-  qualityRating       Int?  // 1-5
-  communicationRating Int?  // 1-5
-  timelinessRating    Int?  // 1-5
-  valueRating         Int?  // 1-5
-  
+
   // Pro can respond
   response    String?  @db.Text
   respondedAt DateTime?
@@ -411,4 +407,39 @@ enum NotificationType {
   REVIEW_REQUEST
   REVIEW_RECEIVED
   SYSTEM
+}
+
+// ============================================
+// SERVICES (for PRO monetization)
+// ============================================
+
+model Service {
+  id           String   @id @default(cuid())
+  name         String
+  description  String   @db.Text
+  price        Int      @default(0) // cents, 0 for free
+  durationDays Int      @default(30)
+  active       Boolean  @default(true)
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  purchases ServicePurchase[]
+
+  @@index([active, order])
+}
+
+model ServicePurchase {
+  id          String     @id @default(cuid())
+  proId       String
+  pro         ProProfile @relation(fields: [proId], references: [id], onDelete: Cascade)
+  serviceId   String
+  service     Service    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  price       Int        // price at time of purchase
+  purchasedAt DateTime   @default(now())
+  expiresAt   DateTime
+
+  @@index([proId])
+  @@index([serviceId])
+  @@index([expiresAt])
 }

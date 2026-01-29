@@ -2,6 +2,57 @@
 import { z } from 'zod';
 
 // ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+// Dutch postal code regex: 1234 AB (with optional space)
+const DUTCH_POSTCODE_REGEX = /^[1-9][0-9]{3}\s?[A-Za-z]{2}$/;
+
+// Format postal code to standard format: "1234 AB"
+export function formatDutchPostcode(postcode: string): string {
+  const cleaned = postcode.replace(/\s/g, '').toUpperCase();
+  if (cleaned.length === 6) {
+    return `${cleaned.slice(0, 4)} ${cleaned.slice(4)}`;
+  }
+  return postcode;
+}
+
+// Validate Dutch postal code
+export function isValidDutchPostcode(postcode: string): boolean {
+  return DUTCH_POSTCODE_REGEX.test(postcode);
+}
+
+// Custom Zod transformer for Dutch postal codes
+const dutchPostcodeSchema = z
+  .string()
+  .min(1, 'Postcode is verplicht')
+  .transform((val) => val.replace(/\s/g, '').toUpperCase())
+  .refine((val) => /^[1-9][0-9]{3}[A-Za-z]{2}$/.test(val), {
+    message: 'Ongeldige postcode (gebruik formaat: 1234 AB)',
+  })
+  .transform((val) => `${val.slice(0, 4)} ${val.slice(4)}`);
+
+// Optional Dutch postcode (for fields that aren't required)
+const optionalDutchPostcodeSchema = z
+  .string()
+  .optional()
+  .or(z.literal(''))
+  .transform((val) => {
+    if (!val || val === '') return '';
+    return val.replace(/\s/g, '').toUpperCase();
+  })
+  .refine((val) => {
+    if (!val || val === '') return true;
+    return /^[1-9][0-9]{3}[A-Za-z]{2}$/.test(val);
+  }, {
+    message: 'Ongeldige postcode (gebruik formaat: 1234 AB)',
+  })
+  .transform((val) => {
+    if (!val || val.length < 6) return val || '';
+    return `${val.slice(0, 4)} ${val.slice(4)}`;
+  });
+
+// ============================================
 // AUTH SCHEMAS
 // ============================================
 
@@ -18,7 +69,10 @@ export const registerClientSchema = z.object({
   name: z.string().min(2, 'Naam moet minimaal 2 tekens zijn'),
   phone: z.string().optional().or(z.literal('')),
   city: z.string().optional().or(z.literal('')),
-  postcode: z.string().regex(/^[1-9][0-9]{3}\s?[A-Za-z]{2}$/, 'Ongeldige postcode').optional().or(z.literal('')),
+  postcode: optionalDutchPostcodeSchema,
+  acceptTerms: z.boolean().refine((val) => val === true, {
+    message: 'U moet akkoord gaan met de algemene voorwaarden',
+  }).optional(), // Make optional for backward compatibility, enforce in form
   role: z.literal('CLIENT').optional(),
 });
 
@@ -32,9 +86,12 @@ export const registerProSchema = z.object({
   kvkNumber: z.string().regex(/^[0-9]{8}$/, 'KVK nummer moet 8 cijfers zijn').optional().or(z.literal('')),
   phone: z.string().min(10, 'Ongeldig telefoonnummer'),
   city: z.string().min(2, 'Stad is verplicht'),
-  postcode: z.string().regex(/^[1-9][0-9]{3}\s?[A-Za-z]{2}$/, 'Ongeldige postcode').optional().or(z.literal('')),
+  postcode: optionalDutchPostcodeSchema,
   categories: z.array(z.string()).min(1, 'Selecteer minimaal één categorie'),
   serviceRadius: z.number().min(5).max(100).default(25),
+  acceptTerms: z.boolean().refine((val) => val === true, {
+    message: 'U moet akkoord gaan met de algemene voorwaarden',
+  }).optional(), // Make optional for backward compatibility, enforce in form
   role: z.literal('PRO').optional(),
 });
 
@@ -48,7 +105,7 @@ export const createJobSchema = z.object({
   description: z.string().min(20, 'Beschrijving moet minimaal 20 tekens zijn').max(5000, 'Beschrijving mag maximaal 5000 tekens zijn'),
   categoryId: z.string().min(1, 'Selecteer een categorie'),
   locationCity: z.string().min(2, 'Stad is verplicht'),
-  locationPostcode: z.string().min(4, 'Postcode is verplicht'),
+  locationPostcode: dutchPostcodeSchema,
   locationAddress: z.string().optional().or(z.literal('')),
   // Optional fields (with defaults applied in API)
   budgetMin: z.number().min(0).optional().nullable(),
@@ -98,11 +155,6 @@ export const createReviewSchema = z.object({
   rating: z.number().min(1).max(5),
   title: z.string().max(100).optional().or(z.literal('')),
   content: z.string().min(10, 'Review moet minimaal 10 tekens zijn').max(1000, 'Review mag maximaal 1000 tekens zijn'),
-  // Sub-ratings are optional
-  qualityRating: z.number().min(1).max(5).optional(),
-  communicationRating: z.number().min(1).max(5).optional(),
-  timelinessRating: z.number().min(1).max(5).optional(),
-  valueRating: z.number().min(1).max(5).optional(),
 });
 
 export const reviewResponseSchema = z.object({
@@ -118,7 +170,7 @@ export const updateClientProfileSchema = z.object({
   name: z.string().min(2).optional().or(z.literal('')),
   phone: z.string().optional().or(z.literal('')),
   city: z.string().optional().or(z.literal('')),
-  postcode: z.string().regex(/^[1-9][0-9]{3}\s?[A-Za-z]{2}$/, 'Ongeldige postcode').optional().or(z.literal('')),
+  postcode: optionalDutchPostcodeSchema,
   address: z.string().optional().or(z.literal('')),
 });
 

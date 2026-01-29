@@ -10,13 +10,20 @@ import { z } from 'zod';
 import { AlertCircle, Upload, X, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
 
-// Simplified validation schema
+// Dutch postal code validation
+const dutchPostcodeRegex = /^[1-9][0-9]{3}\s?[A-Za-z]{2}$/;
+
+// Simplified validation schema with Dutch postal code
 const simpleJobSchema = z.object({
   categoryId: z.string().min(1, 'Selecteer een categorie'),
   title: z.string().min(5, 'Minimaal 5 tekens').max(100),
   description: z.string().min(20, 'Minimaal 20 tekens').max(5000),
   locationCity: z.string().min(2, 'Vul een stad in'),
-  locationPostcode: z.string().min(4, 'Vul een postcode in'),
+  locationPostcode: z.string()
+    .min(1, 'Postcode is verplicht')
+    .refine((val) => dutchPostcodeRegex.test(val.replace(/\s/g, '')), {
+      message: 'Ongeldige postcode (gebruik formaat: 1234 AB)',
+    }),
 });
 
 type SimpleJobInput = z.infer<typeof simpleJobSchema>;
@@ -30,6 +37,18 @@ type Category = {
 interface JobFormProps {
   categories: Category[];
   initialCategorySlug?: string;
+}
+
+// Format postal code as user types
+function formatPostcode(value: string): string {
+  // Remove all non-alphanumeric characters
+  const cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  
+  // If we have 4+ characters, insert space after 4th
+  if (cleaned.length > 4) {
+    return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 6)}`;
+  }
+  return cleaned;
 }
 
 export function JobForm({ categories, initialCategorySlug }: JobFormProps) {
@@ -58,6 +77,12 @@ export function JobForm({ categories, initialCategorySlug }: JobFormProps) {
   });
 
   const selectedCategoryId = watch('categoryId');
+
+  // Handle postcode input with formatting
+  const handlePostcodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPostcode(e.target.value);
+    setValue('locationPostcode', formatted, { shouldValidate: true });
+  };
 
   // Image handling
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -218,13 +243,19 @@ export function JobForm({ categories, initialCategorySlug }: JobFormProps) {
             required
             {...register('locationCity')}
           />
-          <Input
-            label="Postcode"
-            placeholder="1234 AB"
-            error={errors.locationPostcode?.message}
-            required
-            {...register('locationPostcode')}
-          />
+          <div>
+            <Input
+              label="Postcode"
+              placeholder="1234 AB"
+              error={errors.locationPostcode?.message}
+              required
+              maxLength={7}
+              {...register('locationPostcode', {
+                onChange: handlePostcodeChange,
+              })}
+            />
+            <p className="mt-1 text-xs text-surface-500">Nederlands formaat: 1234 AB</p>
+          </div>
         </div>
 
         {/* Photos (optional) */}

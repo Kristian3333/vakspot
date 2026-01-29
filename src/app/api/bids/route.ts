@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { createBidSchema } from '@/lib/validations';
+import { sendNewInterestEmail } from '@/lib/email';
 
 // GET - List interests (for pro: their interests, for client: interests on their jobs)
 export async function GET(request: NextRequest) {
@@ -138,14 +139,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Pro profile not found' }, { status: 404 });
     }
 
-    // Verify job exists and is available (PUBLISHED or already has interests but not yet accepted)
+    // Verify job exists and is available (PUBLISHED only - not ACCEPTED, COMPLETED, etc.)
     const job = await prisma.job.findUnique({
       where: { id: jobId },
+      include: {
+        client: {
+          select: {
+            userId: true,
+            user: { select: { email: true, name: true } },
+          },
+        },
+      },
     });
 
-    // Allow interest on PUBLISHED jobs (not ACCEPTED, COMPLETED, CANCELLED, etc.)
-    const availableStatuses = ['PUBLISHED', 'IN_CONVERSATION'];
-    if (!job || !availableStatuses.includes(job.status)) {
+    if (!job || job.status !== 'PUBLISHED') {
       return NextResponse.json({ error: 'Job not available' }, { status: 400 });
     }
 
@@ -194,7 +201,30 @@ export async function POST(request: NextRequest) {
     // DON'T change job status here - keep it PUBLISHED so other PROs can see it
     // Status only changes to ACCEPTED when client accepts a PRO
 
-    return NextResponse.json({ 
+    // Send email notification to client (fire-and-forget)
+    if (job.client.user.email) {
+      sendNewInterestEmail({
+        to: job.client.user.email,
+        proName: session.user.name || 'Vakman',
+        proCompany: proProfile.companyName,
+        jobTitle: bid.job.title,
+        message: message,
+        jobUrl: `/client/jobs/${jobId}`,
+      }).catch(console.error);
+
+      // Create in-app notification for client
+      prisma.notification.create({
+        data: {
+          userId: job.client.userId,
+          type: 'NEW_BID',
+          title: `Nieuwe interesse van ${proProfile.companyName}`,
+          message: `${proProfile.companyName} is geïnteresseerd in "${bid.job.title}"`,
+          link: `/client/jobs/${jobId}`,
+        },
+      }).catch(console.error);
+    }
+
+    return NextResponse.json({
       bid,
       jobId: bid.jobId,
       conversationId: bid.conversation?.id,

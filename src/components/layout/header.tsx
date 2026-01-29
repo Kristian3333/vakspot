@@ -16,6 +16,7 @@ import {
   PlusCircle,
   Briefcase,
   ClipboardList,
+  Package,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { Session } from 'next-auth';
@@ -65,6 +66,7 @@ export function Header({ session }: HeaderProps) {
         { href: '/pro/jobs', label: 'Zoeken', icon: Search },
         { href: '/pro/leads', label: 'Mijn klussen', icon: ClipboardList },
         { href: '/messages', label: 'Berichten', icon: MessageSquare, showBadge: true },
+        { href: '/pro/services', label: 'Services', icon: Package },
         { href: '/pro/profile', label: 'Profiel', icon: User },
       ];
     }

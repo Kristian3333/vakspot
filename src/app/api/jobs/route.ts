@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { createJobSchema } from '@/lib/validations';
 import { JobStatus } from '@prisma/client';
+import { geocodePostcode } from '@/lib/geo/dutch-postcodes';
 
 // GET /api/jobs - List jobs (for client's own jobs or public published jobs)
 export async function GET(request: NextRequest) {
@@ -165,6 +166,11 @@ export async function POST(request: NextRequest) {
       images,
     } = parsed.data;
 
+    // Geocode postal code to get coordinates
+    const coords = geocodePostcode(locationPostcode);
+    const locationLat = coords?.lat || null;
+    const locationLng = coords?.lng || null;
+
     // Create the job (auto-publish)
     const job = await prisma.job.create({
       data: {
@@ -178,6 +184,8 @@ export async function POST(request: NextRequest) {
         locationCity,
         locationPostcode,
         locationAddress: locationAddress || null,
+        locationLat,
+        locationLng,
         timeline: timeline || 'FLEXIBLE',
         startDate: startDate || null,
         status: JobStatus.PUBLISHED,

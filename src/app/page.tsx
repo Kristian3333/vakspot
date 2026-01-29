@@ -1,7 +1,7 @@
 // src/app/page.tsx
 import Link from 'next/link';
 import { Button } from '@/components/ui';
-import { Search, Briefcase, CheckCircle2, Clock, Shield } from 'lucide-react';
+import { Search, Briefcase, CheckCircle2, Clock, Shield, Users, ArrowRight, Info } from 'lucide-react';
 import { auth } from '@/lib/auth';
 
 export default async function HomePage() {
@@ -20,7 +20,7 @@ export default async function HomePage() {
           Bekijk de nieuwste klussen in uw regio.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row gap-4">
-          <Link href="/pro/leads">
+          <Link href="/pro/jobs">
             <Button size="lg">
               <Search className="h-5 w-5 mr-2" />
               Bekijk klussen
@@ -134,7 +134,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Simple how it works */}
+      {/* How it works - Concrete steps */}
       <section className="bg-surface-50 py-16 px-4">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold text-surface-900 text-center mb-12">
@@ -167,6 +167,58 @@ export default async function HomePage() {
               <p className="mt-2 text-sm text-surface-600">
                 Chat, vergelijk en kies de beste match
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Explanation (P2B Compliance) */}
+      <section className="py-16 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="p-6 rounded-2xl bg-surface-50 border border-surface-200">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center">
+                <Info className="h-5 w-5 text-brand-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-surface-900">Wat doet VakSpot?</h3>
+                <p className="mt-2 text-sm text-surface-600">
+                  VakSpot is een <strong>bemiddelingsplatform</strong> dat opdrachtgevers verbindt met zelfstandige vakmensen. 
+                  Wij zijn géén aannemer en voeren zelf geen werkzaamheden uit.
+                </p>
+                
+                {/* Simple visual diagram */}
+                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-surface-500">
+                  <div className="px-3 py-2 rounded-lg bg-white border border-surface-200 text-center">
+                    <Users className="h-5 w-5 mx-auto text-brand-500" />
+                    <span className="block mt-1">Opdrachtgever</span>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-surface-400" />
+                  <div className="px-3 py-2 rounded-lg bg-brand-50 border border-brand-200 text-center">
+                    <span className="font-semibold text-brand-600">VakSpot</span>
+                    <span className="block text-xs text-brand-500">Bemiddeling</span>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-surface-400" />
+                  <div className="px-3 py-2 rounded-lg bg-white border border-surface-200 text-center">
+                    <Briefcase className="h-5 w-5 mx-auto text-surface-500" />
+                    <span className="block mt-1">Vakman</span>
+                  </div>
+                </div>
+
+                <ul className="mt-4 text-sm text-surface-600 space-y-1">
+                  <li>• U maakt rechtstreeks afspraken met de vakman</li>
+                  <li>• Prijs en voorwaarden bepaalt u onderling</li>
+                  <li>• De vakman is verantwoordelijk voor zijn eigen werk</li>
+                </ul>
+                
+                <Link 
+                  href="/faq#platform" 
+                  className="inline-flex items-center gap-1 mt-3 text-sm text-brand-600 hover:underline"
+                >
+                  Meer informatie
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>

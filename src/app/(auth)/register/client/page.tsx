@@ -8,13 +8,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Input, Card } from '@/components/ui';
 import { z } from 'zod';
-import { AlertCircle, User, ArrowLeft } from 'lucide-react';
+import { AlertCircle, User, ArrowLeft, Check } from 'lucide-react';
 
 const clientRegisterSchema = z.object({
   name: z.string().min(2, 'Minimaal 2 tekens'),
   email: z.string().email('Ongeldig e-mailadres'),
   password: z.string().min(6, 'Minimaal 6 tekens'),
   confirmPassword: z.string(),
+  acceptTerms: z.boolean().refine((val) => val === true, {
+    message: 'U moet akkoord gaan met de voorwaarden',
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Wachtwoorden komen niet overeen',
   path: ['confirmPassword'],
@@ -30,9 +33,15 @@ export default function ClientRegisterPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    watch,
   } = useForm<ClientRegisterInput>({
     resolver: zodResolver(clientRegisterSchema),
+    defaultValues: {
+      acceptTerms: false,
+    },
   });
+
+  const acceptTerms = watch('acceptTerms');
 
   const onSubmit = async (data: ClientRegisterInput) => {
     setError(null);
@@ -126,15 +135,47 @@ export default function ClientRegisterPage() {
               {...register('confirmPassword')}
             />
 
-            <div className="text-xs text-surface-600">
-              Door te registreren gaat u akkoord met onze{' '}
-              <Link href="/terms" className="text-brand-600 hover:underline">
-                voorwaarden
-              </Link>{' '}
-              en{' '}
-              <Link href="/privacy" className="text-brand-600 hover:underline">
-                privacybeleid
-              </Link>.
+            {/* Terms consent checkbox */}
+            <div>
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <div className="relative flex-shrink-0 mt-0.5">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    {...register('acceptTerms')}
+                  />
+                  <div className={`w-5 h-5 rounded border-2 transition-colors flex items-center justify-center ${
+                    acceptTerms 
+                      ? 'bg-brand-500 border-brand-500' 
+                      : 'border-surface-300 group-hover:border-surface-400'
+                  } ${errors.acceptTerms ? 'border-error-500' : ''}`}>
+                    {acceptTerms && <Check className="h-3 w-3 text-white" />}
+                  </div>
+                </div>
+                <span className="text-sm text-surface-600">
+                  Ik ga akkoord met de{' '}
+                  <Link href="/terms" className="text-brand-600 hover:underline" target="_blank">
+                    algemene voorwaarden
+                  </Link>{' '}
+                  en het{' '}
+                  <Link href="/privacy" className="text-brand-600 hover:underline" target="_blank">
+                    privacybeleid
+                  </Link>
+                </span>
+              </label>
+              {errors.acceptTerms && (
+                <p className="mt-1 text-sm text-error-500">{errors.acceptTerms.message}</p>
+              )}
+            </div>
+
+            {/* Terms summary */}
+            <div className="p-3 rounded-lg bg-surface-50 text-xs text-surface-600">
+              <p className="font-medium text-surface-700 mb-1">Samenvatting:</p>
+              <ul className="space-y-1">
+                <li>• VakSpot is een bemiddelingsplatform, geen aannemer</li>
+                <li>• Uw gegevens worden alleen gebruikt om vakmensen te koppelen</li>
+                <li>• U kunt uw account altijd verwijderen</li>
+              </ul>
             </div>
 
             <Button type="submit" className="w-full" isLoading={isSubmitting}>

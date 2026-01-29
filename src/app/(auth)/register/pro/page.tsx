@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Input, Card } from '@/components/ui';
 import { z } from 'zod';
-import { AlertCircle, CheckCircle2, Briefcase, ArrowLeft } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Briefcase, ArrowLeft, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const proRegisterSchema = z.object({
@@ -20,6 +20,9 @@ const proRegisterSchema = z.object({
   phone: z.string().min(10, 'Ongeldig telefoonnummer'),
   city: z.string().min(2, 'Vul een stad in'),
   categories: z.array(z.string()).min(1, 'Selecteer minimaal één categorie'),
+  acceptTerms: z.boolean().refine((val) => val === true, {
+    message: 'U moet akkoord gaan met de voorwaarden',
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Wachtwoorden komen niet overeen',
   path: ['confirmPassword'],
@@ -44,13 +47,17 @@ export default function ProRegisterPage() {
     handleSubmit,
     setValue,
     trigger,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ProRegisterInput>({
     resolver: zodResolver(proRegisterSchema),
     defaultValues: {
       categories: [],
+      acceptTerms: false,
     },
   });
+
+  const acceptTerms = watch('acceptTerms');
 
   useEffect(() => {
     fetch('/api/categories')
@@ -228,11 +235,51 @@ export default function ProRegisterPage() {
                   )}
                 </div>
 
-                <div className="text-xs text-surface-600">
-                  Door te registreren gaat u akkoord met onze{' '}
-                  <Link href="/terms" className="text-brand-600 hover:underline">voorwaarden</Link>
-                  {' '}en{' '}
-                  <Link href="/privacy" className="text-brand-600 hover:underline">privacybeleid</Link>.
+                {/* Terms consent checkbox */}
+                <div>
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <div className="relative flex-shrink-0 mt-0.5">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        {...register('acceptTerms')}
+                      />
+                      <div className={`w-5 h-5 rounded border-2 transition-colors flex items-center justify-center ${
+                        acceptTerms 
+                          ? 'bg-brand-500 border-brand-500' 
+                          : 'border-surface-300 group-hover:border-surface-400'
+                      } ${errors.acceptTerms ? 'border-error-500' : ''}`}>
+                        {acceptTerms && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                    </div>
+                    <span className="text-sm text-surface-600">
+                      Ik ga akkoord met de{' '}
+                      <Link href="/terms" className="text-brand-600 hover:underline" target="_blank">
+                        algemene voorwaarden
+                      </Link>,{' '}
+                      <Link href="/privacy" className="text-brand-600 hover:underline" target="_blank">
+                        privacybeleid
+                      </Link>{' '}
+                      en de{' '}
+                      <Link href="/terms#professionals" className="text-brand-600 hover:underline" target="_blank">
+                        platformvoorwaarden voor vakmensen
+                      </Link>
+                    </span>
+                  </label>
+                  {errors.acceptTerms && (
+                    <p className="mt-1 text-sm text-error-500">{errors.acceptTerms.message}</p>
+                  )}
+                </div>
+
+                {/* Terms summary for PROs */}
+                <div className="p-3 rounded-lg bg-surface-50 text-xs text-surface-600">
+                  <p className="font-medium text-surface-700 mb-1">Samenvatting voor vakmensen:</p>
+                  <ul className="space-y-1">
+                    <li>• VakSpot brengt opdrachtgevers en vakmensen samen</li>
+                    <li>• Uw profiel is zichtbaar voor potentiële opdrachtgevers</li>
+                    <li>• Ranking is gebaseerd op: locatie, reactiesnelheid, reviews</li>
+                    <li>• Bij geschillen kunt u bezwaar maken via ons support</li>
+                  </ul>
                 </div>
 
                 <div className="flex gap-3">

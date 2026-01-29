@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, Badge, Select, Spinner } from '@/components/ui';
 import { formatRelativeTime, cn } from '@/lib/utils';
-import { MapPin, ChevronRight, Briefcase, AlertCircle, RefreshCw, Users, CheckCircle2 } from 'lucide-react';
+import { MapPin, ChevronRight, Briefcase, AlertCircle, RefreshCw, Users, CheckCircle2, Sparkles } from 'lucide-react';
 
 type Job = {
   id: string;
@@ -17,6 +17,7 @@ type Job = {
   distance?: number | null;
   interestCount?: number;
   isAccepted?: boolean;
+  isSponsored?: boolean;
   category: { id: string; name: string };
   images: { url: string }[];
 };
@@ -28,7 +29,7 @@ export default function ProJobsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('recommended'); // Default to recommended
 
   const fetchCategories = async () => {
     try {
@@ -46,7 +47,16 @@ export default function ProJobsPage() {
     
     try {
       const params = new URLSearchParams();
-      if (selectedCategory) params.set('categoryId', selectedCategory);
+      
+      // 'recommended' = use PRO's categories (default)
+      // 'all' = show all jobs regardless of category
+      // specific ID = filter by that category
+      if (selectedCategory === 'all') {
+        params.set('showAll', 'true');
+      } else if (selectedCategory && selectedCategory !== 'recommended') {
+        params.set('categoryId', selectedCategory);
+      }
+      // If 'recommended', don't pass any param - API will use PRO's categories
 
       const res = await fetch(`/api/leads?${params}`);
       const data = await res.json();
@@ -81,17 +91,24 @@ export default function ProJobsPage() {
         <p className="mt-1 text-surface-600">Klussen in uw regio</p>
       </div>
 
-      {/* Simple filter */}
+      {/* Category filter */}
       <div className="mb-6">
         <Select
           options={[
-            { value: '', label: 'Alle categorieën' },
+            { value: 'recommended', label: '⭐ Aanbevolen voor u' },
+            { value: 'all', label: 'Alle klussen' },
             ...categories.map(c => ({ value: c.id, label: c.name })),
           ]}
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
           className="w-full sm:w-64"
         />
+        {selectedCategory === 'recommended' && (
+          <p className="mt-2 text-xs text-surface-500 flex items-center gap-1">
+            <Sparkles className="h-3 w-3" />
+            Gebaseerd op uw vakgebieden
+          </p>
+        )}
       </div>
 
       {/* Loading */}
@@ -122,7 +139,12 @@ export default function ProJobsPage() {
         <Card className="text-center py-12">
           <Briefcase className="mx-auto h-12 w-12 text-surface-300" />
           <h3 className="mt-4 text-lg font-medium text-surface-900">Geen klussen gevonden</h3>
-          <p className="mt-1 text-surface-500">Probeer een andere categorie</p>
+          <p className="mt-1 text-surface-500">
+            {selectedCategory === 'recommended' 
+              ? 'Er zijn momenteel geen klussen in uw vakgebied. Probeer "Alle klussen" te bekijken.'
+              : 'Probeer een andere categorie of bekijk de aanbevolen klussen.'
+            }
+          </p>
         </Card>
       )}
 
@@ -183,7 +205,13 @@ function JobCard({ job, accepted = false }: { job: Job; accepted?: boolean }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {job.isSponsored && !accepted && (
+                    <Badge className="bg-amber-100 text-amber-800 flex items-center gap-1" size="sm">
+                      <Sparkles className="h-3 w-3" />
+                      Gesponsord
+                    </Badge>
+                  )}
                   <Badge variant="neutral" size="sm">{job.category?.name}</Badge>
                   {accepted && (
                     <Badge variant="warning" size="sm" className="flex items-center gap-1">

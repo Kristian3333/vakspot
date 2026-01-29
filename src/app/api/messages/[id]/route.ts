@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { sendNewMessageEmail } from '@/lib/email';
 
 // GET - Get conversation details with messages
 export async function GET(
@@ -190,8 +191,24 @@ export async function POST(
       include: {
         bid: {
           include: {
-            job: { select: { client: { select: { userId: true } } } },
-            pro: { select: { userId: true } },
+            job: {
+              select: {
+                title: true,
+                client: {
+                  select: {
+                    userId: true,
+                    user: { select: { email: true, name: true } },
+                  },
+                },
+              },
+            },
+            pro: {
+              select: {
+                userId: true,
+                companyName: true,
+                user: { select: { id: true, email: true, name: true } },
+              },
+            },
           },
         },
       },
@@ -252,6 +269,36 @@ export async function POST(
       where: { id },
       data: { updatedAt: new Date() },
     });
+
+    // Send email notification to the other party (fire-and-forget)
+    const senderName = session.user.name || 'Gebruiker';
+    const recipientEmail = isClient
+      ? conversation.bid.pro.user.email
+      : conversation.bid.job.client.user.email;
+    const recipientUserId = isClient
+      ? conversation.bid.pro.userId
+      : conversation.bid.job.client.userId;
+
+    if (recipientEmail) {
+      sendNewMessageEmail({
+        to: recipientEmail,
+        senderName: isClient ? senderName : (conversation.bid.pro.companyName || senderName),
+        jobTitle: conversation.bid.job.title,
+        messagePreview: (content?.trim() || '📎 Bijlage verstuurd').substring(0, 100),
+        conversationUrl: `/messages/${id}`,
+      }).catch(console.error);
+
+      // Create in-app notification
+      prisma.notification.create({
+        data: {
+          userId: recipientUserId,
+          type: 'NEW_MESSAGE',
+          title: `Nieuw bericht van ${isClient ? senderName : conversation.bid.pro.companyName}`,
+          message: (content?.trim() || '📎 Bijlage verstuurd').substring(0, 100),
+          link: `/messages/${id}`,
+        },
+      }).catch(console.error);
+    }
 
     return NextResponse.json({ message }, { status: 201 });
   } catch (error) {

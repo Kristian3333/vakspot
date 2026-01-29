@@ -17,6 +17,7 @@ export function AcceptProButton({ bidId, proName, jobTitle }: AcceptProButtonPro
   const [showConfirm, setShowConfirm] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<{ rejectedCount: number } | null>(null);
 
   const handleAccept = async () => {
     setIsAccepting(true);
@@ -27,19 +28,44 @@ export function AcceptProButton({ bidId, proName, jobTitle }: AcceptProButtonPro
         method: 'POST',
       });
 
-      if (!response.ok && !response.redirected) {
-        const data = await response.json();
+      const data = await response.json();
+
+      if (!response.ok) {
         throw new Error(data.error || 'Accepteren mislukt');
       }
 
-      // Refresh the page to show updated status
-      router.refresh();
-      setShowConfirm(false);
+      // Show success briefly, then refresh
+      setSuccess({ rejectedCount: data.rejectedCount || 0 });
+      
+      // Refresh the page after a short delay
+      setTimeout(() => {
+        router.refresh();
+      }, 1500);
     } catch (err: any) {
       setError(err.message);
       setIsAccepting(false);
     }
   };
+
+  if (success) {
+    return (
+      <div className="p-4 rounded-xl border border-success-200 bg-success-50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-success-100">
+            <CheckCircle2 className="h-5 w-5 text-success-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-success-800">{proName} gekozen!</h3>
+            <p className="text-sm text-success-700">
+              {success.rejectedCount > 0 
+                ? `${success.rejectedCount} andere vakman${success.rejectedCount > 1 ? 'nen' : ''} automatisch afgewezen.`
+                : 'De vakman ontvangt nu bericht.'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (showConfirm) {
     return (
@@ -52,7 +78,7 @@ export function AcceptProButton({ bidId, proName, jobTitle }: AcceptProButtonPro
             <h3 className="font-semibold text-surface-900">{proName} kiezen?</h3>
             <p className="mt-1 text-sm text-surface-600">
               Weet u zeker dat u deze vakman wilt kiezen voor "{jobTitle}"? 
-              Andere geïnteresseerden worden automatisch afgewezen.
+              Andere geïnteresseerden worden automatisch afgewezen en ontvangen hierover bericht.
             </p>
             {error && (
               <p className="mt-2 text-sm text-error-600">{error}</p>

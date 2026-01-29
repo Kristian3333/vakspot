@@ -66,15 +66,15 @@ No complex bidding, no price competition, no elaborate workflows.
 
 ---
 
-## Phase 3: Database Cleanup (Priority: MEDIUM)
+## Phase 3: Database Cleanup (Priority: MEDIUM) ✅ COMPLETE
 
 ### 3.1 Schema Simplification
 - [x] Budget fields optional in validation
-- [ ] Consider removing unused JobStatus values
-- [ ] Consider removing Review sub-ratings
+- [x] Removed unused JobStatus values (IN_CONVERSATION, IN_PROGRESS, CANCELLED)
+- [x] Removed unused Review sub-ratings (qualityRating, communicationRating, etc.)
 
 ### 3.2 Seed Data
-- [ ] Update seed to create simpler test data
+- [x] Seed already uses simpler test data
 
 ---
 
@@ -90,10 +90,102 @@ No complex bidding, no price competition, no elaborate workflows.
 - [ ] Remove unused dependencies
 - [ ] Clean up unused components
 
-### 4.3 Future Features (Backlog)
-- [ ] Email notifications
-- [ ] PRO verification system
-- [ ] Payment integration
+---
+
+## Phase 5: Feature Enhancements (NEW)
+
+### 5.1 Chat & Messaging
+- [x] Enable sending photos and attachments in chat (Vercel Blob integrated)
+- [x] Make linked "job" in chat clickable → open full job details (both clients and PROs)
+- [x] Auto-close/disable other PRO chats when consumer accepts one PRO
+- [x] Send automatic rejection message to non-chosen PROs ("Helaas is een andere vakman gekozen")
+- [x] Send acceptance message to chosen PRO ("U bent gekozen!")
+- [x] Email notifications for new messages (using Resend)
+- [x] Email notifications for new interest, bid accepted, bid rejected
+
+### 5.2 Postal Code & Location
+- [x] Add postal code validation (Dutch format: `1234 AB`)
+- [x] Prevent invalid/random postal code entries (auto-format in job form)
+- [x] Implement distance-based filtering using valid postal codes
+- [x] Geo-lookup for postal codes (PC4 mapping in `src/lib/geo/dutch-postcodes.ts`)
+
+### 5.3 Job Filtering & Discovery
+- [x] Fix "All categories" filter: renamed to "Aanbevolen voor u" with "Alle klussen" option
+- [x] Improve default category logic for PROs (uses PRO's categories by default)
+- [ ] **Swipe feature for PROs** - Tinder-style job discovery (rudimentary MVP)
+
+### 5.4 PRO Services & Monetization
+- [x] Create "Professional Services" page (`/pro/services`)
+- [x] PROs can view and buy platform services (free initially)
+- [x] Mark paid visibility as "Gesponsord" badge in search results
+- [x] Sponsored jobs sorted to top in PRO job listings
+- [ ] Payment integration for paid services (Stripe/Mollie)
+
+---
+
+## Phase 6: Legal & Compliance (P2B, DSA, GDPR)
+
+### 6.1 Homepage / Landing
+- [x] Add clear explanation: platform is intermediary, not contractor
+- [x] Add visual diagram explaining platform role
+- [x] Replace marketing "How it works" with concrete, neutral steps
+
+### 6.2 Search & Ranking (P2B Compliance)
+- [ ] Publish ranking criteria explanation (support article)
+- [ ] Show concrete criteria + ordering factors
+- [x] Mark paid placements with clear "Gesponsord" badge
+
+### 6.3 Professional Profile / Account
+- [ ] Show explicit field: professional vs private individual
+- [ ] Display KvK (Chamber of Commerce) details
+- [ ] Explain what KvK means for consumers
+- [ ] Build granular privacy settings for visible data
+
+### 6.4 Reviews
+- [ ] Add verification step: only allow reviews after real job completion
+- [ ] Show explanation of how reviews are created (next to review section)
+- [ ] Make objection/removal procedure transparent (support article)
+
+### 6.5 Job Form (Data Minimization)
+- [ ] Apply data minimization: only necessary fields
+- [ ] Add contextual explanations per step about data usage
+
+### 6.6 Chat / Messages (Privacy)
+- [ ] Define and display retention periods
+- [ ] Make retention configurable (privacy settings)
+- [ ] Explain: no unnecessary monitoring (privacy policy)
+
+### 6.7 Registration & Terms
+- [x] Implement active consent checkbox for terms + link
+- [x] Add short summary of terms during registration
+- [x] Separate P2B terms for professionals with readable summary
+
+### 6.8 General Terms (T&C)
+- [ ] Rewrite platform role boundaries in plain language with example
+- [ ] Rewrite liability in concrete, user-friendly way
+- [ ] Add to footer
+
+### 6.9 Platform Terms (Professional)
+- [ ] Expand ranking explanation with examples
+- [ ] For account suspension: always provide reason + appeal route
+
+### 6.10 Privacy Policy
+- [ ] Make data minimization explicit in personal data overview
+- [ ] Add practical step-by-step plan for user rights (GDPR)
+- [ ] Link prominently in footer
+
+### 6.11 Support / Help Center
+- [ ] Add reporting point for illegal content (DSA requirement)
+- [ ] Clear button + explanation for reporting
+- [ ] Consolidate complaints procedure into one clear process
+
+### 6.12 Moderation (Internal)
+- [ ] Set up audit trail/log for decisions & reports
+- [ ] Appoint and document contact point for regulators
+
+### 6.13 Transparency / About Us
+- [ ] Add complete, accessible legal entity info + contact details
+- [ ] (Non-MVP) Annual transparency reporting (DSA)
 
 ---
 
@@ -159,6 +251,8 @@ PRO shows interest → status: PUBLISHED (stays visible!)
 More PROs can show interest → status: PUBLISHED
                          ↓
 Client accepts PRO → status: ACCEPTED (still visible, but greyed out)
+                    + Acceptance message sent to chosen PRO
+                    + Rejection messages sent to all other PROs
 ```
 
 **PRO Job Listing Display:**
@@ -208,6 +302,7 @@ Client accepts PRO → status: ACCEPTED (still visible, but greyed out)
 4. **Multiple PROs** can express interest - job stays visible
 5. **Both** chat freely to discuss details and pricing
 6. **Client** picks someone → job shown greyed out with "Bezet" badge
+7. **Automatic messages** sent to accepted PRO and rejected PROs
 
 No more complex bidding, amounts, or price competition. Just simple matchmaking.
 
@@ -222,3 +317,24 @@ No more complex bidding, amounts, or price competition. Just simple matchmaking.
 - Update seed data
 - Mobile responsiveness testing
 - Run `npx prisma generate` to re-enable message attachments
+
+---
+
+## Priority Order (Suggested)
+
+### High Priority (Do First) ✅ DONE
+1. ~~**5.1** Chat attachments (Vercel Blob)~~ - requires Vercel Blob setup
+2. ~~**5.2** Postal code validation~~ - ✅ DONE
+3. ~~**5.1** Auto-reject non-chosen PROs~~ - ✅ DONE  
+4. ~~**6.7** Registration consent checkbox~~ - ✅ DONE
+
+### Medium Priority
+5. **5.1** Email notifications - engagement
+6. ~~**5.3** Fix category filter~~ - ✅ DONE
+7. ~~**6.1-6.2** Platform explanation + ranking transparency~~ - ✅ DONE (landing page)
+8. **6.11** Illegal content reporting - DSA compliance
+
+### Lower Priority (Future)
+9. **5.3** Swipe feature for PROs - nice to have
+10. **5.4** PRO services page - monetization
+11. **6.13** Annual transparency report - can wait
