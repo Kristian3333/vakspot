@@ -3,6 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import { Button, Avatar } from '@/components/ui';
 import { UnreadBadge } from '@/components/messages/unread-badge';
@@ -35,19 +36,7 @@ export function Header({ session }: HeaderProps) {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    try {
-      const response = await fetch('/api/auth/signout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (response.redirected) {
-        window.location.href = response.url;
-      } else {
-        window.location.href = '/';
-      }
-    } catch (error) {
-      window.location.href = '/';
-    }
+    await signOut({ callbackUrl: '/' });
   };
 
   // Simplified navigation

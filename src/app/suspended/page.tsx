@@ -7,6 +7,7 @@ import prisma from '@/lib/prisma';
 import { Card, Button } from '@/components/ui';
 import { AlertTriangle, Mail, FileText, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { LogoutButton } from '@/components/auth/logout-button';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -137,12 +138,7 @@ export default async function SuspendedPage() {
 
           {/* Sign out link */}
           <div className="mt-6">
-            <Link
-              href="/api/auth/signout"
-              className="text-sm text-surface-500 hover:text-surface-700"
-            >
-              Uitloggen
-            </Link>
+            <LogoutButton className="text-sm text-surface-500 hover:text-surface-700" />
           </div>
         </Card>
 
