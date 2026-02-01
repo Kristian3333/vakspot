@@ -19,6 +19,7 @@ type ProProfile = {
   image: string | null;
   proProfile?: {
     companyName: string | null;
+    kvkNumber: string | null;
     phone: string | null;
     description: string | null;
     locationCity: string | null;
@@ -38,6 +39,7 @@ export default function EditProProfilePage() {
 
   const [formData, setFormData] = useState({
     companyName: '',
+    kvkNumber: '',
     phone: '',
     description: '',
     serviceRadius: 25,
@@ -54,6 +56,7 @@ export default function EditProProfilePage() {
           setProfile(profileData);
           setFormData({
             companyName: profileData.proProfile?.companyName || '',
+            kvkNumber: profileData.proProfile?.kvkNumber || '',
             phone: profileData.proProfile?.phone || '',
             description: profileData.proProfile?.description || '',
             serviceRadius: profileData.proProfile?.serviceRadius || 25,
@@ -171,6 +174,13 @@ export default function EditProProfilePage() {
                 required
               />
               <Input
+                label="KvK-nummer"
+                value={formData.kvkNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, kvkNumber: e.target.value }))}
+                placeholder="12345678"
+                maxLength={8}
+              />
+              <Input
                 label="Telefoonnummer"
                 value={formData.phone}
                 onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
@@ -179,6 +189,9 @@ export default function EditProProfilePage() {
                 required
               />
             </div>
+            <p className="text-xs text-surface-500 mt-3">
+              Het KvK-nummer helpt opdrachtgevers uw bedrijf te verifiëren.
+            </p>
           </Card>
 
           {/* Service Area */}

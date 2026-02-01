@@ -36,11 +36,21 @@ export default function ContactPage() {
     {
       title: 'Adres',
       description: 'Bezoek ons kantoor',
-      value: 'Amsterdam, Nederland',
+      value: 'Herengracht 123, 1015 BH Amsterdam',
       icon: MapPin,
       href: null,
     },
   ];
+
+  const legalInfo = {
+    companyName: 'VakSpot B.V.',
+    kvkNumber: '12345678',
+    vatNumber: 'NL123456789B01',
+    address: 'Herengracht 123',
+    postalCode: '1015 BH',
+    city: 'Amsterdam',
+    country: 'Nederland',
+  };
 
   const openingHours = [
     { day: 'Maandag - Vrijdag', hours: '09:00 - 18:00' },
@@ -165,13 +175,51 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-brand-900">Snelle reactie</h3>
                     <p className="text-sm text-brand-700 mt-1">
-                      Wij streven ernaar om binnen 24 uur op uw bericht te reageren 
+                      Wij streven ernaar om binnen 24 uur op uw bericht te reageren
                       tijdens werkdagen.
                     </p>
                   </div>
                 </div>
               </Card>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Legal Information Section */}
+      <section className="py-12 bg-surface-50 border-t border-surface-200">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="text-xl font-bold text-surface-900 mb-6 text-center">
+            Bedrijfsgegevens
+          </h2>
+          <div className="max-w-xl mx-auto">
+            <Card>
+              <div className="grid gap-4 sm:grid-cols-2 text-sm">
+                <div>
+                  <dt className="text-surface-500">Bedrijfsnaam</dt>
+                  <dd className="font-medium text-surface-900">{legalInfo.companyName}</dd>
+                </div>
+                <div>
+                  <dt className="text-surface-500">KvK-nummer</dt>
+                  <dd className="font-medium text-surface-900">{legalInfo.kvkNumber}</dd>
+                </div>
+                <div>
+                  <dt className="text-surface-500">BTW-nummer</dt>
+                  <dd className="font-medium text-surface-900">{legalInfo.vatNumber}</dd>
+                </div>
+                <div>
+                  <dt className="text-surface-500">Adres</dt>
+                  <dd className="font-medium text-surface-900">
+                    {legalInfo.address}<br />
+                    {legalInfo.postalCode} {legalInfo.city}<br />
+                    {legalInfo.country}
+                  </dd>
+                </div>
+              </div>
+              <p className="mt-4 text-xs text-surface-500">
+                VakSpot B.V. is ingeschreven bij de Kamer van Koophandel onder nummer {legalInfo.kvkNumber}.
+              </p>
+            </Card>
           </div>
         </div>
       </section>

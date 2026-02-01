@@ -65,7 +65,7 @@ Wij verkopen uw persoonsgegevens nooit aan derden.`,
       content: `Wij bewaren uw persoonsgegevens niet langer dan noodzakelijk voor de doeleinden waarvoor ze zijn verzameld. Na beëindiging van uw account bewaren wij uw gegevens nog maximaal 2 jaar voor administratieve doeleinden en om aan wettelijke verplichtingen te voldoen.`,
     },
     {
-      title: '8. Uw rechten',
+      title: '8. Uw rechten (AVG/GDPR)',
       content: `U heeft de volgende rechten met betrekking tot uw persoonsgegevens:
 
 • Recht op inzage: u kunt opvragen welke gegevens wij van u hebben
@@ -75,7 +75,38 @@ Wij verkopen uw persoonsgegevens nooit aan derden.`,
 • Recht op overdraagbaarheid: u kunt uw gegevens opvragen in een gestructureerd formaat
 • Recht van bezwaar: u kunt bezwaar maken tegen bepaalde verwerkingen
 
-Om deze rechten uit te oefenen, kunt u contact met ons opnemen via support@vakspot.nl.`,
+Stap-voor-stap procedure om uw rechten uit te oefenen:
+
+1. Ga naar Instellingen > Privacy in uw account, of
+2. Stuur een e-mail naar support@vakspot.nl met uw verzoek
+3. Wij verifiëren uw identiteit binnen 3 werkdagen
+4. Wij behandelen uw verzoek binnen 30 dagen (wettelijke termijn)
+5. U ontvangt een bevestiging wanneer uw verzoek is afgerond
+
+Bij gegevensexport:
+• U ontvangt uw gegevens in JSON-formaat
+• De download-link is 7 dagen geldig
+• Export bevat al uw accountgegevens, klussen en berichten`,
+    },
+    {
+      title: '8a. Dataminimalisatie',
+      content: `Wij hanteren het principe van dataminimalisatie conform de AVG:
+
+• Wij verzamelen alleen gegevens die strikt noodzakelijk zijn voor onze dienstverlening
+• Wij vragen niet naar gevoelige persoonsgegevens (religie, gezondheid, etc.)
+• Locatiegegevens worden alleen op postcodegebied-niveau gebruikt
+• Uw exacte adres wordt nooit gedeeld met andere gebruikers
+• Berichten worden niet automatisch gescand voor marketing
+
+Welke gegevens zijn verplicht?
+• Voor opdrachtgevers: naam, e-mail, woonplaats
+• Voor vakmensen: naam, e-mail, bedrijfsnaam, telefoon, werkgebied
+
+Optionele gegevens (u kiest zelf):
+• Profielfoto
+• KvK-nummer
+• Website
+• Uitgebreide bedrijfsbeschrijving`,
     },
     {
       title: '9. Cookies',

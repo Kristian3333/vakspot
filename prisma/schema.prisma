@@ -26,6 +26,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // Suspension (P2B compliance)
+  suspended        Boolean   @default(false)
+  suspendedAt      DateTime?
+  suspensionReason String?   @db.Text
+  suspendedBy      String?   // Admin user ID who suspended
+
   // Profiles (one-to-one)
   clientProfile ClientProfile?
   proProfile    ProProfile?
@@ -37,8 +43,12 @@ model User {
   // Messages sent
   messages Message[]
 
+  // Reports filed by this user
+  reports Report[]
+
   @@index([email])
   @@index([role])
+  @@index([suspended])
 }
 
 model Account {
@@ -442,4 +452,121 @@ model ServicePurchase {
   @@index([proId])
   @@index([serviceId])
   @@index([expiresAt])
+}
+
+// ============================================
+// REPORTS (DSA Compliance)
+// ============================================
+
+model Report {
+  id          String       @id @default(cuid())
+  type        ReportType
+  targetId    String       // ID of reported job, profile, or message
+  reporterId  String
+  reporter    User         @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  reason      ReportReason
+  description String?      @db.Text
+  status      ReportStatus @default(OPEN)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Resolution
+  resolvedAt  DateTime?
+  resolvedBy  String?      // Admin user ID
+  resolution  String?      @db.Text
+
+  @@index([type, targetId])
+  @@index([reporterId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ReportType {
+  JOB
+  PROFILE
+  MESSAGE
+}
+
+enum ReportReason {
+  SPAM
+  FRAUD
+  INAPPROPRIATE
+  ILLEGAL
+  HARASSMENT
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+// ============================================
+// APPEALS (P2B Compliance)
+// ============================================
+
+model Appeal {
+  id          String       @id @default(cuid())
+  userId      String
+  type        AppealType
+  reason      String       @db.Text
+  status      AppealStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Resolution
+  resolvedAt  DateTime?
+  resolvedBy  String?      // Admin user ID
+  resolution  String?      @db.Text
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum AppealType {
+  SUSPENSION
+  REPORT_DECISION
+  CONTENT_REMOVAL
+}
+
+enum AppealStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+// ============================================
+// MODERATION LOG (Audit Trail)
+// ============================================
+
+model ModerationLog {
+  id          String         @id @default(cuid())
+  adminId     String
+  action      ModerationAction
+  targetType  String         // "user", "job", "review", "report"
+  targetId    String
+  reason      String?        @db.Text
+  details     String?        @db.Text // JSON with additional details
+  createdAt   DateTime       @default(now())
+
+  @@index([adminId])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+enum ModerationAction {
+  SUSPEND_USER
+  UNSUSPEND_USER
+  DELETE_CONTENT
+  HIDE_CONTENT
+  RESOLVE_REPORT
+  DISMISS_REPORT
+  APPROVE_APPEAL
+  REJECT_APPEAL
+  VERIFY_PRO
+  UNVERIFY_PRO
 }

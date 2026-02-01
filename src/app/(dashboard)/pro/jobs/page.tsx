@@ -207,7 +207,11 @@ function JobCard({ job, accepted = false }: { job: Job; accepted?: boolean }) {
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {job.isSponsored && !accepted && (
-                    <Badge className="bg-amber-100 text-amber-800 flex items-center gap-1" size="sm">
+                    <Badge
+                      className="bg-amber-100 text-amber-800 flex items-center gap-1 cursor-help"
+                      size="sm"
+                      title="Deze klus is gepromoot door de opdrachtgever voor extra zichtbaarheid. Zie /ranking voor meer info."
+                    >
                       <Sparkles className="h-3 w-3" />
                       Gesponsord
                     </Badge>

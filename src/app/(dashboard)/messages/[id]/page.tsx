@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { Card, Button, Avatar, Spinner, Badge, StatusBadge } from '@/components/ui';
+import { Card, Button, Avatar, Spinner, Badge, StatusBadge, ReportButton } from '@/components/ui';
 import { formatCurrency, formatRelativeTime, cn } from '@/lib/utils';
 import {
   Send,
@@ -473,11 +473,14 @@ export default function ConversationPage() {
 
         {/* Messages */}
         <Card className="p-0 overflow-hidden">
-          <div className="p-4 border-b border-surface-200 bg-surface-50">
-            <h3 className="font-semibold text-surface-900">Berichten</h3>
-            <p className="text-sm text-surface-500">
-              Stel vragen, deel foto's en plan de klus
-            </p>
+          <div className="p-4 border-b border-surface-200 bg-surface-50 flex items-start justify-between">
+            <div>
+              <h3 className="font-semibold text-surface-900">Berichten</h3>
+              <p className="text-sm text-surface-500">
+                Stel vragen, deel foto's en plan de klus
+              </p>
+            </div>
+            <ReportButton type="MESSAGE" targetId={conversation.id} variant="icon" />
           </div>
 
           {/* Messages list */}

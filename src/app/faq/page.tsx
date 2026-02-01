@@ -120,6 +120,35 @@ export default function FAQPage() {
         },
       ],
     },
+    {
+      title: 'Reviews & beoordelingen',
+      faqs: [
+        {
+          question: 'Hoe werkt het reviewsysteem?',
+          answer: 'Na afronding van een klus kan de opdrachtgever een beoordeling achterlaten. Reviews bestaan uit een sterrenrating (1-5) en optioneel een geschreven beoordeling. Alle reviews worden gepubliceerd op het profiel van de vakman.',
+        },
+        {
+          question: 'Zijn reviews geverifieerd?',
+          answer: 'Reviews kunnen alleen worden geplaatst door opdrachtgevers die daadwerkelijk een klus via VakSpot hebben afgerond met de betreffende vakman. We controleren dit automatisch via ons systeem.',
+        },
+        {
+          question: 'Hoe wordt de gemiddelde score berekend?',
+          answer: 'De gemiddelde score is het rekenkundig gemiddelde van alle ontvangen sterrenratings. Elke review telt even zwaar mee, ongeacht de datum.',
+        },
+        {
+          question: 'Kan ik bezwaar maken tegen een review?',
+          answer: 'Ja, als vakman kunt u bezwaar maken tegen een review die u onterecht vindt. Neem contact op via support@vakspot.nl met het review-ID en uw bezwaar. Wij beoordelen elk bezwaar binnen 14 werkdagen. Legitieme redenen voor verwijdering zijn: valse identiteit, feitelijke onjuistheden, beledigende taal, of reviews die niet gerelateerd zijn aan de uitgevoerde klus.',
+        },
+        {
+          question: 'Kan een vakman reageren op reviews?',
+          answer: 'Ja, vakmensen kunnen reageren op reviews via hun profiel. Dit stelt u in staat om uw kant van het verhaal te delen en te laten zien dat u feedback serieus neemt.',
+        },
+        {
+          question: 'Worden negatieve reviews verwijderd?',
+          answer: 'Negatieve reviews worden niet automatisch verwijderd. Alleen reviews die onze richtlijnen schenden (bijv. haatspraak, valse claims, niet-gerelateerde inhoud) worden na onderzoek verwijderd.',
+        },
+      ],
+    },
   ];
 
   return (

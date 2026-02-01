@@ -43,6 +43,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             passwordHash: true,
             role: true,
             image: true,
+            suspended: true,
           },
         });
 
@@ -57,15 +58,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.name,
           role: user.role,
           image: user.image,
+          suspended: user.suspended,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role: Role }).role;
+        token.suspended = (user as { suspended: boolean }).suspended;
+      }
+      // Refresh suspended status on every request for security
+      if (trigger === 'update' || !user) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { suspended: true },
+        });
+        if (dbUser) {
+          token.suspended = dbUser.suspended;
+        }
       }
       return token;
     },
@@ -73,6 +86,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as Role;
+        session.user.suspended = token.suspended as boolean;
       }
       return session;
     },
@@ -83,6 +97,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 declare module 'next-auth' {
   interface User {
     role: Role;
+    suspended: boolean;
   }
   interface Session {
     user: {
@@ -91,6 +106,7 @@ declare module 'next-auth' {
       email: string;
       name?: string | null;
       image?: string | null;
+      suspended: boolean;
     };
   }
 }
@@ -99,5 +115,6 @@ declare module '@auth/core/jwt' {
   interface JWT {
     id: string;
     role: Role;
+    suspended: boolean;
   }
 }

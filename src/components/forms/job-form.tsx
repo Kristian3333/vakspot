@@ -194,6 +194,9 @@ export function JobForm({ categories, initialCategorySlug }: JobFormProps) {
         {/* Category selection */}
         <div>
           <label className="label">Wat voor klus?</label>
+          <p className="text-xs text-surface-500 mb-2">
+            Selecteer een categorie zodat de juiste vakmensen uw klus zien.
+          </p>
           <div className="grid grid-cols-2 gap-2 mt-2">
             {categories.map((cat) => (
               <button
@@ -216,45 +219,60 @@ export function JobForm({ categories, initialCategorySlug }: JobFormProps) {
         </div>
 
         {/* Title */}
-        <Input
-          label="Titel"
-          placeholder="Bijv: Badkamer renoveren"
-          error={errors.title?.message}
-          required
-          {...register('title')}
-        />
+        <div>
+          <Input
+            label="Titel"
+            placeholder="Bijv: Badkamer renoveren"
+            error={errors.title?.message}
+            required
+            {...register('title')}
+          />
+          <p className="mt-1 text-xs text-surface-500">
+            Een duidelijke titel helpt vakmensen snel te begrijpen wat u zoekt.
+          </p>
+        </div>
 
         {/* Description */}
-        <Textarea
-          label="Beschrijving"
-          placeholder="Beschrijf wat u nodig heeft..."
-          rows={4}
-          error={errors.description?.message}
-          required
-          {...register('description')}
-        />
+        <div>
+          <Textarea
+            label="Beschrijving"
+            placeholder="Beschrijf wat u nodig heeft..."
+            rows={4}
+            error={errors.description?.message}
+            required
+            {...register('description')}
+          />
+          <p className="mt-1 text-xs text-surface-500">
+            Beschrijf de huidige situatie, wat u wilt en eventuele eisen. Hoe meer detail, hoe beter de offertes.
+          </p>
+        </div>
 
         {/* Location */}
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Stad"
-            placeholder="Amsterdam"
-            error={errors.locationCity?.message}
-            required
-            {...register('locationCity')}
-          />
-          <div>
+        <div>
+          <p className="text-xs text-surface-500 mb-2">
+            Uw exacte adres wordt nooit gedeeld. Vakmensen zien alleen uw stad en postcode om te bepalen of de klus binnen hun werkgebied valt.
+          </p>
+          <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Postcode"
-              placeholder="1234 AB"
-              error={errors.locationPostcode?.message}
+              label="Stad"
+              placeholder="Amsterdam"
+              error={errors.locationCity?.message}
               required
-              maxLength={7}
-              {...register('locationPostcode', {
-                onChange: handlePostcodeChange,
-              })}
+              {...register('locationCity')}
             />
-            <p className="mt-1 text-xs text-surface-500">Nederlands formaat: 1234 AB</p>
+            <div>
+              <Input
+                label="Postcode"
+                placeholder="1234 AB"
+                error={errors.locationPostcode?.message}
+                required
+                maxLength={7}
+                {...register('locationPostcode', {
+                  onChange: handlePostcodeChange,
+                })}
+              />
+              <p className="mt-1 text-xs text-surface-500">Nederlands formaat: 1234 AB</p>
+            </div>
           </div>
         </div>
 

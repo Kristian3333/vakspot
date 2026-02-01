@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Card, Button, Badge, Textarea, Spinner, Avatar } from '@/components/ui';
+import { Card, Button, Badge, Textarea, Spinner, Avatar, ReportButton } from '@/components/ui';
 import { formatRelativeTime } from '@/lib/utils';
 import {
   MapPin, ArrowLeft, CheckCircle2, AlertCircle, MessageSquare, Send, Users, XCircle
@@ -234,11 +234,14 @@ export default function ProJobDetailPage() {
           </div>
         )}
 
-        <div className="mt-6 flex items-center gap-3 text-sm text-surface-500">
-          <Avatar name={job.client.user.name} size="sm" />
-          <span>{job.client.user.name || 'Anoniem'}</span>
-          <span>•</span>
-          <span>{formatRelativeTime(job.publishedAt)}</span>
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex items-center gap-3 text-sm text-surface-500">
+            <Avatar name={job.client.user.name} size="sm" />
+            <span>{job.client.user.name || 'Anoniem'}</span>
+            <span>•</span>
+            <span>{formatRelativeTime(job.publishedAt)}</span>
+          </div>
+          <ReportButton type="JOB" targetId={job.id} variant="text" />
         </div>
       </Card>
 

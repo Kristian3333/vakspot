@@ -28,3 +28,5 @@ export {
 } from './skeleton';
 
 export { ToastProvider, useToast } from './toast';
+
+export { ReportButton } from './report-button';

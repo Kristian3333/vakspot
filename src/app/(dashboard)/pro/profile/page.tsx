@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { Card, Button, Avatar } from '@/components/ui';
+import { Card, Button, Avatar, ReportButton } from '@/components/ui';
 import {
   User,
   Mail,
@@ -172,6 +172,11 @@ export default async function ProProfilePage() {
                 <p className="mt-1 text-surface-600 flex items-center gap-2">
                   <Building2 className="h-4 w-4" />
                   {proProfile.companyName}
+                </p>
+              )}
+              {proProfile?.kvkNumber && (
+                <p className="mt-1 text-surface-500 text-sm flex items-center gap-2" title="Kamer van Koophandel nummer">
+                  KvK: {proProfile.kvkNumber}
                 </p>
               )}
 

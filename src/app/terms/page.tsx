@@ -75,6 +75,7 @@ VakSpot kan accounts weigeren, opschorten of beëindigen bij:
     },
     {
       title: '6. Vergoedingen',
+      id: 'vergoedingen',
       content: `Voor Opdrachtgevers:
 • Het plaatsen van klussen en ontvangen van offertes is gratis
 • Er worden geen bemiddelingskosten in rekening gebracht
@@ -83,6 +84,30 @@ Voor Vakmensen:
 • Er kunnen kosten verbonden zijn aan het reageren op leads
 • Prijzen worden vooraf duidelijk gecommuniceerd
 • Betaling geschiedt via de op het Platform aangegeven methoden`,
+    },
+    {
+      title: '6a. Voorwaarden voor vakmensen (P2B)',
+      id: 'professionals',
+      content: `De volgende aanvullende voorwaarden gelden specifiek voor zakelijke gebruikers (vakmensen):
+
+Rangschikking van klussen:
+• Gesponsorde klussen worden bovenaan getoond
+• Niet-gesponsorde klussen worden gesorteerd op afstand
+• Uw geregistreerde vakgebieden bepalen welke klussen u ziet
+• Zie /ranking voor een volledige uitleg
+
+Voorbeeld: Een schilder in Amsterdam met 25km werkgebied ziet eerst gesponsorde klussen, daarna klussen in Amsterdam, vervolgens klussen in omliggende gemeenten.
+
+Account beëindiging:
+• VakSpot kan uw account schorsen bij overtredingen
+• U ontvangt altijd een schriftelijke reden
+• U heeft recht op bezwaar binnen 14 dagen
+• Zie /appeal voor de bezwaarprocedure
+
+Klachten en geschillen:
+• Neem eerst contact op via support@vakspot.nl
+• Klachten worden binnen 14 werkdagen behandeld
+• U kunt ook de online geschillenbeslechting (ODR) gebruiken: ec.europa.eu/consumers/odr`,
     },
     {
       title: '7. Overeenkomsten tussen Gebruikers',
@@ -178,7 +203,7 @@ Telefoon: 020-123 4567`,
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <div className="space-y-8">
             {sections.map((section, index) => (
-              <Card key={index}>
+              <Card key={index} id={(section as any).id}>
                 <h2 className="text-xl font-semibold text-surface-900 mb-4">
                   {section.title}
                 </h2>
