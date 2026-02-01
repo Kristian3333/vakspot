@@ -30,7 +30,7 @@ export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
   const userRole = req.auth?.user?.role;
-  const isSuspended = req.auth?.user?.suspended;
+  const isSuspended = req.auth?.user?.suspended === true; // Explicitly check for true
 
   // Check if route is protected
   const isProtected = protectedRoutes.some((route) =>

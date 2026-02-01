@@ -68,16 +68,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = (user as { role: Role }).role;
-        token.suspended = (user as { suspended: boolean }).suspended;
+        token.suspended = (user as { suspended: boolean }).suspended ?? false;
       }
-      // Refresh suspended status on every request for security
-      if (trigger === 'update' || !user) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { suspended: true },
-        });
-        if (dbUser) {
-          token.suspended = dbUser.suspended;
+      // Only refresh suspended status when session is explicitly updated
+      // Not on every request to avoid performance issues
+      if (trigger === 'update' && token.id) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { suspended: true },
+          });
+          if (dbUser) {
+            token.suspended = dbUser.suspended;
+          }
+        } catch (error) {
+          console.error('Error fetching user suspended status:', error);
         }
       }
       return token;
