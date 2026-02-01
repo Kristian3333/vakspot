@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { jobId, rating, title, content, qualityRating, communicationRating, timelinessRating, valueRating } = parsed.data;
+    const { jobId, rating, title, content } = parsed.data;
 
     // Verify job belongs to client and is completed
     const job = await prisma.job.findFirst({
@@ -95,10 +95,6 @@ export async function POST(request: NextRequest) {
         rating,
         title,
         content,
-        qualityRating,
-        communicationRating,
-        timelinessRating,
-        valueRating,
       },
     });
 
