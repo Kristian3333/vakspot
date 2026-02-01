@@ -3,20 +3,29 @@
 
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization to avoid build-time errors when RESEND_API_KEY is not set
+let resend: Resend | null = null;
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 const FROM_EMAIL = 'VakSpot <noreply@vakspot.nl>';
 const BASE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
 // Helper to send emails (fire-and-forget pattern)
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
-  if (!process.env.RESEND_API_KEY) {
+  const client = getResend();
+  if (!client) {
     console.log('[Email] RESEND_API_KEY not configured, skipping email to:', to);
     return false;
   }
 
   try {
-    await resend.emails.send({
+    await client.emails.send({
       from: FROM_EMAIL,
       to,
       subject,
