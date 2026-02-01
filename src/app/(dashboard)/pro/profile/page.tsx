@@ -313,36 +313,6 @@ export default async function ProProfilePage() {
                       {review.content}
                     </p>
                   )}
-
-                  {/* Detailed ratings */}
-                  {(review.qualityRating || review.communicationRating || review.timelinessRating || review.valueRating) && (
-                    <div className="mt-3 pt-3 border-t border-surface-200 grid grid-cols-2 gap-2 text-xs">
-                      {review.qualityRating && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-surface-500">Kwaliteit</span>
-                          <StarRating rating={review.qualityRating} />
-                        </div>
-                      )}
-                      {review.communicationRating && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-surface-500">Communicatie</span>
-                          <StarRating rating={review.communicationRating} />
-                        </div>
-                      )}
-                      {review.timelinessRating && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-surface-500">Stiptheid</span>
-                          <StarRating rating={review.timelinessRating} />
-                        </div>
-                      )}
-                      {review.valueRating && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-surface-500">Prijs/kwaliteit</span>
-                          <StarRating rating={review.valueRating} />
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
