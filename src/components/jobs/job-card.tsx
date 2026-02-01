@@ -15,22 +15,16 @@ interface JobCardProps {
 const statusColors: Record<string, 'neutral' | 'primary' | 'success' | 'warning' | 'error'> = {
   DRAFT: 'neutral',
   PUBLISHED: 'primary',
-  IN_CONVERSATION: 'warning',
   ACCEPTED: 'success',
-  IN_PROGRESS: 'primary',
   COMPLETED: 'success',
-  CANCELLED: 'error',
   REVIEWED: 'success',
 };
 
 const statusLabels: Record<string, string> = {
   DRAFT: 'Concept',
   PUBLISHED: 'Gepubliceerd',
-  IN_CONVERSATION: 'In gesprek',
   ACCEPTED: 'Geaccepteerd',
-  IN_PROGRESS: 'In uitvoering',
   COMPLETED: 'Afgerond',
-  CANCELLED: 'Geannuleerd',
   REVIEWED: 'Beoordeeld',
 };
 

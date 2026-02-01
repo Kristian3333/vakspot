@@ -44,7 +44,7 @@ async function getStats(clientProfileId: string | undefined) {
 
   const [totalJobs, activeJobs, completedJobs] = await Promise.all([
     prisma.job.count({ where: { clientId: clientProfileId } }),
-    prisma.job.count({ where: { clientId: clientProfileId, status: { in: ['PUBLISHED', 'IN_CONVERSATION', 'IN_PROGRESS'] } } }),
+    prisma.job.count({ where: { clientId: clientProfileId, status: { in: ['PUBLISHED', 'ACCEPTED'] } } }),
     prisma.job.count({ where: { clientId: clientProfileId, status: 'COMPLETED' } }),
   ]);
 

@@ -197,11 +197,8 @@ export type BudgetTypeConfig = {
 export const JOB_STATUS_CONFIG: Record<JobStatus, JobStatusConfig> = {
   DRAFT: { label: 'Concept', color: 'neutral', description: 'Nog niet gepubliceerd' },
   PUBLISHED: { label: 'Gepubliceerd', color: 'primary', description: 'Wacht op offertes' },
-  IN_CONVERSATION: { label: 'In gesprek', color: 'warning', description: 'Je bent in gesprek met vakmensen' },
   ACCEPTED: { label: 'Geaccepteerd', color: 'success', description: 'Offerte geaccepteerd' },
-  IN_PROGRESS: { label: 'In uitvoering', color: 'primary', description: 'Werk wordt uitgevoerd' },
   COMPLETED: { label: 'Afgerond', color: 'success', description: 'Klus is afgerond' },
-  CANCELLED: { label: 'Geannuleerd', color: 'error', description: 'Klus is geannuleerd' },
   REVIEWED: { label: 'Beoordeeld', color: 'success', description: 'Review geplaatst' },
 };
 

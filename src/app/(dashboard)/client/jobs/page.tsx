@@ -14,11 +14,9 @@ export const metadata = {
 const STATUS_LABELS: Record<string, { label: string; variant: 'success' | 'warning' | 'error' | 'neutral' }> = {
   DRAFT: { label: 'Concept', variant: 'neutral' },
   PUBLISHED: { label: 'Actief', variant: 'success' },
-  IN_CONVERSATION: { label: 'In gesprek', variant: 'warning' },
   ACCEPTED: { label: 'Geaccepteerd', variant: 'success' },
-  IN_PROGRESS: { label: 'In uitvoering', variant: 'warning' },
   COMPLETED: { label: 'Afgerond', variant: 'neutral' },
-  CANCELLED: { label: 'Geannuleerd', variant: 'error' },
+  REVIEWED: { label: 'Beoordeeld', variant: 'success' },
 };
 
 async function getClientJobs(userId: string) {

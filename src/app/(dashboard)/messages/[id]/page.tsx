@@ -357,9 +357,10 @@ export default function ConversationPage() {
                     <h2 className="font-semibold text-surface-900 group-hover:text-brand-600 transition-colors">{job.title}</h2>
                   </div>
                   <StatusBadge variant={job.status === 'ACCEPTED' ? 'success' : 'primary'} size="sm">
-                    {job.status === 'PUBLISHED' ? 'Gepubliceerd' : 
+                    {job.status === 'PUBLISHED' ? 'Gepubliceerd' :
                      job.status === 'ACCEPTED' ? 'Geaccepteerd' :
-                     job.status === 'IN_CONVERSATION' ? 'In gesprek' : job.status}
+                     job.status === 'COMPLETED' ? 'Afgerond' :
+                     job.status === 'REVIEWED' ? 'Beoordeeld' : job.status}
                   </StatusBadge>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-surface-500">

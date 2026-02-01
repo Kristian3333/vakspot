@@ -28,11 +28,9 @@ interface PageProps {
 const statusConfig: Record<string, { label: string; variant: 'success' | 'warning' | 'error' | 'neutral' }> = {
   DRAFT: { label: 'Concept', variant: 'neutral' },
   PUBLISHED: { label: 'Actief', variant: 'success' },
-  IN_CONVERSATION: { label: 'In gesprek', variant: 'warning' },
   ACCEPTED: { label: 'Vakman gekozen', variant: 'success' },
-  IN_PROGRESS: { label: 'In uitvoering', variant: 'warning' },
   COMPLETED: { label: 'Afgerond', variant: 'neutral' },
-  CANCELLED: { label: 'Geannuleerd', variant: 'error' },
+  REVIEWED: { label: 'Beoordeeld', variant: 'success' },
 };
 
 async function getJob(id: string, userId: string) {
@@ -85,7 +83,7 @@ export default async function JobDetailPage({ params }: PageProps) {
   const status = statusConfig[job.status] || statusConfig.DRAFT;
   const interestedPros = job.bids;
   const canDelete = !['COMPLETED', 'REVIEWED'].includes(job.status);
-  const canAcceptPros = ['PUBLISHED', 'IN_CONVERSATION'].includes(job.status);
+  const canAcceptPros = job.status === 'PUBLISHED';
   const acceptedBid = interestedPros.find(b => b.status === 'ACCEPTED');
 
   return (

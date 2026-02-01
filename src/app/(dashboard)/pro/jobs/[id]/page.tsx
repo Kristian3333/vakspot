@@ -135,7 +135,7 @@ export default function ProJobDetailPage() {
   const alreadyInterested = !!existingBid;
   const isAcceptedByMe = existingBid?.status === 'ACCEPTED';
   const isRejected = existingBid?.status === 'REJECTED';
-  const isAvailable = ['PUBLISHED', 'IN_CONVERSATION'].includes(job.status);
+  const isAvailable = ['PUBLISHED', 'ACCEPTED'].includes(job.status);
   const isJobAccepted = job.status === 'ACCEPTED';
   const existingConversationId = existingBid?.conversation?.id || null;
 

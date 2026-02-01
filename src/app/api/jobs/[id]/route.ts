@@ -47,7 +47,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const isOwner = session?.user?.id === job.client.user.id;
     const isAdmin = session?.user?.role === 'ADMIN';
     const isPro = session?.user?.role === 'PRO';
-    const isAvailable = ['PUBLISHED', 'IN_CONVERSATION'].includes(job.status);
+    const isAvailable = ['PUBLISHED', 'ACCEPTED'].includes(job.status);
 
     // PROs can view available jobs
     if (!isOwner && !isAdmin && !isAvailable) {
@@ -205,16 +205,16 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ deleted: true, message: 'Klus verwijderd' });
     }
 
-    // If job has bids/conversations, mark as cancelled instead
-    const cancelledJob = await prisma.job.update({
+    // If job has bids/conversations, mark as completed instead
+    const completedJob = await prisma.job.update({
       where: { id },
-      data: { status: JobStatus.CANCELLED },
+      data: { status: JobStatus.COMPLETED },
       select: { id: true, status: true },
     });
 
-    return NextResponse.json({ 
-      job: cancelledJob, 
-      message: 'Klus geannuleerd (had al reacties)' 
+    return NextResponse.json({
+      job: completedJob,
+      message: 'Klus afgesloten (had al reacties)'
     });
   } catch (error) {
     console.error('Failed to delete job:', error);
