@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Card, Button, Textarea, Avatar, Spinner } from '@/components/ui';
-import { ArrowLeft, Star, Send, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Star, Send, CheckCircle2, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 type JobDetail = {
@@ -124,6 +124,26 @@ export default function JobReviewPage() {
         </p>
         <Link href={`/client/jobs/${jobId}`}>
           <Button className="mt-4">Terug naar klus</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  // Check if job is completed (required before review)
+  const completedStatuses = ['COMPLETED_BY_CONSUMER', 'COMPLETED_BY_PRO', 'COMPLETED'];
+  if (!completedStatuses.includes(job.status)) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-8 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-warning-50 mb-6">
+          <AlertTriangle className="h-8 w-8 text-warning-500" />
+        </div>
+        <h1 className="text-xl font-bold text-surface-900">Werk nog niet voltooid</h1>
+        <p className="text-surface-600 mt-2">
+          Voordat u een beoordeling kunt achterlaten, moet u eerst bevestigen dat het werk is voltooid.
+          Ga naar de kluspagina en klik op &quot;Markeer als voltooid&quot;.
+        </p>
+        <Link href={`/client/jobs/${jobId}`}>
+          <Button className="mt-6">Ga naar klus</Button>
         </Link>
       </div>
     );

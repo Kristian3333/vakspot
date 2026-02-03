@@ -20,8 +20,8 @@ All core simplification work is done:
 
 ## Phase 4: Polish
 
-### 4.1 UX Improvements
-- [ ] Mobile-first responsive check
+### 4.1 UX Improvements ✅ COMPLETE
+- [x] Mobile-first responsive check — header has mobile nav, pages have responsive classes
 - [x] Form validation messages consistency
 - [x] Success/error toast messages
 - [x] Registration validation fix
@@ -53,12 +53,12 @@ All core simplification work is done:
 - [x] Swipe feature for PROs (Tinder-style) - `/pro/swipe`
 - [x] Distance filter on jobs page (5/10/25/50/100 km)
 
-### 5.4 PRO Services & Monetization ✅ MOSTLY COMPLETE
+### 5.4 PRO Services & Monetization ✅ COMPLETE
 - [x] Professional Services page (`/pro/services`)
 - [x] View and purchase platform services
 - [x] "Gesponsord" badge on sponsored jobs
 - [x] Sponsored jobs sorted to top
-- [ ] Payment integration (Stripe/Mollie)
+- [x] Payment integration (Stripe) — `/api/stripe/checkout`, `/api/stripe/webhook`
 
 ### 5.5 Job Management ✅ COMPLETE
 - [x] Delete job button (`delete-job-button.tsx` + `DELETE /api/jobs/[id]`)
@@ -86,9 +86,9 @@ All core simplification work is done:
 - [x] Privacy settings page (`/settings/privacy`) — has marketing toggle, profile visibility, GDPR export, account deletion
 - [x] "Professional vs private individual" explicit field (added `entityType` enum: BUSINESS/INDIVIDUAL)
 
-### 6.4 Reviews ✅ MOSTLY COMPLETE
+### 6.4 Reviews ✅ COMPLETE
 - [x] Backend verification (checks job COMPLETED/ACCEPTED)
-- [ ] User confirmation step before review (explicit "work done" button — relates to Phase 7 completion flow)
+- [x] User confirmation step before review — requires COMPLETED status, review page shows prompt if not completed
 - [x] Review explanation in FAQ
 - [x] Review objection/removal procedure in FAQ
 
@@ -96,10 +96,10 @@ All core simplification work is done:
 - [x] Data minimization (minimal required fields)
 - [x] Contextual explanations per field about data usage
 
-### 6.6 Chat / Messages (Privacy) ✅ MOSTLY COMPLETE
+### 6.6 Chat / Messages (Privacy) ✅ COMPLETE
 - [x] Retention mentioned in privacy policy ("max 2 jaar")
 - [x] Specific chat message retention period defined (section 7a added with detailed timelines)
-- [ ] User-configurable retention in privacy settings (P3 - nice to have)
+- [x] User-configurable retention in privacy settings — dropdown in `/settings/privacy` (3mo/6mo/1yr/2yr)
 - [x] "No unnecessary monitoring" statement in privacy policy (section 7a added)
 
 ### 6.7 Registration & Terms ✅ COMPLETE
@@ -267,7 +267,7 @@ After selection (status 6), PRO sees: `Selected → Scheduled → In Progress �
 - [x] Status 12/13 (Cancelled): notify other party — `sendJobCancelledEmail`
 - [x] Quote received email — `sendQuoteReceivedEmail`
 - [x] Nudge: PRO hasn't set start date within X days of selection — `api/cron/job-transitions/route.ts`
-- [ ] Nudge: job has no responses after X days (optional, could be added to cron)
+- [x] Nudge: job has no responses after 3 days — `sendNoResponsesNudgeEmail` in cron job
 
 ### 7.9 Reporting & Analytics Dashboard ✅ COMPLETE
 
@@ -360,6 +360,11 @@ Everything below has been code-verified as actually implemented:
 | Analytics dashboard | `admin/analytics/page.tsx` - status distribution, funnel, stalls |
 | Analytics API | `api/admin/analytics/route.ts` - metrics, export endpoints |
 | Recharts charts | Pie, bar, line charts for analytics visualizations |
+| Stripe payment integration | `lib/stripe.ts`, `api/stripe/checkout`, `api/stripe/webhook` |
+| No-response nudge email | `sendNoResponsesNudgeEmail` in `lib/email.ts` + cron job |
+| Chat retention settings | `chatRetentionDays` field + `/settings/privacy` dropdown |
+| Work done before review | Review API requires COMPLETED status, review page shows prompt |
+| Mobile navigation | Header with mobile menu, responsive classes throughout |
 
 ---
 
@@ -386,13 +391,13 @@ Everything below has been code-verified as actually implemented:
 14. ~~SCHEDULED→IN_PROGRESS cron job~~ ✅
 15. ~~CREATED→NO_MATCH/EXPIRED cron job~~ ✅
 
-### ✅ P3 — Nice to Have — MOSTLY COMPLETE
+### ✅ P3 — Nice to Have — COMPLETE
 13. ~~Reporting & analytics dashboard (7.9)~~ ✅
-14. Chat retention configurability (6.6) — Non-essential
+14. ~~Chat retention configurability (6.6)~~ ✅ (dropdown in privacy settings)
 15. ~~"No monitoring" statement in privacy policy (6.6)~~ ✅
 16. ~~"Professional vs individual" explicit toggle (B7)~~ ✅
-17. Payment integration (Stripe/Mollie) — Future
-18. ~~Nudge emails (cron jobs)~~ ✅ (PRO start date reminder implemented)
+17. ~~Payment integration (Stripe)~~ ✅ (checkout + webhook + iDEAL)
+18. ~~Nudge emails (cron jobs)~~ ✅ (PRO start date + no responses nudge)
 
 ### ⚪ P4 — Non-MVP
 19. Annual transparency reporting
@@ -404,11 +409,11 @@ Everything below has been code-verified as actually implemented:
 
 | Category | Count |
 |----------|-------|
-| ✅ Verified complete | 60+ |
+| ✅ Verified complete | 70+ |
 | 🐛 Open bugs | 0 |
-| ❌ Phase 6 remaining | ~2 tasks (non-MVP) |
-| ✅ Phase 7 complete | All core features |
-| **Total tracked** | **~65** |
+| ✅ All phases complete | Core MVP done |
+| ⚪ Non-MVP remaining | 2 tasks |
+| **Total tracked** | **~70** |
 
 ---
 

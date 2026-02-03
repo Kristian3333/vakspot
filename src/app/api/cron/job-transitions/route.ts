@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { JobStatus } from '@prisma/client';
-import { sendSetStartDateReminderEmail } from '@/lib/email';
+import { sendSetStartDateReminderEmail, sendNoResponsesNudgeEmail } from '@/lib/email';
 
 // Verify cron secret to prevent unauthorized access
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
     createdToNoMatch: 0,
     createdToExpired: 0,
     nudgesSent: 0,
+    noResponseNudgesSent: 0,
     errors: [] as string[],
   };
 
@@ -197,6 +198,45 @@ export async function GET(request: NextRequest) {
           results.nudgesSent++;
         } catch (err) {
           results.errors.push(`Nudge email failed for job ${job.id}: ${err}`);
+        }
+      }
+    }
+
+    // 5. Nudge emails: Jobs with no responses after 3 days (send once between day 3-4)
+    const noResponseNudgeStart = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+    const noResponseNudgeEnd = new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000);
+    const jobsNeedingNoResponseNudge = await prisma.job.findMany({
+      where: {
+        status: 'CREATED',
+        createdAt: {
+          lte: noResponseNudgeStart,
+          gte: noResponseNudgeEnd,
+        },
+        bids: {
+          none: {},
+        },
+      },
+      include: {
+        client: { include: { user: true } },
+      },
+    });
+
+    for (const job of jobsNeedingNoResponseNudge) {
+      if (job.client.user.email && job.client.user.emailJobUpdates) {
+        try {
+          const daysSincePosted = Math.floor(
+            (now.getTime() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          await sendNoResponsesNudgeEmail({
+            to: job.client.user.email,
+            clientName: job.client.user.name || 'Klant',
+            jobTitle: job.title,
+            daysSincePosted,
+            jobUrl: `/client/jobs/${job.id}`,
+          });
+          results.noResponseNudgesSent++;
+        } catch (err) {
+          results.errors.push(`No-response nudge email failed for job ${job.id}: ${err}`);
         }
       }
     }

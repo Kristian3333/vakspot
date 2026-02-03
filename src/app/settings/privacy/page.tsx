@@ -14,20 +14,30 @@ import {
   AlertTriangle,
   CheckCircle2,
   Loader2,
+  MessageSquare,
 } from 'lucide-react';
+
+type RetentionOption = {
+  value: number;
+  label: string;
+};
 
 type PrivacySettings = {
   marketingEmails: boolean;
   profileVisible: boolean;
+  chatRetentionDays: number;
 };
 
 export default function PrivacySettingsPage() {
   const [settings, setSettings] = useState<PrivacySettings>({
     marketingEmails: true,
     profileVisible: true,
+    chatRetentionDays: 730,
   });
+  const [retentionOptions, setRetentionOptions] = useState<RetentionOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [requestingExport, setRequestingExport] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
 
@@ -39,6 +49,9 @@ export default function PrivacySettingsPage() {
         if (data.settings) {
           setSettings(data.settings);
         }
+        if (data.retentionOptions) {
+          setRetentionOptions(data.retentionOptions);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -46,12 +59,17 @@ export default function PrivacySettingsPage() {
 
   const handleSave = async () => {
     setSaving(true);
+    setSaveSuccess(false);
     try {
-      await fetch('/api/settings/privacy', {
+      const res = await fetch('/api/settings/privacy', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       });
+      if (res.ok) {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      }
     } catch (error) {
       console.error('Failed to save settings:', error);
     }
@@ -139,7 +157,36 @@ export default function PrivacySettingsPage() {
                 </p>
               </div>
             </label>
+
+            {/* Chat Retention Setting */}
+            <div className="p-4 rounded-xl border border-surface-200">
+              <div className="flex items-center gap-2 mb-2">
+                <MessageSquare className="h-4 w-4 text-surface-500" />
+                <span className="font-medium text-surface-900">Chatgeschiedenis bewaren</span>
+              </div>
+              <p className="text-sm text-surface-500 mb-3">
+                Kies hoe lang uw chatberichten worden bewaard. Na deze periode worden berichten automatisch verwijderd.
+              </p>
+              <select
+                value={settings.chatRetentionDays}
+                onChange={(e) => setSettings(prev => ({ ...prev, chatRetentionDays: parseInt(e.target.value, 10) }))}
+                className="w-full px-3 py-2 rounded-lg border border-surface-300 bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              >
+                {retentionOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+
+          {saveSuccess && (
+            <div className="flex items-center gap-2 mt-4 p-3 rounded-lg bg-success-50 text-success-700">
+              <CheckCircle2 className="h-4 w-4" />
+              <span className="text-sm">Voorkeuren opgeslagen!</span>
+            </div>
+          )}
 
           <Button
             onClick={handleSave}

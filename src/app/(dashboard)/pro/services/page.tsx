@@ -2,8 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, Button, Badge, Spinner } from '@/components/ui';
-import { Package, Check, Clock, Sparkles, ArrowRight } from 'lucide-react';
+import { Package, Check, Clock, Sparkles, ArrowRight, CreditCard, CheckCircle2 } from 'lucide-react';
 
 interface Service {
   id: string;
@@ -20,10 +21,32 @@ interface Service {
 }
 
 export default function ProServicesPage() {
+  const searchParams = useSearchParams();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Handle success/cancel from Stripe redirect
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+
+    if (success === 'true') {
+      setMessage({
+        type: 'success',
+        text: 'Betaling geslaagd! Uw service is nu actief.',
+      });
+      // Clear URL params
+      window.history.replaceState({}, '', '/pro/services');
+    } else if (canceled === 'true') {
+      setMessage({
+        type: 'error',
+        text: 'Betaling geannuleerd. U kunt het later opnieuw proberen.',
+      });
+      window.history.replaceState({}, '', '/pro/services');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetchServices();
@@ -43,19 +66,29 @@ export default function ProServicesPage() {
     }
   }
 
-  async function handlePurchase(serviceId: string) {
+  async function handlePurchase(serviceId: string, price: number) {
     setPurchasing(serviceId);
     setMessage(null);
 
     try {
-      const res = await fetch(`/api/services/${serviceId}/purchase`, {
+      // Use Stripe checkout for all services (free ones handled server-side)
+      const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ serviceId }),
       });
       const data = await res.json();
 
       if (res.ok) {
-        setMessage({ type: 'success', text: data.message });
-        fetchServices(); // Refresh the list
+        if (data.free) {
+          // Free service was activated directly
+          setMessage({ type: 'success', text: data.message });
+          fetchServices();
+        } else if (data.url) {
+          // Redirect to Stripe Checkout
+          window.location.href = data.url;
+          return; // Don't clear purchasing state since we're redirecting
+        }
       } else {
         setMessage({ type: 'error', text: data.error });
       }
@@ -158,20 +191,21 @@ export default function ProServicesPage() {
                     <Check className="w-4 h-4 mr-2" />
                     Geactiveerd
                   </Button>
-                ) : service.price > 0 ? (
-                  <Button disabled className="w-full" variant="secondary">
-                    Binnenkort beschikbaar
-                  </Button>
                 ) : (
                   <Button
-                    onClick={() => handlePurchase(service.id)}
+                    onClick={() => handlePurchase(service.id, service.price)}
                     disabled={purchasing === service.id}
                     className="w-full"
                   >
                     {purchasing === service.id ? (
                       <>
                         <Spinner className="w-4 h-4 mr-2" />
-                        Activeren...
+                        {service.price > 0 ? 'Doorsturen naar betaling...' : 'Activeren...'}
+                      </>
+                    ) : service.price > 0 ? (
+                      <>
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        Kopen
                       </>
                     ) : (
                       <>
@@ -189,12 +223,16 @@ export default function ProServicesPage() {
 
       {/* Info Section */}
       <Card className="p-6 bg-blue-50 border-blue-200">
-        <h3 className="font-semibold text-blue-900">Binnenkort: Premium Services</h3>
-        <p className="text-blue-800 text-sm mt-2">
-          We werken aan premium services waarmee u nog meer zichtbaarheid krijgt.
-          Denk aan uitgelichte profielen, prioriteit in zoekresultaten en meer.
-          Houd deze pagina in de gaten!
-        </p>
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="font-semibold text-blue-900">Veilig betalen met Stripe</h3>
+            <p className="text-blue-800 text-sm mt-1">
+              Alle betalingen worden veilig verwerkt via Stripe. U kunt betalen met iDEAL
+              of creditcard. Na succesvolle betaling wordt uw service direct geactiveerd.
+            </p>
+          </div>
+        </div>
       </Card>
     </div>
   );

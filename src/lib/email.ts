@@ -569,3 +569,38 @@ export async function sendQuoteReceivedEmail(params: {
 
   return sendEmail(to, `Nieuwe offerte van ${proCompany} voor "${jobTitle}"`, html);
 }
+
+/**
+ * Send nudge email when job has no responses after X days
+ */
+export async function sendNoResponsesNudgeEmail(params: {
+  to: string;
+  clientName: string;
+  jobTitle: string;
+  daysSincePosted: number;
+  jobUrl: string;
+}): Promise<boolean> {
+  const { to, clientName, jobTitle, daysSincePosted, jobUrl } = params;
+
+  const html = wrapInTemplate(`
+    <h2>Nog geen reacties op je klus</h2>
+    <p>Hallo ${clientName},</p>
+    <p>Je hebt ${daysSincePosted} dagen geleden een klus geplaatst, maar er zijn nog geen vakmannen die interesse hebben getoond:</p>
+    <p style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid #f59e0b;">
+      <strong>${jobTitle}</strong>
+    </p>
+    <h3>Tips om meer reacties te krijgen:</h3>
+    <ul style="line-height: 2;">
+      <li><strong>Voeg meer details toe</strong> - Hoe duidelijker je beschrijving, hoe sneller vakmannen reageren</li>
+      <li><strong>Voeg foto's toe</strong> - Beelden zeggen meer dan woorden</li>
+      <li><strong>Controleer je budget</strong> - Zorg dat het budget realistisch is voor de werkzaamheden</li>
+      <li><strong>Breid je zoekgebied uit</strong> - Overweeg vakmannen uit omliggende plaatsen</li>
+    </ul>
+    <p>
+      <a href="${BASE_URL}${jobUrl}" class="button">Bekijk en bewerk je klus</a>
+    </p>
+    <p class="muted">Geen zorgen - de meeste klussen krijgen binnen een week reacties. Geduld loont!</p>
+  `);
+
+  return sendEmail(to, `Nog geen reacties op "${jobTitle}" - Tips om meer reacties te krijgen`, html);
+}

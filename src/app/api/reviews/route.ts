@@ -60,10 +60,12 @@ export async function POST(request: NextRequest) {
     const { jobId, rating, title, content } = parsed.data;
 
     // Verify job belongs to client and is in a reviewable state
-    // Phase 7: can review after COMPLETED_BY_CONSUMER, COMPLETED_BY_PRO, or legacy COMPLETED/ACCEPTED
+    // Phase 7: User must confirm work is done before reviewing (DSA compliance: explicit "work done" confirmation)
+    // Only allow reviews after job is marked as completed (COMPLETED_BY_CONSUMER, COMPLETED_BY_PRO, or legacy COMPLETED)
     const reviewableStatuses: JobStatus[] = [
-      JobStatus.COMPLETED_BY_CONSUMER, JobStatus.COMPLETED_BY_PRO, JobStatus.COMPLETED, JobStatus.ACCEPTED,
-      JobStatus.SELECTED, JobStatus.SCHEDULED, JobStatus.IN_PROGRESS, // Allow early reviews after PRO selection
+      JobStatus.COMPLETED_BY_CONSUMER,
+      JobStatus.COMPLETED_BY_PRO,
+      JobStatus.COMPLETED, // Legacy
     ];
     const job = await prisma.job.findFirst({
       where: {
@@ -77,7 +79,23 @@ export async function POST(request: NextRequest) {
     });
 
     if (!job) {
-      return NextResponse.json({ error: 'Job not found or not eligible for review' }, { status: 400 });
+      // Check if job exists but isn't completed yet
+      const pendingJob = await prisma.job.findFirst({
+        where: {
+          id: jobId,
+          client: { userId: session.user.id },
+        },
+        select: { status: true },
+      });
+
+      if (pendingJob && !reviewableStatuses.includes(pendingJob.status)) {
+        return NextResponse.json(
+          { error: 'Markeer eerst het werk als voltooid voordat u een beoordeling kunt achterlaten' },
+          { status: 400 }
+        );
+      }
+
+      return NextResponse.json({ error: 'Klus niet gevonden of niet geschikt voor beoordeling' }, { status: 400 });
     }
 
     if (!job.acceptedBid) {

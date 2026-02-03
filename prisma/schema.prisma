@@ -33,6 +33,11 @@ model User {
   emailNewJobs      Boolean @default(true)  // New jobs in area (for PROs)
   emailMarketing    Boolean @default(false) // Marketing & promotions
   emailWeeklyDigest Boolean @default(false) // Weekly summary
+  emailJobUpdates   Boolean @default(true)  // Job status updates (for clients)
+
+  // Privacy settings (GDPR)
+  profileVisible     Boolean @default(true)  // Profile visible to others (PROs only)
+  chatRetentionDays  Int     @default(730)   // Chat retention period (default 2 years = 730 days)
 
   // Suspension (P2B compliance)
   suspended        Boolean   @default(false)
@@ -551,18 +556,21 @@ model Service {
 }
 
 model ServicePurchase {
-  id          String     @id @default(cuid())
-  proId       String
-  pro         ProProfile @relation(fields: [proId], references: [id], onDelete: Cascade)
-  serviceId   String
-  service     Service    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  price       Int        // price at time of purchase
-  purchasedAt DateTime   @default(now())
-  expiresAt   DateTime
+  id                    String     @id @default(cuid())
+  proId                 String
+  pro                   ProProfile @relation(fields: [proId], references: [id], onDelete: Cascade)
+  serviceId             String
+  service               Service    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  price                 Int        // price at time of purchase (cents)
+  purchasedAt           DateTime   @default(now())
+  expiresAt             DateTime
+  stripeSessionId       String?    // Stripe Checkout session ID
+  stripePaymentIntentId String?    // Stripe Payment Intent ID
 
   @@index([proId])
   @@index([serviceId])
   @@index([expiresAt])
+  @@index([stripeSessionId])
 }
 
 // ============================================
