@@ -4,6 +4,7 @@ import { hash } from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { registerClientSchema, registerProSchema } from '@/lib/validations';
 import { Role } from '@prisma/client';
+import { sendWelcomeEmailClient, sendWelcomeEmailPro } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,6 +68,13 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Send welcome email (fire-and-forget)
+      sendWelcomeEmailPro({
+        to: email.toLowerCase(),
+        name: name || '',
+        companyName,
+      }).catch(console.error);
+
       return NextResponse.json({ success: true, user });
     } else {
       // Client registration
@@ -117,6 +125,12 @@ export async function POST(request: NextRequest) {
           role: true,
         },
       });
+
+      // Send welcome email (fire-and-forget)
+      sendWelcomeEmailClient({
+        to: email.toLowerCase(),
+        name: name || '',
+      }).catch(console.error);
 
       return NextResponse.json({ success: true, user });
     }

@@ -194,3 +194,121 @@ export async function sendBidRejectedEmail(params: {
 
   return sendEmail(to, `Update: Andere vakman gekozen voor "${jobTitle}"`, html);
 }
+
+/**
+ * Send welcome email to new client
+ */
+export async function sendWelcomeEmailClient(params: {
+  to: string;
+  name: string;
+}): Promise<boolean> {
+  const { to, name } = params;
+
+  const html = wrapInTemplate(`
+    <h2>Welkom bij VakSpot, ${name || 'nieuwe gebruiker'}! 👋</h2>
+    <p>Bedankt voor je registratie. Je kunt nu direct een klus plaatsen en vakmannen in je omgeving vinden.</p>
+
+    <h3>Hoe werkt het?</h3>
+    <ol style="line-height: 2;">
+      <li><strong>Plaats een klus</strong> - Beschrijf wat je nodig hebt</li>
+      <li><strong>Ontvang reacties</strong> - Vakmannen in je buurt reageren</li>
+      <li><strong>Kies je vakman</strong> - Chat en kies de beste match</li>
+    </ol>
+
+    <p>
+      <a href="${BASE_URL}/client/jobs/new" class="button">Plaats je eerste klus</a>
+    </p>
+
+    <p class="muted">Vragen? Bekijk onze <a href="${BASE_URL}/faq">veelgestelde vragen</a> of neem <a href="${BASE_URL}/contact">contact</a> met ons op.</p>
+  `);
+
+  return sendEmail(to, 'Welkom bij VakSpot! 👋', html);
+}
+
+/**
+ * Send welcome email to new professional
+ */
+export async function sendWelcomeEmailPro(params: {
+  to: string;
+  name: string;
+  companyName: string;
+}): Promise<boolean> {
+  const { to, name, companyName } = params;
+
+  const html = wrapInTemplate(`
+    <h2>Welkom bij VakSpot, ${companyName}! 🔧</h2>
+    <p>Hallo ${name || 'vakman'},</p>
+    <p>Bedankt voor je registratie als vakman. Je kunt nu klussen in je omgeving bekijken en klanten bereiken.</p>
+
+    <h3>Aan de slag</h3>
+    <ol style="line-height: 2;">
+      <li><strong>Maak je profiel compleet</strong> - Voeg een beschrijving en foto toe</li>
+      <li><strong>Bekijk klussen</strong> - Vind werk in je vakgebied en regio</li>
+      <li><strong>Toon interesse</strong> - Reageer op klussen die je aanspreken</li>
+      <li><strong>Chat met klanten</strong> - Bespreek de details en maak afspraken</li>
+    </ol>
+
+    <p>
+      <a href="${BASE_URL}/pro/jobs" class="button">Bekijk beschikbare klussen</a>
+    </p>
+
+    <p style="background: #fef3c7; padding: 15px; border-radius: 4px; margin-top: 20px;">
+      <strong>💡 Tip:</strong> Vul je KvK-nummer in voor extra vertrouwen bij klanten.
+    </p>
+
+    <p class="muted">Vragen? Bekijk onze <a href="${BASE_URL}/faq">veelgestelde vragen</a> of neem <a href="${BASE_URL}/contact">contact</a> met ons op.</p>
+  `);
+
+  return sendEmail(to, `Welkom bij VakSpot, ${companyName}! 🔧`, html);
+}
+
+/**
+ * Send notification for new jobs in PRO's area (for digest/alerts)
+ */
+export async function sendNewJobsAlertEmail(params: {
+  to: string;
+  proName: string;
+  jobs: Array<{ title: string; city: string; category: string; id: string }>;
+}): Promise<boolean> {
+  const { to, proName, jobs } = params;
+
+  const jobsList = jobs
+    .slice(0, 5)
+    .map(
+      (job) => `
+      <tr>
+        <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
+          <strong>${job.title}</strong><br>
+          <span class="muted">${job.category} • ${job.city}</span>
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">
+          <a href="${BASE_URL}/pro/jobs/${job.id}" style="color: #2563eb;">Bekijk →</a>
+        </td>
+      </tr>
+    `
+    )
+    .join('');
+
+  const html = wrapInTemplate(`
+    <h2>Nieuwe klussen in je buurt! 📍</h2>
+    <p>Hallo ${proName},</p>
+    <p>Er ${jobs.length === 1 ? 'is een nieuwe klus' : `zijn ${jobs.length} nieuwe klussen`} die mogelijk interessant ${jobs.length === 1 ? 'is' : 'zijn'} voor je:</p>
+
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+      ${jobsList}
+    </table>
+
+    ${jobs.length > 5 ? `<p class="muted">...en ${jobs.length - 5} andere klussen</p>` : ''}
+
+    <p>
+      <a href="${BASE_URL}/pro/jobs" class="button">Bekijk alle klussen</a>
+    </p>
+
+    <p class="muted" style="margin-top: 20px; font-size: 12px;">
+      Je ontvangt deze email omdat je email notificaties hebt ingeschakeld.
+      <a href="${BASE_URL}/settings">Voorkeuren aanpassen</a>
+    </p>
+  `);
+
+  return sendEmail(to, `${jobs.length} nieuwe ${jobs.length === 1 ? 'klus' : 'klussen'} in je buurt`, html);
+}

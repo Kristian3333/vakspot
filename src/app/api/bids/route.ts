@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
         client: {
           select: {
             userId: true,
-            user: { select: { email: true, name: true } },
+            user: { select: { email: true, name: true, emailNewInterest: true } },
           },
         },
       },
@@ -201,8 +201,8 @@ export async function POST(request: NextRequest) {
     // DON'T change job status here - keep it PUBLISHED so other PROs can see it
     // Status only changes to ACCEPTED when client accepts a PRO
 
-    // Send email notification to client (fire-and-forget)
-    if (job.client.user.email) {
+    // Send email notification to client (fire-and-forget) - only if preference enabled
+    if (job.client.user.email && job.client.user.emailNewInterest) {
       sendNewInterestEmail({
         to: job.client.user.email,
         proName: session.user.name || 'Vakman',
@@ -211,18 +211,18 @@ export async function POST(request: NextRequest) {
         message: message,
         jobUrl: `/client/jobs/${jobId}`,
       }).catch(console.error);
-
-      // Create in-app notification for client
-      prisma.notification.create({
-        data: {
-          userId: job.client.userId,
-          type: 'NEW_BID',
-          title: `Nieuwe interesse van ${proProfile.companyName}`,
-          message: `${proProfile.companyName} is geïnteresseerd in "${bid.job.title}"`,
-          link: `/client/jobs/${jobId}`,
-        },
-      }).catch(console.error);
     }
+
+    // Always create in-app notification for client
+    prisma.notification.create({
+      data: {
+        userId: job.client.userId,
+        type: 'NEW_BID',
+        title: `Nieuwe interesse van ${proProfile.companyName}`,
+        message: `${proProfile.companyName} is geïnteresseerd in "${bid.job.title}"`,
+        link: `/client/jobs/${jobId}`,
+      },
+    }).catch(console.error);
 
     return NextResponse.json({
       bid,

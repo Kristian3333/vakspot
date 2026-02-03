@@ -197,7 +197,7 @@ export async function POST(
                 client: {
                   select: {
                     userId: true,
-                    user: { select: { email: true, name: true } },
+                    user: { select: { email: true, name: true, emailNewMessages: true } },
                   },
                 },
               },
@@ -206,7 +206,7 @@ export async function POST(
               select: {
                 userId: true,
                 companyName: true,
-                user: { select: { id: true, email: true, name: true } },
+                user: { select: { id: true, email: true, name: true, emailNewMessages: true } },
               },
             },
           },
@@ -272,16 +272,17 @@ export async function POST(
 
     // Send email notification to the other party (fire-and-forget)
     const senderName = session.user.name || 'Gebruiker';
-    const recipientEmail = isClient
-      ? conversation.bid.pro.user.email
-      : conversation.bid.job.client.user.email;
+    const recipientUser = isClient
+      ? conversation.bid.pro.user
+      : conversation.bid.job.client.user;
     const recipientUserId = isClient
       ? conversation.bid.pro.userId
       : conversation.bid.job.client.userId;
 
-    if (recipientEmail) {
+    // Only send email if recipient has email notifications enabled
+    if (recipientUser.email && recipientUser.emailNewMessages) {
       sendNewMessageEmail({
-        to: recipientEmail,
+        to: recipientUser.email,
         senderName: isClient ? senderName : (conversation.bid.pro.companyName || senderName),
         jobTitle: conversation.bid.job.title,
         messagePreview: (content?.trim() || '📎 Bijlage verstuurd').substring(0, 100),

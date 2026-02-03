@@ -23,12 +23,12 @@ export async function POST(
         job: {
           include: {
             client: {
-              include: { user: true },
+              include: { user: { select: { id: true, email: true, name: true } } },
             },
           },
         },
         pro: {
-          include: { user: true },
+          include: { user: { select: { id: true, email: true, name: true, emailBidUpdates: true } } },
         },
       },
     });
@@ -68,7 +68,7 @@ export async function POST(
       include: {
         conversation: true,
         pro: {
-          include: { user: true },
+          include: { user: { select: { id: true, email: true, name: true, emailBidUpdates: true } } },
         },
       },
     });
@@ -140,46 +140,46 @@ export async function POST(
         });
       }
 
-      // Send rejection email to this PRO (fire-and-forget)
-      if (otherBid.pro.user.email) {
+      // Send rejection email to this PRO (fire-and-forget) - only if preference enabled
+      if (otherBid.pro.user.email && otherBid.pro.user.emailBidUpdates) {
         sendBidRejectedEmail({
           to: otherBid.pro.user.email,
           jobTitle: bid.job.title,
         }).catch(console.error);
-
-        // Create in-app notification
-        prisma.notification.create({
-          data: {
-            userId: otherBid.pro.userId,
-            type: 'BID_REJECTED',
-            title: 'Andere vakman gekozen',
-            message: `Helaas is een andere vakman gekozen voor "${bid.job.title}"`,
-            link: `/pro/leads`,
-          },
-        }).catch(console.error);
       }
+
+      // Always create in-app notification
+      prisma.notification.create({
+        data: {
+          userId: otherBid.pro.userId,
+          type: 'BID_REJECTED',
+          title: 'Andere vakman gekozen',
+          message: `Helaas is een andere vakman gekozen voor "${bid.job.title}"`,
+          link: `/pro/leads`,
+        },
+      }).catch(console.error);
     }
 
-    // Send acceptance email to the chosen PRO (fire-and-forget)
-    if (bid.pro.user.email) {
+    // Send acceptance email to the chosen PRO (fire-and-forget) - only if preference enabled
+    if (bid.pro.user.email && bid.pro.user.emailBidUpdates) {
       sendBidAcceptedEmail({
         to: bid.pro.user.email,
         clientName: bid.job.client.user.name || 'Klant',
         jobTitle: bid.job.title,
         conversationUrl: acceptedConversation ? `/messages/${acceptedConversation.id}` : `/pro/leads`,
       }).catch(console.error);
-
-      // Create in-app notification for accepted PRO
-      prisma.notification.create({
-        data: {
-          userId: bid.pro.userId,
-          type: 'BID_ACCEPTED',
-          title: 'Gefeliciteerd! Je bent gekozen!',
-          message: `Je bent gekozen voor "${bid.job.title}"`,
-          link: acceptedConversation ? `/messages/${acceptedConversation.id}` : `/pro/leads`,
-        },
-      }).catch(console.error);
     }
+
+    // Always create in-app notification for accepted PRO
+    prisma.notification.create({
+      data: {
+        userId: bid.pro.userId,
+        type: 'BID_ACCEPTED',
+        title: 'Gefeliciteerd! Je bent gekozen!',
+        message: `Je bent gekozen voor "${bid.job.title}"`,
+        link: acceptedConversation ? `/messages/${acceptedConversation.id}` : `/pro/leads`,
+      },
+    }).catch(console.error);
 
     // Return JSON response instead of redirect (better for client-side handling)
     return NextResponse.json({ 

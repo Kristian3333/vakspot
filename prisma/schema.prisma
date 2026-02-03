@@ -26,6 +26,14 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // Email notification preferences
+  emailNewMessages  Boolean @default(true)  // New chat messages
+  emailNewInterest  Boolean @default(true)  // PRO shows interest (for clients)
+  emailBidUpdates   Boolean @default(true)  // Bid accepted/rejected (for PROs)
+  emailNewJobs      Boolean @default(true)  // New jobs in area (for PROs)
+  emailMarketing    Boolean @default(false) // Marketing & promotions
+  emailWeeklyDigest Boolean @default(false) // Weekly summary
+
   // Suspension (P2B compliance)
   suspended        Boolean   @default(false)
   suspendedAt      DateTime?
