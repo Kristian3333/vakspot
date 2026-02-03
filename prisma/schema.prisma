@@ -370,6 +370,7 @@ model Bid {
   // Relations
   acceptedJob  Job?      @relation("AcceptedBid")
   conversation Conversation?
+  quotes       Quote[]   // Phase 7: PRO can send formal quotes
 
   @@unique([jobId, proId]) // One bid per pro per job
   @@index([jobId])
@@ -383,6 +384,43 @@ enum BidStatus {
   ACCEPTED
   REJECTED
   WITHDRAWN
+}
+
+// ============================================
+// QUOTES (Phase 7)
+// ============================================
+
+model Quote {
+  id           String      @id @default(cuid())
+  bidId        String
+  bid          Bid         @relation(fields: [bidId], references: [id], onDelete: Cascade)
+
+  // Quote details
+  amount       Int         // in cents
+  amountType   BudgetType  @default(ESTIMATE)
+  description  String      @db.Text
+  validUntil   DateTime    // Quote expiration date
+
+  // Status
+  status       QuoteStatus @default(PENDING)
+
+  // Timestamps
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  acceptedAt   DateTime?
+  rejectedAt   DateTime?
+
+  @@index([bidId])
+  @@index([status])
+  @@index([validUntil])
+}
+
+enum QuoteStatus {
+  PENDING    // Waiting for consumer response
+  ACCEPTED   // Consumer accepted
+  REJECTED   // Consumer rejected
+  EXPIRED    // Past validUntil date
+  WITHDRAWN  // PRO withdrew the quote
 }
 
 // ============================================

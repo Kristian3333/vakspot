@@ -8,5 +8,11 @@
     "src/app/api/**/*.ts": {
       "maxDuration": 30
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/job-transitions",
+      "schedule": "0 */2 * * *"
+    }
+  ]
 }

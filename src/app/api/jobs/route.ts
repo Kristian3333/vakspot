@@ -75,9 +75,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Public endpoint - only published jobs
+    // Public endpoint - only active jobs (CREATED = published, available for PROs)
     const where = {
-      status: JobStatus.PUBLISHED,
+      status: JobStatus.CREATED,
       ...(categoryId && { categoryId }),
     };
 
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
     const locationLat = coords?.lat || null;
     const locationLng = coords?.lng || null;
 
-    // Create the job (auto-publish)
+    // Create the job (auto-publish as CREATED)
     const job = await prisma.job.create({
       data: {
         title,
@@ -188,8 +188,10 @@ export async function POST(request: NextRequest) {
         locationLng,
         timeline: timeline || 'FLEXIBLE',
         startDate: startDate || null,
-        status: JobStatus.PUBLISHED,
+        status: JobStatus.CREATED,
         publishedAt: new Date(),
+        statusChangedAt: new Date(),
+        statusChangedBy: 'CONSUMER',
         // Create images if provided
         ...(images && images.length > 0 && {
           images: {

@@ -47,7 +47,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const isOwner = session?.user?.id === job.client.user.id;
     const isAdmin = session?.user?.role === 'ADMIN';
     const isPro = session?.user?.role === 'PRO';
-    const isAvailable = ['PUBLISHED', 'ACCEPTED'].includes(job.status);
+    // Jobs are available to PROs during active phases (before completion/cancellation)
+    const availableStatuses = [
+      'CREATED', 'RESPONSES_RECEIVED', 'IN_CONVERSATION', 'QUOTE_RECEIVED',
+      'SELECTED', 'SCHEDULED', 'IN_PROGRESS',
+      // Legacy statuses for backwards compatibility
+      'PUBLISHED', 'ACCEPTED',
+    ];
+    const isAvailable = availableStatuses.includes(job.status);
 
     // PROs can view available jobs
     if (!isOwner && !isAdmin && !isAvailable) {
@@ -104,10 +111,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Can only edit draft jobs
-    if (job.status !== JobStatus.DRAFT) {
+    // Can only edit jobs that haven't received responses yet
+    // In Phase 7, CREATED jobs are auto-published, so we allow edits only before first response
+    const editableStatuses: JobStatus[] = [JobStatus.DRAFT, JobStatus.CREATED];
+    if (!editableStatuses.includes(job.status)) {
       return NextResponse.json(
-        { error: 'Can only edit draft jobs' },
+        { error: 'Kan alleen klussen bewerken die nog geen reacties hebben' },
         { status: 400 }
       );
     }
@@ -185,8 +194,15 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Can't delete completed or already cancelled jobs
-    const nonDeletableStatuses: JobStatus[] = [JobStatus.COMPLETED, JobStatus.REVIEWED];
+    // Can't delete completed, reviewed, or already cancelled jobs
+    const nonDeletableStatuses: JobStatus[] = [
+      JobStatus.COMPLETED,
+      JobStatus.COMPLETED_BY_CONSUMER,
+      JobStatus.COMPLETED_BY_PRO,
+      JobStatus.REVIEWED,
+      JobStatus.CANCELLED_BY_CONSUMER,
+      JobStatus.CANCELLED_BY_PRO,
+    ];
     if (nonDeletableStatuses.includes(job.status)) {
       return NextResponse.json(
         { error: 'Deze klus kan niet meer worden verwijderd' },
@@ -205,16 +221,33 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ deleted: true, message: 'Klus verwijderd' });
     }
 
-    // If job has bids/conversations, mark as completed instead
-    const completedJob = await prisma.job.update({
+    // If job has bids/conversations, mark as cancelled by consumer
+    const cancelledJob = await prisma.job.update({
       where: { id },
-      data: { status: JobStatus.COMPLETED },
+      data: {
+        status: JobStatus.CANCELLED_BY_CONSUMER,
+        cancelledAt: new Date(),
+        statusChangedAt: new Date(),
+        statusChangedBy: 'CONSUMER',
+      },
       select: { id: true, status: true },
     });
 
+    // Log to status history
+    await prisma.statusHistory.create({
+      data: {
+        jobId: id,
+        fromStatus: job.status,
+        toStatus: JobStatus.CANCELLED_BY_CONSUMER,
+        changedBy: 'CONSUMER',
+        userId: session.user.id,
+        reason: 'Klus verwijderd door opdrachtgever',
+      },
+    });
+
     return NextResponse.json({
-      job: completedJob,
-      message: 'Klus afgesloten (had al reacties)'
+      job: cancelledJob,
+      message: 'Klus geannuleerd (had al reacties)'
     });
   } catch (error) {
     console.error('Failed to delete job:', error);

@@ -42,8 +42,9 @@ export async function POST(
       return NextResponse.json({ error: 'Niet geautoriseerd' }, { status: 403 });
     }
 
-    // Check if job can accept bids (must be PUBLISHED)
-    if (bid.job.status !== 'PUBLISHED') {
+    // Check if job can accept bids (must be in active status)
+    const acceptableStatuses = ['CREATED', 'RESPONSES_RECEIVED', 'IN_CONVERSATION', 'QUOTE_RECEIVED', 'PUBLISHED'];
+    if (!acceptableStatuses.includes(bid.job.status)) {
       return NextResponse.json(
         { error: 'Deze klus kan geen offertes meer accepteren' },
         { status: 400 }
@@ -80,12 +81,14 @@ export async function POST(
         where: { id: bidId },
         data: { status: 'ACCEPTED' },
       }),
-      // Update job status and link accepted bid
+      // Update job status and link accepted bid (Phase 7: SELECTED instead of ACCEPTED)
       prisma.job.update({
         where: { id: bid.jobId },
         data: {
-          status: 'ACCEPTED',
+          status: 'SELECTED',
           acceptedBidId: bidId,
+          statusChangedAt: new Date(),
+          statusChangedBy: 'CONSUMER',
         },
       }),
       // Reject all other pending bids for this job
@@ -98,6 +101,18 @@ export async function POST(
         data: { status: 'REJECTED' },
       }),
     ]);
+
+    // Log status change to audit history
+    await prisma.statusHistory.create({
+      data: {
+        jobId: bid.jobId,
+        fromStatus: bid.job.status as any,
+        toStatus: 'SELECTED',
+        changedBy: 'CONSUMER',
+        userId: session.user.id,
+        reason: `Vakman ${bid.pro.companyName || bid.pro.user.name} gekozen voor klus`,
+      },
+    });
 
     // Send acceptance message to the chosen PRO
     const acceptedConversation = await prisma.conversation.findFirst({

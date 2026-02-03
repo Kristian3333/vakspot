@@ -135,8 +135,12 @@ export default function ProJobDetailPage() {
   const alreadyInterested = !!existingBid;
   const isAcceptedByMe = existingBid?.status === 'ACCEPTED';
   const isRejected = existingBid?.status === 'REJECTED';
-  const isAvailable = ['PUBLISHED', 'ACCEPTED'].includes(job.status);
-  const isJobAccepted = job.status === 'ACCEPTED';
+  // Job is available for expressing interest in early stages
+  const availableStatuses = ['CREATED', 'RESPONSES_RECEIVED', 'IN_CONVERSATION', 'QUOTE_RECEIVED', 'PUBLISHED'];
+  const isAvailable = availableStatuses.includes(job.status);
+  // Job has a PRO selected (but may or may not be me)
+  const selectedStatuses = ['SELECTED', 'SCHEDULED', 'IN_PROGRESS', 'ACCEPTED'];
+  const isJobAccepted = selectedStatuses.includes(job.status);
   const existingConversationId = existingBid?.conversation?.id || null;
 
   // Success state after submitting interest

@@ -33,10 +33,17 @@ export async function GET(request: NextRequest) {
     const proCategoryIds = proProfile.categories.map(c => c.categoryId);
 
     // Build query filters
-    // Show all jobs that are available or accepted (not cancelled/completed)
-    // This lets PROs see the market even for taken jobs
+    // Show all jobs that are available or in progress (not cancelled/completed)
+    // Phase 7 statuses: CREATED through IN_PROGRESS are visible to PROs
     const where: any = {
-      status: { in: ['PUBLISHED', 'ACCEPTED'] },
+      status: {
+        in: [
+          'CREATED', 'RESPONSES_RECEIVED', 'IN_CONVERSATION', 'QUOTE_RECEIVED',
+          'SELECTED', 'SCHEDULED', 'IN_PROGRESS',
+          // Legacy statuses for backwards compatibility
+          'PUBLISHED', 'ACCEPTED',
+        ],
+      },
       // Exclude jobs the pro has already bid on (they'll see those in their own list)
       bids: {
         none: { proId: proProfile.id },
@@ -80,10 +87,16 @@ export async function GET(request: NextRequest) {
 
     // Calculate distance and add interest count
     const now = new Date();
+    // Statuses where a PRO has been selected (job is "taken")
+    const takenStatuses = [
+      'SELECTED', 'SCHEDULED', 'IN_PROGRESS',
+      'COMPLETED_BY_CONSUMER', 'COMPLETED_BY_PRO', 'COMPLETED', 'REVIEWED',
+      'ACCEPTED', // legacy
+    ];
     let processedJobs = jobs.map(job => ({
       ...job,
       interestCount: job._count.bids,
-      isAccepted: ['ACCEPTED', 'COMPLETED'].includes(job.status),
+      isAccepted: takenStatuses.includes(job.status),
       isSponsored: job.sponsoredUntil && new Date(job.sponsoredUntil) > now,
       distance: (proProfile.locationLat && proProfile.locationLng && job.locationLat && job.locationLng)
         ? Math.round(calculateDistance(

@@ -95,20 +95,45 @@ export async function POST(request: NextRequest) {
 
     const { type, targetId, reason, description } = parsed.data;
 
-    // Verify the target exists
+    // Verify the target exists and get details for flagging
     let targetExists = false;
+    let jobToFlag: { id: string; status: string } | null = null;
+
     switch (type) {
       case 'JOB':
-        const job = await prisma.job.findUnique({ where: { id: targetId } });
+        const job = await prisma.job.findUnique({
+          where: { id: targetId },
+          select: { id: true, status: true },
+        });
         targetExists = !!job;
+        if (job) jobToFlag = job;
         break;
       case 'PROFILE':
         const profile = await prisma.proProfile.findUnique({ where: { id: targetId } });
         targetExists = !!profile;
         break;
       case 'MESSAGE':
-        const message = await prisma.message.findUnique({ where: { id: targetId } });
+        // For messages, also flag the associated job
+        const message = await prisma.message.findUnique({
+          where: { id: targetId },
+          include: {
+            conversation: {
+              include: {
+                bid: {
+                  select: { jobId: true },
+                },
+              },
+            },
+          },
+        });
         targetExists = !!message;
+        if (message?.conversation?.bid?.jobId) {
+          const associatedJob = await prisma.job.findUnique({
+            where: { id: message.conversation.bid.jobId },
+            select: { id: true, status: true },
+          });
+          if (associatedJob) jobToFlag = associatedJob;
+        }
         break;
     }
 
@@ -143,6 +168,37 @@ export async function POST(request: NextRequest) {
         description,
       },
     });
+
+    // Phase 7: Automatically flag associated job for review (DSA compliance)
+    // Only flag if job is in an active/in-progress status (not already completed/cancelled)
+    const nonFlaggableStatuses = [
+      'FLAGGED', 'COMPLETED_BY_CONSUMER', 'COMPLETED_BY_PRO', 'COMPLETED',
+      'REVIEWED', 'CANCELLED_BY_CONSUMER', 'CANCELLED_BY_PRO', 'EXPIRED',
+    ];
+
+    if (jobToFlag && !nonFlaggableStatuses.includes(jobToFlag.status)) {
+      const previousStatus = jobToFlag.status;
+      await prisma.job.update({
+        where: { id: jobToFlag.id },
+        data: {
+          status: 'FLAGGED',
+          statusChangedAt: new Date(),
+          statusChangedBy: 'SYSTEM',
+        },
+      });
+
+      // Log status transition for audit
+      await prisma.statusHistory.create({
+        data: {
+          jobId: jobToFlag.id,
+          fromStatus: previousStatus as any,
+          toStatus: 'FLAGGED',
+          changedBy: 'SYSTEM',
+          userId: session.user.id,
+          reason: `Gemeld via DSA procedure: ${reason}${description ? ` - ${description.substring(0, 100)}` : ''}`,
+        },
+      });
+    }
 
     return NextResponse.json({ report, message: 'Melding ontvangen. Bedankt voor uw feedback.' }, { status: 201 });
   } catch (error) {

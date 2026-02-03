@@ -139,7 +139,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Pro profile not found' }, { status: 404 });
     }
 
-    // Verify job exists and is available (PUBLISHED only - not ACCEPTED, COMPLETED, etc.)
+    // Verify job exists and is available for interest (Phase 7 active statuses)
+    const availableStatuses = ['CREATED', 'RESPONSES_RECEIVED', 'IN_CONVERSATION', 'QUOTE_RECEIVED', 'PUBLISHED'];
     const job = await prisma.job.findUnique({
       where: { id: jobId },
       include: {
@@ -152,7 +153,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!job || job.status !== 'PUBLISHED') {
+    if (!job || !availableStatuses.includes(job.status)) {
       return NextResponse.json({ error: 'Job not available' }, { status: 400 });
     }
 
@@ -198,8 +199,29 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // DON'T change job status here - keep it PUBLISHED so other PROs can see it
-    // Status only changes to ACCEPTED when client accepts a PRO
+    // Phase 7: Update job status to RESPONSES_RECEIVED if this is the first interest
+    // Don't update if already in a later state
+    if (job.status === 'CREATED' || job.status === 'PUBLISHED') {
+      await prisma.job.update({
+        where: { id: jobId },
+        data: {
+          status: 'RESPONSES_RECEIVED',
+          statusChangedAt: new Date(),
+          statusChangedBy: 'SYSTEM',
+        },
+      });
+
+      // Log status transition
+      await prisma.statusHistory.create({
+        data: {
+          jobId,
+          fromStatus: job.status as any,
+          toStatus: 'RESPONSES_RECEIVED',
+          changedBy: 'SYSTEM',
+          reason: 'Eerste vakman heeft interesse getoond',
+        },
+      });
+    }
 
     // Send email notification to client (fire-and-forget) - only if preference enabled
     if (job.client.user.email && job.client.user.emailNewInterest) {

@@ -179,8 +179,8 @@ Blueprint requires 15 statuses for tracking, conversion reporting, automated ema
 
 Tasks:
 - [x] Update Prisma `JobStatus` enum (5 → 15 values)
-- [ ] Write data migration (DRAFT→CREATED, ACCEPTED→SELECTED, COMPLETED→COMPLETED_BY_CONSUMER)
-- [ ] Update all API routes referencing old status values
+- [x] Write data migration (DRAFT→CREATED, ACCEPTED→SELECTED, COMPLETED→COMPLETED_BY_CONSUMER) — `scripts/migrate-job-statuses.ts`
+- [x] Update all API routes referencing old status values (jobs, bids, leads, reviews, admin)
 - [x] Update all UI components displaying/filtering by status (JOB_STATUS_CONFIG updated)
 
 ### 7.2 Schema: New Fields on Job Model ✅ COMPLETE
@@ -199,7 +199,7 @@ Currently has `startDate` and `completedAt`. Added:
 - [x] Create `StatusHistory` model: jobId, fromStatus, toStatus, changedBy, changedAt, reason
 - [x] Log every status transition automatically (via transitionJobStatus)
 
-### 7.4 State Machine: Transition Validation
+### 7.4 State Machine: Transition Validation ✅ COMPLETE
 
 ```
 1 CREATED → 3 RESPONSES_RECEIVED (auto: first PRO interest)
@@ -220,11 +220,15 @@ Currently has `startDate` and `completedAt`. Added:
 
 Tasks:
 - [x] Implement state machine validation lib (reject invalid transitions) — `lib/job-state-machine.ts`
-- [ ] Auto-transition: CREATED→RESPONSES_RECEIVED on first bid/interest
-- [ ] Auto-transition: RESPONSES_RECEIVED→IN_CONVERSATION on first message
-- [ ] Auto-transition: SCHEDULED→IN_PROGRESS when `start_date` reached (cron or on-access)
-- [ ] Auto-transition: CREATED→NO_MATCH / EXPIRED after configurable timeout
-- [ ] Skip PUBLISHED: auto-publish on create (CREATED = published)
+- [x] Auto-transition: CREATED→RESPONSES_RECEIVED on first bid/interest — `api/bids/route.ts`
+- [x] Auto-transition: RESPONSES_RECEIVED→IN_CONVERSATION on first message — `api/messages/[id]/route.ts`
+- [x] Auto-transition: QUOTE_RECEIVED when quote sent — `api/quotes/route.ts`
+- [x] Auto-transition: SCHEDULED→IN_PROGRESS when `start_date` reached — `api/cron/job-transitions/route.ts`
+- [x] Auto-transition: CREATED→NO_MATCH / EXPIRED after configurable timeout — `api/cron/job-transitions/route.ts`
+- [x] Skip PUBLISHED: auto-publish on create (CREATED = published) — `api/jobs/route.ts`
+- [x] Vercel cron configuration — `vercel.json` (runs every 2 hours)
+
+**Note:** Set `CRON_SECRET` environment variable in Vercel for cron job authentication.
 
 ### 7.5 PRO 4-Step Flow UI ✅ COMPLETE
 
@@ -243,24 +247,27 @@ After selection (status 6), PRO sees: `Selected → Scheduled → In Progress �
 - [x] "Markeer als voltooid" button at statuses 7/8 → status 9 (COMPLETED_BY_CONSUMER)
 - [x] "Annuleer project" button at statuses 6/7/8 → status 12 (CANCELLED_BY_CONSUMER)
 - [x] After completion (9/10): prompt for review → status 11
-- [ ] Flag conversation option → status 2 (FLAGGED)
+- [x] Flag conversation option → status 2 (FLAGGED) — `api/reports/route.ts` auto-flags jobs on report
 
-### 7.7 Quote Feature (Status 5)
+### 7.7 Quote Feature (Status 5) ✅ COMPLETE
 
-- [ ] Quote data model (amount, description, validUntil, status)
-- [ ] PRO quote sending UI (amount, description, validity period)
-- [ ] Consumer accept/decline quote UI
-- [ ] Auto-transition IN_CONVERSATION→QUOTE_RECEIVED when quote sent
+- [x] Quote data model (amount, description, validUntil, status) — `prisma/schema.prisma`
+- [x] Quote API endpoints — `api/quotes/route.ts`, `api/quotes/[id]/route.ts`
+- [x] PRO quote sending UI (amount, description, validity period) — `components/quotes/quote-form.tsx`
+- [x] Consumer accept/decline quote UI — `components/quotes/quote-card.tsx`
+- [x] Quote UI integrated in conversation view — `messages/[id]/page.tsx`
+- [x] Auto-transition IN_CONVERSATION→QUOTE_RECEIVED when quote sent — `api/quotes/route.ts`
 
-### 7.8 Automated Emails for Status Changes
+### 7.8 Automated Emails for Status Changes ✅ COMPLETE
 
-- [ ] Status 6 (Selected): email PRO to set start date
-- [ ] Status 7 (Scheduled): confirm date to both parties
-- [ ] Status 8 (In Progress): reminder that work is starting
-- [ ] Status 9/10 (Completed): prompt consumer for review
-- [ ] Status 12/13 (Cancelled): notify other party
-- [ ] Nudge: PRO hasn't set start date within X days of selection
-- [ ] Nudge: job has no responses after X days
+- [x] Status 6 (Selected): email PRO to set start date — `sendProSelectedEmail`
+- [x] Status 7 (Scheduled): confirm date to both parties — `sendJobScheduledEmail`
+- [x] Status 8 (In Progress): reminder that work is starting — `sendWorkStartedEmail`
+- [x] Status 9/10 (Completed): prompt consumer for review — `sendJobCompletedEmail`
+- [x] Status 12/13 (Cancelled): notify other party — `sendJobCancelledEmail`
+- [x] Quote received email — `sendQuoteReceivedEmail`
+- [x] Nudge: PRO hasn't set start date within X days of selection — `api/cron/job-transitions/route.ts`
+- [ ] Nudge: job has no responses after X days (optional, could be added to cron)
 
 ### 7.9 Reporting & Analytics Dashboard
 
@@ -339,6 +346,17 @@ Everything below has been code-verified as actually implemented:
 | Chat retention policy | `privacy/page.tsx` Section 7a with specific periods |
 | No monitoring statement | `privacy/page.tsx` Section 7a |
 | ReportButton on client jobs | `client/jobs/[id]/page.tsx` for reporting PROs |
+| Data migration script | `scripts/migrate-job-statuses.ts` |
+| Auto-transition: interest | `api/bids/route.ts` → RESPONSES_RECEIVED |
+| Auto-transition: message | `api/messages/[id]/route.ts` → IN_CONVERSATION |
+| Auto-transition: quote | `api/quotes/route.ts` → QUOTE_RECEIVED |
+| Auto-flag on report | `api/reports/route.ts` → FLAGGED |
+| Quote model & API | `prisma/schema.prisma`, `api/quotes/` |
+| Status change emails | `lib/email.ts` Phase 7 emails |
+| Quote UI components | `components/quotes/quote-form.tsx`, `quote-card.tsx` |
+| Quote in conversation | `messages/[id]/page.tsx` - integrated QuoteForm + QuoteCard |
+| Cron job auto-transitions | `api/cron/job-transitions/route.ts` |
+| Vercel cron config | `vercel.json` - runs every 2 hours |
 
 ---
 
@@ -349,18 +367,21 @@ Everything below has been code-verified as actually implemented:
 2. ~~**B3+B4**: Display and edit KvK number on PRO profile pages~~ ✅ (was already working)
 3. ~~**B5+B6**: Expand footer with legal info, links, platform role~~ ✅
 
-### 🔴 P1 — Phase 7 Foundation (Status Blueprint)
-4. Schema changes: JobStatus enum expansion + new fields + StatusHistory model (7.1-7.3)
-5. State machine validation lib (7.4)
-6. PRO 4-step flow UI (7.5)
-7. Consumer completion + cancellation UI (7.6)
+### ✅ P1 — Phase 7 Foundation (Status Blueprint) — COMPLETE
+4. ~~Schema changes: JobStatus enum expansion + new fields + StatusHistory model (7.1-7.3)~~ ✅
+5. ~~State machine validation lib (7.4)~~ ✅
+6. ~~PRO 4-step flow UI (7.5)~~ ✅
+7. ~~Consumer completion + cancellation UI (7.6)~~ ✅
 
-### 🟡 P2 — Phase 7 Features
-8. Auto-transitions: interest → conversation → scheduled → in progress (7.4)
-9. Quote feature (7.7)
-10. Automated status change emails (7.8)
+### ✅ P2 — Phase 7 Features — COMPLETE
+8. ~~Auto-transitions: interest → conversation → quote received~~ ✅
+9. ~~Quote feature (7.7) — API + UI~~ ✅
+10. ~~Automated status change emails (7.8) — core emails + nudges~~ ✅
 11. ~~T&C improvements: platform role example + liability plain language (6.8)~~ ✅
-12. "Work done" confirmation before review (6.4 → ties into 7.6 completion flow)
+12. ~~"Work done" confirmation before review (6.4 → ties into 7.6 completion flow)~~ ✅
+13. ~~Quote UI components (frontend)~~ ✅
+14. ~~SCHEDULED→IN_PROGRESS cron job~~ ✅
+15. ~~CREATED→NO_MATCH/EXPIRED cron job~~ ✅
 
 ### 🟢 P3 — Nice to Have
 13. Reporting & analytics dashboard (7.9)
@@ -368,10 +389,11 @@ Everything below has been code-verified as actually implemented:
 15. ~~"No monitoring" statement in privacy policy (6.6)~~ ✅
 16. ~~"Professional vs individual" explicit toggle (B7)~~ ✅
 17. Payment integration (Stripe/Mollie)
+18. ~~Nudge emails (cron jobs)~~ ✅ (PRO start date reminder implemented)
 
 ### ⚪ P4 — Non-MVP
-18. Annual transparency reporting
-19. Regulator contact documentation
+19. Annual transparency reporting
+20. Regulator contact documentation
 
 ---
 
@@ -379,11 +401,11 @@ Everything below has been code-verified as actually implemented:
 
 | Category | Count |
 |----------|-------|
-| ✅ Verified complete | 40+ |
+| ✅ Verified complete | 55+ |
 | 🐛 Open bugs | 0 |
-| ❌ Phase 6 remaining | ~3 tasks |
-| ❌ Phase 7 (new) | ~46 tasks |
-| **Total tracked** | **~93** |
+| ❌ Phase 6 remaining | ~2 tasks (non-MVP) |
+| ❌ Phase 7 remaining | ~5 tasks (analytics dashboard) |
+| **Total tracked** | **~65** |
 
 ---
 

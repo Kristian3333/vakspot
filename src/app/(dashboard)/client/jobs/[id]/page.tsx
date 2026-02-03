@@ -26,6 +26,22 @@ interface PageProps {
 }
 
 const statusConfig: Record<string, { label: string; variant: 'success' | 'warning' | 'error' | 'neutral' }> = {
+  // Phase 7 statuses
+  CREATED: { label: 'Actief', variant: 'success' },
+  FLAGGED: { label: 'Gemeld', variant: 'warning' },
+  RESPONSES_RECEIVED: { label: 'Reacties', variant: 'success' },
+  IN_CONVERSATION: { label: 'In gesprek', variant: 'success' },
+  QUOTE_RECEIVED: { label: 'Offerte', variant: 'warning' },
+  SELECTED: { label: 'Vakman gekozen', variant: 'success' },
+  SCHEDULED: { label: 'Ingepland', variant: 'success' },
+  IN_PROGRESS: { label: 'Bezig', variant: 'warning' },
+  COMPLETED_BY_CONSUMER: { label: 'Afgerond', variant: 'neutral' },
+  COMPLETED_BY_PRO: { label: 'Afgerond (PRO)', variant: 'neutral' },
+  CANCELLED_BY_CONSUMER: { label: 'Geannuleerd', variant: 'neutral' },
+  CANCELLED_BY_PRO: { label: 'Geannuleerd', variant: 'neutral' },
+  NO_MATCH: { label: 'Geen match', variant: 'neutral' },
+  EXPIRED: { label: 'Verlopen', variant: 'neutral' },
+  // Legacy statuses
   DRAFT: { label: 'Concept', variant: 'neutral' },
   PUBLISHED: { label: 'Actief', variant: 'success' },
   ACCEPTED: { label: 'Vakman gekozen', variant: 'success' },
@@ -80,10 +96,17 @@ export default async function JobDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const status = statusConfig[job.status] || statusConfig.DRAFT;
+  const status = statusConfig[job.status] || statusConfig.CREATED;
   const interestedPros = job.bids;
-  const canDelete = !['COMPLETED', 'REVIEWED'].includes(job.status);
-  const canAcceptPros = job.status === 'PUBLISHED';
+  // Can delete if not in a terminal state
+  const terminalStatuses = [
+    'COMPLETED', 'COMPLETED_BY_CONSUMER', 'COMPLETED_BY_PRO', 'REVIEWED',
+    'CANCELLED_BY_CONSUMER', 'CANCELLED_BY_PRO',
+  ];
+  const canDelete = !terminalStatuses.includes(job.status);
+  // Can accept PROs if job is in early stages (before PRO selection)
+  const acceptableStatuses = ['CREATED', 'RESPONSES_RECEIVED', 'IN_CONVERSATION', 'QUOTE_RECEIVED', 'PUBLISHED'];
+  const canAcceptPros = acceptableStatuses.includes(job.status);
   const acceptedBid = interestedPros.find(b => b.status === 'ACCEPTED');
 
   return (

@@ -6,6 +6,13 @@ import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { JobStatus, StatusChangedBy } from '@prisma/client';
 import { transitionJobStatus, isValidTransition } from '@/lib/job-state-machine';
+import {
+  sendProSelectedEmail,
+  sendJobScheduledEmail,
+  sendWorkStartedEmail,
+  sendJobCompletedEmail,
+  sendJobCancelledEmail,
+} from '@/lib/email';
 
 // POST - Transition job status
 export async function POST(
@@ -107,8 +114,126 @@ export async function POST(
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    // TODO: Send email notifications based on status change
-    // This would be implemented in Phase 7.8
+    // Phase 7.8: Send email notifications based on status change
+    const conversationUrl = job.acceptedBid
+      ? await prisma.conversation.findUnique({
+          where: { bidId: job.acceptedBid.id },
+          select: { id: true },
+        }).then(conv => conv ? `/messages/${conv.id}` : '/pro/jobs')
+      : '/pro/jobs';
+
+    // Send emails based on the status transition (fire-and-forget)
+    try {
+      switch (toStatus) {
+        case 'SELECTED':
+          // Notify PRO that they were selected
+          if (job.acceptedBid?.pro.user.email && job.acceptedBid.pro.user.emailBidUpdates) {
+            sendProSelectedEmail({
+              to: job.acceptedBid.pro.user.email,
+              proName: job.acceptedBid.pro.user.name || 'Vakman',
+              clientName: job.client.user.name || 'Klant',
+              jobTitle: job.title,
+              conversationUrl,
+            }).catch(console.error);
+          }
+          break;
+
+        case 'SCHEDULED':
+          // Notify both parties about the scheduled date
+          const scheduledDate = additionalData.startDate || new Date();
+          // Notify client
+          if (job.client.user.email && job.client.user.emailBidUpdates) {
+            sendJobScheduledEmail({
+              to: job.client.user.email,
+              recipientName: job.client.user.name || 'Klant',
+              jobTitle: job.title,
+              startDate: scheduledDate,
+              conversationUrl,
+              isClient: true,
+            }).catch(console.error);
+          }
+          // Notify PRO (confirmation)
+          if (job.acceptedBid?.pro.user.email && job.acceptedBid.pro.user.emailBidUpdates) {
+            sendJobScheduledEmail({
+              to: job.acceptedBid.pro.user.email,
+              recipientName: job.acceptedBid.pro.user.name || 'Vakman',
+              jobTitle: job.title,
+              startDate: scheduledDate,
+              conversationUrl,
+              isClient: false,
+            }).catch(console.error);
+          }
+          break;
+
+        case 'IN_PROGRESS':
+          // Notify client that work has started
+          if (job.client.user.email && job.client.user.emailBidUpdates) {
+            sendWorkStartedEmail({
+              to: job.client.user.email,
+              recipientName: job.client.user.name || 'Klant',
+              jobTitle: job.title,
+              conversationUrl,
+            }).catch(console.error);
+          }
+          break;
+
+        case 'COMPLETED_BY_PRO':
+          // Notify client that PRO marked job complete
+          if (job.client.user.email && job.client.user.emailBidUpdates) {
+            sendJobCompletedEmail({
+              to: job.client.user.email,
+              recipientName: job.client.user.name || 'Klant',
+              jobTitle: job.title,
+              completedBy: 'pro',
+              conversationUrl,
+              reviewUrl: `/client/jobs/${jobId}/review`,
+            }).catch(console.error);
+          }
+          break;
+
+        case 'COMPLETED_BY_CONSUMER':
+          // Notify PRO that client marked job complete
+          if (job.acceptedBid?.pro.user.email && job.acceptedBid.pro.user.emailBidUpdates) {
+            sendJobCompletedEmail({
+              to: job.acceptedBid.pro.user.email,
+              recipientName: job.acceptedBid.pro.user.name || 'Vakman',
+              jobTitle: job.title,
+              completedBy: 'consumer',
+              conversationUrl,
+            }).catch(console.error);
+          }
+          break;
+
+        case 'CANCELLED_BY_PRO':
+          // Notify client that PRO cancelled
+          if (job.client.user.email && job.client.user.emailBidUpdates) {
+            sendJobCancelledEmail({
+              to: job.client.user.email,
+              recipientName: job.client.user.name || 'Klant',
+              jobTitle: job.title,
+              cancelledBy: 'pro',
+              reason,
+            }).catch(console.error);
+          }
+          break;
+
+        case 'CANCELLED_BY_CONSUMER':
+          // Notify PRO that client cancelled
+          if (job.acceptedBid?.pro.user.email && job.acceptedBid.pro.user.emailBidUpdates) {
+            sendJobCancelledEmail({
+              to: job.acceptedBid.pro.user.email,
+              recipientName: job.acceptedBid.pro.user.name || 'Vakman',
+              jobTitle: job.title,
+              cancelledBy: 'consumer',
+              reason,
+            }).catch(console.error);
+          }
+          break;
+      }
+    } catch (emailError) {
+      console.error('Failed to send status change email:', emailError);
+      // Don't fail the request if email fails
+    }
 
     return NextResponse.json({
       success: true,

@@ -23,7 +23,9 @@ import {
   Briefcase,
   ExternalLink,
   AlertCircle,
+  Receipt,
 } from 'lucide-react';
+import { QuoteForm, QuoteCard } from '@/components/quotes';
 
 type Attachment = {
   id: string;
@@ -31,6 +33,18 @@ type Attachment = {
   filename: string;
   fileType: string;
   fileSize: number;
+};
+
+type Quote = {
+  id: string;
+  amount: number;
+  amountType: 'FIXED' | 'ESTIMATE' | 'HOURLY' | 'TO_DISCUSS';
+  description: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED' | 'WITHDRAWN';
+  validUntil: string;
+  createdAt: string;
+  acceptedAt?: string | null;
+  rejectedAt?: string | null;
 };
 
 type Message = {
@@ -130,6 +144,8 @@ export default function ConversationPage() {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [showQuoteForm, setShowQuoteForm] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -143,21 +159,28 @@ export default function ConversationPage() {
           fetch(`/api/messages/${id}`),
           fetch('/api/auth/session'),
         ]);
-        
+
         const sessionData = await sessionRes.json();
         setCurrentUserId(sessionData?.user?.id || null);
         setUserRole(sessionData?.user?.role || null);
-        
+
         if (!convRes.ok) {
           const errorData = await convRes.json();
           setError(errorData.error || `Error: ${convRes.status}`);
           setLoading(false);
           return;
         }
-        
+
         const convData = await convRes.json();
         if (convData.conversation) {
           setConversation(convData.conversation);
+
+          // Fetch quotes for this bid
+          const quotesRes = await fetch(`/api/quotes?bidId=${convData.conversation.bid.id}`);
+          if (quotesRes.ok) {
+            const quotesData = await quotesRes.json();
+            setQuotes(quotesData.quotes || []);
+          }
         } else {
           setError('Geen gesprek data ontvangen');
         }
@@ -271,7 +294,7 @@ export default function ConversationPage() {
   const handleBidAction = async (action: 'accept' | 'reject') => {
     if (!conversation) return;
     setActionLoading(true);
-    
+
     try {
       const res = await fetch(`/api/bids/${conversation.bid.id}/${action}`, {
         method: 'POST',
@@ -289,6 +312,30 @@ export default function ConversationPage() {
       console.error(`Failed to ${action} bid:`, err);
     }
     setActionLoading(false);
+  };
+
+  const refreshQuotes = async () => {
+    if (!conversation) return;
+    try {
+      const quotesRes = await fetch(`/api/quotes?bidId=${conversation.bid.id}`);
+      if (quotesRes.ok) {
+        const quotesData = await quotesRes.json();
+        setQuotes(quotesData.quotes || []);
+      }
+      // Also refresh conversation to get updated job status
+      const convRes = await fetch(`/api/messages/${id}`);
+      const data = await convRes.json();
+      if (data.conversation) {
+        setConversation(data.conversation);
+      }
+    } catch (err) {
+      console.error('Failed to refresh quotes:', err);
+    }
+  };
+
+  const handleQuoteSuccess = () => {
+    setShowQuoteForm(false);
+    refreshQuotes();
   };
 
   if (loading) {
@@ -356,8 +403,23 @@ export default function ConversationPage() {
                     </Badge>
                     <h2 className="font-semibold text-surface-900 group-hover:text-brand-600 transition-colors">{job.title}</h2>
                   </div>
-                  <StatusBadge variant={job.status === 'ACCEPTED' ? 'success' : 'primary'} size="sm">
-                    {job.status === 'PUBLISHED' ? 'Gepubliceerd' :
+                  <StatusBadge variant={
+                    ['SELECTED', 'SCHEDULED', 'IN_PROGRESS', 'ACCEPTED'].includes(job.status) ? 'success' :
+                    ['COMPLETED_BY_CONSUMER', 'COMPLETED_BY_PRO', 'COMPLETED', 'REVIEWED'].includes(job.status) ? 'neutral' :
+                    'primary'
+                  } size="sm">
+                    {/* Phase 7 status labels */}
+                    {job.status === 'CREATED' ? 'Actief' :
+                     job.status === 'RESPONSES_RECEIVED' ? 'Reacties' :
+                     job.status === 'IN_CONVERSATION' ? 'In gesprek' :
+                     job.status === 'QUOTE_RECEIVED' ? 'Offerte' :
+                     job.status === 'SELECTED' ? 'Gekozen' :
+                     job.status === 'SCHEDULED' ? 'Ingepland' :
+                     job.status === 'IN_PROGRESS' ? 'Bezig' :
+                     job.status === 'COMPLETED_BY_CONSUMER' ? 'Afgerond' :
+                     job.status === 'COMPLETED_BY_PRO' ? 'Afgerond' :
+                     /* Legacy statuses */
+                     job.status === 'PUBLISHED' ? 'Gepubliceerd' :
                      job.status === 'ACCEPTED' ? 'Geaccepteerd' :
                      job.status === 'COMPLETED' ? 'Afgerond' :
                      job.status === 'REVIEWED' ? 'Beoordeeld' : job.status}
@@ -470,6 +532,44 @@ export default function ConversationPage() {
             </div>
           )}
         </Card>
+
+        {/* Quotes Section */}
+        {quotes.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-surface-700 flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              Offertes ({quotes.length})
+            </h3>
+            {quotes.map((quote) => (
+              <QuoteCard
+                key={quote.id}
+                quote={quote}
+                isClient={isClient}
+                onRefresh={refreshQuotes}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Quote Form for PROs */}
+        {!isClient && !showQuoteForm && bid.status !== 'ACCEPTED' && bid.status !== 'REJECTED' && !quotes.some(q => q.status === 'PENDING') && (
+          <Button
+            variant="outline"
+            onClick={() => setShowQuoteForm(true)}
+            className="w-full border-brand-200 text-brand-600 hover:bg-brand-50"
+          >
+            <Receipt className="h-4 w-4 mr-2" />
+            Offerte versturen
+          </Button>
+        )}
+
+        {showQuoteForm && (
+          <QuoteForm
+            bidId={bid.id}
+            onSuccess={handleQuoteSuccess}
+            onCancel={() => setShowQuoteForm(false)}
+          />
+        )}
 
         {/* Messages */}
         <Card className="p-0 overflow-hidden">

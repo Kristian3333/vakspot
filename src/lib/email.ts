@@ -312,3 +312,260 @@ export async function sendNewJobsAlertEmail(params: {
 
   return sendEmail(to, `${jobs.length} nieuwe ${jobs.length === 1 ? 'klus' : 'klussen'} in je buurt`, html);
 }
+
+// ============================================
+// PHASE 7: STATUS CHANGE EMAILS
+// ============================================
+
+/**
+ * Send notification when PRO is selected (ask them to set start date)
+ */
+export async function sendProSelectedEmail(params: {
+  to: string;
+  proName: string;
+  clientName: string;
+  jobTitle: string;
+  conversationUrl: string;
+}): Promise<boolean> {
+  const { to, proName, clientName, jobTitle, conversationUrl } = params;
+
+  const html = wrapInTemplate(`
+    <h2>Gefeliciteerd, ${proName}! Je bent gekozen! 🎉</h2>
+    <p><strong>${clientName}</strong> heeft jou gekozen voor de klus:</p>
+    <p style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid #10b981;">
+      <strong>${jobTitle}</strong>
+    </p>
+    <h3>Volgende stap: Plan de startdatum</h3>
+    <p>Bespreek met de klant wanneer je kunt beginnen en stel een startdatum in via het gesprek.</p>
+    <p>
+      <a href="${BASE_URL}${conversationUrl}" class="button">Ga naar gesprek</a>
+    </p>
+    <p class="muted">Tip: Reageer snel en stel een concrete startdatum voor om een goede indruk te maken!</p>
+  `);
+
+  return sendEmail(to, `Je bent gekozen voor "${jobTitle}" - Stel een startdatum in`, html);
+}
+
+/**
+ * Send notification when start date is scheduled
+ */
+export async function sendJobScheduledEmail(params: {
+  to: string;
+  recipientName: string;
+  jobTitle: string;
+  startDate: Date;
+  conversationUrl: string;
+  isClient: boolean;
+}): Promise<boolean> {
+  const { to, recipientName, jobTitle, startDate, conversationUrl, isClient } = params;
+
+  const formattedDate = startDate.toLocaleDateString('nl-NL', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const html = wrapInTemplate(`
+    <h2>Startdatum bevestigd! 📅</h2>
+    <p>Hallo ${recipientName},</p>
+    <p>De startdatum voor de volgende klus is ingepland:</p>
+    <p style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid #2563eb;">
+      <strong>${jobTitle}</strong><br>
+      <span style="color: #2563eb; font-size: 18px; margin-top: 10px; display: block;">📅 ${formattedDate}</span>
+    </p>
+    ${isClient
+      ? '<p>De vakman komt op deze datum aan de slag. Zorg dat alles voorbereid is.</p>'
+      : '<p>De klant verwacht je op deze datum. Neem contact op als er iets verandert.</p>'
+    }
+    <p>
+      <a href="${BASE_URL}${conversationUrl}" class="button">Bekijk details</a>
+    </p>
+  `);
+
+  return sendEmail(to, `Startdatum bevestigd: ${formattedDate} - ${jobTitle}`, html);
+}
+
+/**
+ * Send notification when work starts
+ */
+export async function sendWorkStartedEmail(params: {
+  to: string;
+  recipientName: string;
+  jobTitle: string;
+  conversationUrl: string;
+}): Promise<boolean> {
+  const { to, recipientName, jobTitle, conversationUrl } = params;
+
+  const html = wrapInTemplate(`
+    <h2>Het werk is gestart! 🛠️</h2>
+    <p>Hallo ${recipientName},</p>
+    <p>Het werk aan de volgende klus is van start gegaan:</p>
+    <p style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid #f59e0b;">
+      <strong>${jobTitle}</strong>
+    </p>
+    <p>Houd contact via het gesprek voor updates en vragen.</p>
+    <p>
+      <a href="${BASE_URL}${conversationUrl}" class="button">Ga naar gesprek</a>
+    </p>
+  `);
+
+  return sendEmail(to, `Werk gestart: ${jobTitle}`, html);
+}
+
+/**
+ * Send notification when job is marked as completed
+ */
+export async function sendJobCompletedEmail(params: {
+  to: string;
+  recipientName: string;
+  jobTitle: string;
+  completedBy: 'consumer' | 'pro';
+  conversationUrl: string;
+  reviewUrl?: string;
+}): Promise<boolean> {
+  const { to, recipientName, jobTitle, completedBy, conversationUrl, reviewUrl } = params;
+
+  const html = wrapInTemplate(`
+    <h2>Klus afgerond! ✅</h2>
+    <p>Hallo ${recipientName},</p>
+    <p>De volgende klus is gemarkeerd als afgerond ${completedBy === 'consumer' ? 'door de opdrachtgever' : 'door de vakman'}:</p>
+    <p style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid #10b981;">
+      <strong>${jobTitle}</strong>
+    </p>
+    ${reviewUrl
+      ? `
+        <h3>Laat een review achter</h3>
+        <p>Deel je ervaring met anderen door een review te schrijven.</p>
+        <p>
+          <a href="${BASE_URL}${reviewUrl}" class="button">Schrijf een review</a>
+        </p>
+      `
+      : `
+        <p>Bedankt voor het gebruik van VakSpot!</p>
+        <p>
+          <a href="${BASE_URL}${conversationUrl}" class="button">Bekijk details</a>
+        </p>
+      `
+    }
+  `);
+
+  return sendEmail(to, `Klus afgerond: ${jobTitle} ✅`, html);
+}
+
+/**
+ * Send notification when job is cancelled
+ */
+export async function sendJobCancelledEmail(params: {
+  to: string;
+  recipientName: string;
+  jobTitle: string;
+  cancelledBy: 'consumer' | 'pro';
+  reason?: string;
+}): Promise<boolean> {
+  const { to, recipientName, jobTitle, cancelledBy, reason } = params;
+
+  const html = wrapInTemplate(`
+    <h2>Klus geannuleerd</h2>
+    <p>Hallo ${recipientName},</p>
+    <p>Helaas is de volgende klus geannuleerd ${cancelledBy === 'consumer' ? 'door de opdrachtgever' : 'door de vakman'}:</p>
+    <p style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid #ef4444;">
+      <strong>${jobTitle}</strong>
+    </p>
+    ${reason
+      ? `
+        <p class="muted">Reden:</p>
+        <p style="background: #fef2f2; padding: 15px; border-radius: 4px; font-style: italic;">
+          "${reason}"
+        </p>
+      `
+      : ''
+    }
+    <p>
+      <a href="${BASE_URL}${cancelledBy === 'pro' ? '/client/jobs' : '/pro/jobs'}" class="button">
+        ${cancelledBy === 'pro' ? 'Bekijk je klussen' : 'Bekijk nieuwe klussen'}
+      </a>
+    </p>
+  `);
+
+  return sendEmail(to, `Klus geannuleerd: ${jobTitle}`, html);
+}
+
+/**
+ * Send reminder when PRO hasn't set start date
+ */
+export async function sendSetStartDateReminderEmail(params: {
+  to: string;
+  proName: string;
+  clientName: string;
+  jobTitle: string;
+  daysSinceSelection: number;
+  conversationUrl: string;
+}): Promise<boolean> {
+  const { to, proName, clientName, jobTitle, daysSinceSelection, conversationUrl } = params;
+
+  const html = wrapInTemplate(`
+    <h2>Herinnering: Stel een startdatum in 📅</h2>
+    <p>Hallo ${proName},</p>
+    <p>Je bent ${daysSinceSelection} dagen geleden gekozen voor de klus:</p>
+    <p style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid #f59e0b;">
+      <strong>${jobTitle}</strong><br>
+      <span class="muted">Opdrachtgever: ${clientName}</span>
+    </p>
+    <p><strong>Vergeet niet een startdatum in te stellen!</strong></p>
+    <p>De klant wacht op jouw planning. Stel een datum in via het gesprek.</p>
+    <p>
+      <a href="${BASE_URL}${conversationUrl}" class="button">Stel startdatum in</a>
+    </p>
+    <p class="muted">Tip: Reageer snel om de klant tevreden te houden.</p>
+  `);
+
+  return sendEmail(to, `Herinnering: Stel een startdatum in voor "${jobTitle}"`, html);
+}
+
+/**
+ * Send notification when quote is received
+ */
+export async function sendQuoteReceivedEmail(params: {
+  to: string;
+  clientName: string;
+  proName: string;
+  proCompany: string;
+  jobTitle: string;
+  amount: number;
+  validUntil: Date;
+  conversationUrl: string;
+}): Promise<boolean> {
+  const { to, clientName, proName, proCompany, jobTitle, amount, validUntil, conversationUrl } = params;
+
+  const formattedAmount = new Intl.NumberFormat('nl-NL', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(amount / 100);
+
+  const formattedDate = validUntil.toLocaleDateString('nl-NL', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const html = wrapInTemplate(`
+    <h2>Nieuwe offerte ontvangen! 📋</h2>
+    <p>Hallo ${clientName},</p>
+    <p><strong>${proCompany}</strong> (${proName}) heeft een offerte gestuurd voor:</p>
+    <p style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid #2563eb;">
+      <strong>${jobTitle}</strong>
+    </p>
+    <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+      <p style="color: #166534; font-size: 28px; font-weight: bold; margin: 0;">${formattedAmount}</p>
+      <p class="muted" style="margin: 5px 0 0 0;">Geldig tot ${formattedDate}</p>
+    </div>
+    <p>Bekijk de volledige offerte en bespreek de details met de vakman.</p>
+    <p>
+      <a href="${BASE_URL}${conversationUrl}" class="button">Bekijk offerte</a>
+    </p>
+    <p class="muted">Reageer voor ${formattedDate} om de offerte te accepteren of af te wijzen.</p>
+  `);
+
+  return sendEmail(to, `Nieuwe offerte van ${proCompany} voor "${jobTitle}"`, html);
+}

@@ -16,7 +16,8 @@
       "Bash(tasklist:*)",
       "Bash(npx tsc:*)",
       "Bash(npx depcheck --json)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(grep:*)"
     ]
   }
 }

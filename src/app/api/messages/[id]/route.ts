@@ -193,7 +193,9 @@ export async function POST(
           include: {
             job: {
               select: {
+                id: true, // needed for status transition
                 title: true,
+                status: true, // needed for status transition
                 client: {
                   select: {
                     userId: true,
@@ -269,6 +271,34 @@ export async function POST(
       where: { id },
       data: { updatedAt: new Date() },
     });
+
+    // Phase 7: Auto-transition job to IN_CONVERSATION if this is a meaningful exchange
+    // Only transition if job is in RESPONSES_RECEIVED status
+    const jobStatus = conversation.bid.job.status;
+    const jobId = conversation.bid.job.id;
+
+    if (jobStatus === 'RESPONSES_RECEIVED') {
+      await prisma.job.update({
+        where: { id: jobId },
+        data: {
+          status: 'IN_CONVERSATION',
+          statusChangedAt: new Date(),
+          statusChangedBy: isClient ? 'CONSUMER' : 'PROFESSIONAL',
+        },
+      });
+
+      // Log the status transition
+      await prisma.statusHistory.create({
+        data: {
+          jobId: jobId,
+          fromStatus: 'RESPONSES_RECEIVED',
+          toStatus: 'IN_CONVERSATION',
+          changedBy: isClient ? 'CONSUMER' : 'PROFESSIONAL',
+          userId: session.user.id,
+          reason: 'Berichten uitgewisseld tussen klant en vakman',
+        },
+      });
+    }
 
     // Send email notification to the other party (fire-and-forget)
     const senderName = session.user.name || 'Gebruiker';

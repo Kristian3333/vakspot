@@ -19,7 +19,7 @@ import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 
 type Stats = {
   users: { total: number; clients: number; pros: number; admins: number };
-  jobs: { total: number; published: number; completed: number; draft: number };
+  jobs: { total: number; active: number; inProgress: number; completed: number };
   bids: { total: number; accepted: number; pending: number };
   reviews: { total: number; avgRating: number };
   unverifiedPros: Array<{
@@ -101,7 +101,7 @@ export default function AdminDashboard() {
     {
       title: 'Klussen',
       value: stats?.jobs.total || 0,
-      subtitle: `${stats?.jobs.published} actief, ${stats?.jobs.completed} voltooid`,
+      subtitle: `${stats?.jobs.active} actief, ${stats?.jobs.inProgress} bezig, ${stats?.jobs.completed} voltooid`,
       icon: Briefcase,
       color: 'bg-green-100 text-green-600',
     },

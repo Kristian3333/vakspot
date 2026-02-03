@@ -23,12 +23,27 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where: { role: 'ADMIN' } }),
     ]);
 
-    // Get job stats
-    const [totalJobs, publishedJobs, completedJobs, draftJobs] = await Promise.all([
+    // Get job stats (Phase 7 statuses)
+    // Active = CREATED, RESPONSES_RECEIVED, IN_CONVERSATION, QUOTE_RECEIVED (+ legacy PUBLISHED)
+    // In Progress = SELECTED, SCHEDULED, IN_PROGRESS (+ legacy ACCEPTED)
+    // Completed = COMPLETED_BY_CONSUMER, COMPLETED_BY_PRO, REVIEWED (+ legacy COMPLETED)
+    const [totalJobs, activeJobs, inProgressJobs, completedJobs] = await Promise.all([
       prisma.job.count(),
-      prisma.job.count({ where: { status: 'PUBLISHED' } }),
-      prisma.job.count({ where: { status: 'COMPLETED' } }),
-      prisma.job.count({ where: { status: 'DRAFT' } }),
+      prisma.job.count({
+        where: {
+          status: { in: ['CREATED', 'RESPONSES_RECEIVED', 'IN_CONVERSATION', 'QUOTE_RECEIVED', 'PUBLISHED', 'DRAFT'] },
+        },
+      }),
+      prisma.job.count({
+        where: {
+          status: { in: ['SELECTED', 'SCHEDULED', 'IN_PROGRESS', 'ACCEPTED'] },
+        },
+      }),
+      prisma.job.count({
+        where: {
+          status: { in: ['COMPLETED_BY_CONSUMER', 'COMPLETED_BY_PRO', 'COMPLETED', 'REVIEWED'] },
+        },
+      }),
     ]);
 
     // Get bid stats
@@ -121,9 +136,9 @@ export async function GET(request: NextRequest) {
       },
       jobs: {
         total: totalJobs,
-        published: publishedJobs,
-        completed: completedJobs,
-        draft: draftJobs,
+        active: activeJobs,        // Jobs waiting for PRO interest/selection
+        inProgress: inProgressJobs, // Jobs with PRO selected, work ongoing
+        completed: completedJobs,   // Jobs finished
       },
       bids: {
         total: totalBids,

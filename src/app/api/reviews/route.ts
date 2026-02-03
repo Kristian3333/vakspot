@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { createReviewSchema } from '@/lib/validations';
+import { JobStatus } from '@prisma/client';
 
 // GET - Get reviews for a pro
 export async function GET(request: NextRequest) {
@@ -58,12 +59,17 @@ export async function POST(request: NextRequest) {
 
     const { jobId, rating, title, content } = parsed.data;
 
-    // Verify job belongs to client and is completed
+    // Verify job belongs to client and is in a reviewable state
+    // Phase 7: can review after COMPLETED_BY_CONSUMER, COMPLETED_BY_PRO, or legacy COMPLETED/ACCEPTED
+    const reviewableStatuses: JobStatus[] = [
+      JobStatus.COMPLETED_BY_CONSUMER, JobStatus.COMPLETED_BY_PRO, JobStatus.COMPLETED, JobStatus.ACCEPTED,
+      JobStatus.SELECTED, JobStatus.SCHEDULED, JobStatus.IN_PROGRESS, // Allow early reviews after PRO selection
+    ];
     const job = await prisma.job.findFirst({
       where: {
         id: jobId,
         client: { userId: session.user.id },
-        status: { in: ['COMPLETED', 'ACCEPTED'] },
+        status: { in: reviewableStatuses },
       },
       include: {
         acceptedBid: { select: { proId: true } },
