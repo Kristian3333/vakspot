@@ -4,16 +4,17 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, Button, Spinner, Badge, Avatar } from '@/components/ui';
-import { 
-  Users, 
-  Briefcase, 
-  FileText, 
+import {
+  Users,
+  Briefcase,
+  FileText,
   Star,
   TrendingUp,
   Settings,
   ShieldCheck,
   AlertTriangle,
   ChevronRight,
+  BarChart3,
 } from 'lucide-react';
 import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 
@@ -122,6 +123,7 @@ export default function AdminDashboard() {
   ];
 
   const quickActions = [
+    { label: 'Analytics', icon: BarChart3, href: '/admin/analytics' },
     { label: 'Categorieën beheren', icon: Settings, href: '/admin/categories' },
     { label: 'Gebruikers beheren', icon: Users, href: '/admin/users' },
     { label: 'Pro\'s verifiëren', icon: ShieldCheck, href: '/admin/verify' },
@@ -156,7 +158,7 @@ export default function AdminDashboard() {
       {/* Quick Actions */}
       <Card className="p-6 mb-8">
         <h2 className="text-lg font-semibold text-surface-900 mb-4">Snelle acties</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {quickActions.map((action) => (
             <Link key={action.label} href={action.href}>
               <Button

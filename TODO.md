@@ -269,13 +269,13 @@ After selection (status 6), PRO sees: `Selected → Scheduled → In Progress �
 - [x] Nudge: PRO hasn't set start date within X days of selection — `api/cron/job-transitions/route.ts`
 - [ ] Nudge: job has no responses after X days (optional, could be added to cron)
 
-### 7.9 Reporting & Analytics Dashboard
+### 7.9 Reporting & Analytics Dashboard ✅ COMPLETE
 
-- [ ] Status distribution chart (admin dashboard)
-- [ ] Conversion funnel: Created → Responses → Selected → Completed → Reviewed
-- [ ] Identify conversion killers (where jobs stall)
-- [ ] Monthly reporting data export
-- [ ] Average time between transitions
+- [x] Status distribution chart (admin dashboard) — `/admin/analytics`
+- [x] Conversion funnel: Created → Responses → Selected → Completed → Reviewed
+- [x] Identify conversion killers (where jobs stall)
+- [x] Monthly reporting data export (CSV)
+- [x] Average time between transitions
 
 ---
 
@@ -357,6 +357,9 @@ Everything below has been code-verified as actually implemented:
 | Quote in conversation | `messages/[id]/page.tsx` - integrated QuoteForm + QuoteCard |
 | Cron job auto-transitions | `api/cron/job-transitions/route.ts` |
 | Vercel cron config | `vercel.json` - runs every 2 hours |
+| Analytics dashboard | `admin/analytics/page.tsx` - status distribution, funnel, stalls |
+| Analytics API | `api/admin/analytics/route.ts` - metrics, export endpoints |
+| Recharts charts | Pie, bar, line charts for analytics visualizations |
 
 ---
 
@@ -383,12 +386,12 @@ Everything below has been code-verified as actually implemented:
 14. ~~SCHEDULED→IN_PROGRESS cron job~~ ✅
 15. ~~CREATED→NO_MATCH/EXPIRED cron job~~ ✅
 
-### 🟢 P3 — Nice to Have
-13. Reporting & analytics dashboard (7.9)
-14. Chat retention configurability (6.6)
+### ✅ P3 — Nice to Have — MOSTLY COMPLETE
+13. ~~Reporting & analytics dashboard (7.9)~~ ✅
+14. Chat retention configurability (6.6) — Non-essential
 15. ~~"No monitoring" statement in privacy policy (6.6)~~ ✅
 16. ~~"Professional vs individual" explicit toggle (B7)~~ ✅
-17. Payment integration (Stripe/Mollie)
+17. Payment integration (Stripe/Mollie) — Future
 18. ~~Nudge emails (cron jobs)~~ ✅ (PRO start date reminder implemented)
 
 ### ⚪ P4 — Non-MVP
@@ -401,10 +404,10 @@ Everything below has been code-verified as actually implemented:
 
 | Category | Count |
 |----------|-------|
-| ✅ Verified complete | 55+ |
+| ✅ Verified complete | 60+ |
 | 🐛 Open bugs | 0 |
 | ❌ Phase 6 remaining | ~2 tasks (non-MVP) |
-| ❌ Phase 7 remaining | ~5 tasks (analytics dashboard) |
+| ✅ Phase 7 complete | All core features |
 | **Total tracked** | **~65** |
 
 ---
