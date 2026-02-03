@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { geocodePostcode } from '@/lib/geo/dutch-postcodes';
 
 // GET - Get current pro's profile
 export async function GET(request: NextRequest) {
@@ -24,7 +25,17 @@ export async function GET(request: NextRequest) {
         email: true,
         image: true,
         proProfile: {
-          include: {
+          select: {
+            id: true,
+            companyName: true,
+            kvkNumber: true,
+            phone: true,
+            description: true,
+            serviceRadius: true,
+            locationCity: true,
+            locationPostcode: true,
+            locationLat: true,
+            locationLng: true,
             categories: {
               include: {
                 category: true,
@@ -64,6 +75,7 @@ export async function PUT(request: NextRequest) {
     const {
       companyName,
       phone,
+      postcode,
       description,
       serviceRadius,
       categories,
@@ -78,6 +90,25 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Profiel niet gevonden' }, { status: 404 });
     }
 
+    // Geocode postcode if provided
+    let locationData: { locationLat?: number; locationLng?: number; locationCity?: string; locationPostcode?: string } = {};
+    if (postcode) {
+      const geoResult = geocodePostcode(postcode);
+      if (geoResult) {
+        locationData = {
+          locationLat: geoResult.lat,
+          locationLng: geoResult.lng,
+          locationCity: geoResult.city,
+          locationPostcode: postcode.toUpperCase().replace(/\s/g, '').replace(/^(\d{4})(\w{2})$/, '$1 $2'),
+        };
+      } else {
+        return NextResponse.json(
+          { error: 'Ongeldige postcode. Voer een geldige Nederlandse postcode in.' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Update pro profile
     const proProfile = await prisma.proProfile.update({
       where: { id: existingProfile.id },
@@ -86,6 +117,7 @@ export async function PUT(request: NextRequest) {
         ...(phone !== undefined && { phone }),
         ...(description !== undefined && { description }),
         ...(serviceRadius !== undefined && { serviceRadius }),
+        ...locationData,
       },
     });
 

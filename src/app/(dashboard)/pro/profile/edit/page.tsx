@@ -23,6 +23,7 @@ type ProProfile = {
     phone: string | null;
     description: string | null;
     locationCity: string | null;
+    locationPostcode: string | null;
     serviceRadius: number | null;
     categories: { categoryId: string }[];
   } | null;
@@ -41,6 +42,7 @@ export default function EditProProfilePage() {
     companyName: '',
     kvkNumber: '',
     phone: '',
+    postcode: '',
     description: '',
     serviceRadius: 25,
     categories: [] as string[],
@@ -58,6 +60,7 @@ export default function EditProProfilePage() {
             companyName: profileData.proProfile?.companyName || '',
             kvkNumber: profileData.proProfile?.kvkNumber || '',
             phone: profileData.proProfile?.phone || '',
+            postcode: profileData.proProfile?.locationPostcode || '',
             description: profileData.proProfile?.description || '',
             serviceRadius: profileData.proProfile?.serviceRadius || 25,
             categories: profileData.proProfile?.categories?.map((c: { categoryId: string }) => c.categoryId) || [],
@@ -198,19 +201,33 @@ export default function EditProProfilePage() {
           <Card className="mb-6">
             <h2 className="text-lg font-semibold text-surface-900 mb-4">Werkgebied</h2>
             <p className="text-sm text-surface-600 mb-4">
-              U ontvangt klussen binnen deze afstand van uw locatie.
+              Vul uw postcode in om klussen in uw omgeving te vinden.
             </p>
-            <Select
-              options={[
-                { value: '10', label: '10 km' },
-                { value: '25', label: '25 km' },
-                { value: '50', label: '50 km' },
-                { value: '75', label: '75 km' },
-                { value: '100', label: '100 km' },
-              ]}
-              value={formData.serviceRadius.toString()}
-              onChange={(e) => setFormData(prev => ({ ...prev, serviceRadius: parseInt(e.target.value) }))}
-            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Postcode"
+                value={formData.postcode}
+                onChange={(e) => setFormData(prev => ({ ...prev, postcode: e.target.value.toUpperCase() }))}
+                placeholder="1234 AB"
+                maxLength={7}
+                required
+              />
+              <Select
+                label="Werkafstand"
+                options={[
+                  { value: '10', label: '10 km' },
+                  { value: '25', label: '25 km' },
+                  { value: '50', label: '50 km' },
+                  { value: '75', label: '75 km' },
+                  { value: '100', label: '100 km' },
+                ]}
+                value={formData.serviceRadius.toString()}
+                onChange={(e) => setFormData(prev => ({ ...prev, serviceRadius: parseInt(e.target.value) }))}
+              />
+            </div>
+            <p className="text-xs text-surface-500 mt-3">
+              U ontvangt klussen binnen de geselecteerde afstand van uw postcode.
+            </p>
           </Card>
 
           {/* Description */}

@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, Badge, Select, Spinner } from '@/components/ui';
 import { formatRelativeTime, cn } from '@/lib/utils';
-import { MapPin, ChevronRight, Briefcase, AlertCircle, RefreshCw, Users, CheckCircle2, Sparkles } from 'lucide-react';
+import { MapPin, ChevronRight, Briefcase, AlertCircle, RefreshCw, Users, CheckCircle2, Sparkles, Heart } from 'lucide-react';
 
 type Job = {
   id: string;
@@ -30,6 +30,7 @@ export default function ProJobsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('recommended'); // Default to recommended
+  const [maxDistance, setMaxDistance] = useState<string>(''); // Empty = no filter
 
   const fetchCategories = async () => {
     try {
@@ -44,10 +45,10 @@ export default function ProJobsPage() {
   const fetchJobs = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams();
-      
+
       // 'recommended' = use PRO's categories (default)
       // 'all' = show all jobs regardless of category
       // specific ID = filter by that category
@@ -57,6 +58,11 @@ export default function ProJobsPage() {
         params.set('categoryId', selectedCategory);
       }
       // If 'recommended', don't pass any param - API will use PRO's categories
+
+      // Distance filter
+      if (maxDistance) {
+        params.set('maxDistance', maxDistance);
+      }
 
       const res = await fetch(`/api/leads?${params}`);
       const data = await res.json();
@@ -77,7 +83,7 @@ export default function ProJobsPage() {
 
   useEffect(() => {
     fetchJobs();
-  }, [selectedCategory]);
+  }, [selectedCategory, maxDistance]);
 
   // Split jobs into available and accepted
   const availableJobs = jobs.filter(j => !j.isAccepted);
@@ -86,13 +92,22 @@ export default function ProJobsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-surface-900">Beschikbare klussen</h1>
-        <p className="mt-1 text-surface-600">Klussen in uw regio</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-surface-900">Beschikbare klussen</h1>
+          <p className="mt-1 text-surface-600">Klussen in uw regio</p>
+        </div>
+        <Link
+          href="/pro/swipe"
+          className="flex items-center gap-2 rounded-xl bg-brand-50 px-4 py-2 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-100"
+        >
+          <Heart className="h-4 w-4" />
+          Swipe modus
+        </Link>
       </div>
 
-      {/* Category filter */}
-      <div className="mb-6">
+      {/* Filters */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-3">
         <Select
           options={[
             { value: 'recommended', label: '⭐ Aanbevolen voor u' },
@@ -103,13 +118,26 @@ export default function ProJobsPage() {
           onChange={(e) => setSelectedCategory(e.target.value)}
           className="w-full sm:w-64"
         />
-        {selectedCategory === 'recommended' && (
-          <p className="mt-2 text-xs text-surface-500 flex items-center gap-1">
-            <Sparkles className="h-3 w-3" />
-            Gebaseerd op uw vakgebieden
-          </p>
-        )}
+        <Select
+          options={[
+            { value: '', label: 'Alle afstanden' },
+            { value: '5', label: 'Binnen 5 km' },
+            { value: '10', label: 'Binnen 10 km' },
+            { value: '25', label: 'Binnen 25 km' },
+            { value: '50', label: 'Binnen 50 km' },
+            { value: '100', label: 'Binnen 100 km' },
+          ]}
+          value={maxDistance}
+          onChange={(e) => setMaxDistance(e.target.value)}
+          className="w-full sm:w-48"
+        />
       </div>
+      {selectedCategory === 'recommended' && (
+        <p className="mb-4 -mt-2 text-xs text-surface-500 flex items-center gap-1">
+          <Sparkles className="h-3 w-3" />
+          Gebaseerd op uw vakgebieden
+        </p>
+      )}
 
       {/* Loading */}
       {loading && (

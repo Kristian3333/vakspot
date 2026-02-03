@@ -120,10 +120,11 @@ model ProProfile {
   description   String?  @db.Text
   phone         String
   website       String?
-  serviceRadius Int      @default(25) // km
-  locationLat   Float?
-  locationLng   Float?
-  locationCity  String?
+  serviceRadius    Int      @default(25) // km
+  locationLat      Float?
+  locationLng      Float?
+  locationCity     String?
+  locationPostcode String?
   verified      Boolean  @default(false)
   active        Boolean  @default(true)
   
