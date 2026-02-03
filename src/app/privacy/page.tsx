@@ -62,7 +62,38 @@ Wij verkopen uw persoonsgegevens nooit aan derden.`,
     },
     {
       title: '7. Bewaartermijn',
-      content: `Wij bewaren uw persoonsgegevens niet langer dan noodzakelijk voor de doeleinden waarvoor ze zijn verzameld. Na beëindiging van uw account bewaren wij uw gegevens nog maximaal 2 jaar voor administratieve doeleinden en om aan wettelijke verplichtingen te voldoen.`,
+      content: `Wij bewaren uw persoonsgegevens niet langer dan noodzakelijk voor de doeleinden waarvoor ze zijn verzameld.
+
+Specifieke bewaartermijnen:
+• Accountgegevens: tot 2 jaar na beëindiging van uw account
+• Chatberichten en bijlagen: maximaal 2 jaar na het laatste bericht in een gesprek
+• Klussen: tot 2 jaar na voltooiing of annulering
+• Reviews: permanent, maar geanonimiseerd na 5 jaar
+• Factuurgegevens: 7 jaar (wettelijke verplichting)
+• Logbestanden: 90 dagen
+
+Na de bewaartermijn worden uw gegevens automatisch verwijderd of geanonimiseerd. U kunt ook eerder verwijdering aanvragen via uw accountinstellingen.`,
+    },
+    {
+      title: '7a. Chatberichten & monitoring',
+      content: `Uw privacy in communicatie is belangrijk voor ons.
+
+Geen onnodige monitoring:
+• Wij lezen uw chatberichten NIET actief mee
+• Berichten worden NIET gescand voor marketing of profilering
+• Er is geen geautomatiseerde analyse van berichtinhoud
+• Alleen bij een formele melding (via de meldknop) bekijkt ons moderatieteam het betreffende gesprek
+
+Wanneer WEL toegang tot berichten:
+• Bij een melding van ongewenst gedrag door een gebruiker
+• Bij vermoeden van fraude of illegale activiteiten
+• Op last van autoriteiten met geldige juridische grondslag
+
+Chatbericht bewaartermijn:
+• Actieve gesprekken: onbeperkt zolang het gesprek actief is
+• Inactieve gesprekken (geen berichten > 6 maanden): automatische archivering
+• Gearchiveerde gesprekken: verwijdering na 2 jaar
+• U kunt gesprekken zelf eerder verwijderen via uw accountinstellingen`,
     },
     {
       title: '8. Uw rechten (AVG/GDPR)',

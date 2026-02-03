@@ -41,8 +41,15 @@ Door gebruik te maken van het Platform accepteert u deze voorwaarden.`,
 • Vakmensen kunnen reageren op klussen met offertes
 • Partijen met elkaar in contact kunnen komen
 
-VakSpot is slechts bemiddelaar en geen partij bij overeenkomsten tussen Opdrachtgevers en Vakmensen. VakSpot garandeert niet dat:
+VakSpot is uitsluitend een bemiddelingsplatform. Dit betekent:
+• Wij brengen opdrachtgevers en vakmensen met elkaar in contact
+• Wij voeren zelf geen werkzaamheden uit
+• Wij zijn geen partij bij de overeenkomst tussen opdrachtgever en vakman
 
+Concreet voorbeeld:
+Als u via VakSpot een schilder vindt voor uw woning, dan sluit u de overeenkomst rechtstreeks met die schilder. VakSpot is hier geen partij bij. Als er iets misgaat met het schilderwerk, moet u dit rechtstreeks met de schilder oplossen. VakSpot kan wel helpen bij het melden van problemen of het zoeken naar een oplossing, maar wij zijn niet verantwoordelijk voor de kwaliteit van het werk.
+
+VakSpot garandeert niet dat:
 • Opdrachtgevers offertes ontvangen
 • Vakmensen opdrachten krijgen
 • De kwaliteit van werk aan bepaalde normen voldoet`,
@@ -126,15 +133,26 @@ VakSpot is niet aansprakelijk voor:
     },
     {
       title: '8. Aansprakelijkheid',
-      content: `VakSpot is niet aansprakelijk voor:
+      content: `In eenvoudige taal: wij zijn een platform dat vraag en aanbod bij elkaar brengt. Wij zijn niet verantwoordelijk voor wat er gebeurt tussen opdrachtgever en vakman.
 
-• Indirecte schade, gevolgschade of gederfde winst
-• Schade door onjuiste informatie van Gebruikers
-• Schade door onbevoegd gebruik van accounts
-• Tijdelijke onbeschikbaarheid van het Platform
-• Handelingen van andere Gebruikers
+Waar VakSpot NIET verantwoordelijk voor is:
+• Kwaliteit van uitgevoerd werk (voorbeeld: als een schilder slecht werk levert)
+• Schade aan uw woning (voorbeeld: als een loodgieter een lekkage veroorzaakt)
+• Financiele problemen (voorbeeld: als een vakman niet komt opdagen en u noodopvang moet regelen)
+• Onjuiste informatie van gebruikers (voorbeeld: als iemand liegt over zijn ervaring)
+• Storingen van de website (voorbeeld: als u tijdelijk niet kunt inloggen)
 
-Indien VakSpot aansprakelijk is, is deze beperkt tot het bedrag dat in de afgelopen 12 maanden door de betreffende Gebruiker aan VakSpot is betaald.`,
+Waar VakSpot WEL verantwoordelijk voor is:
+• Het goed functioneren van ons platform
+• Het verwerken van meldingen en klachten
+• Het naleven van privacywetgeving
+• Het eerlijk weergeven van informatie die wij zelf publiceren
+
+Als VakSpot wel aansprakelijk is:
+Dan vergoeden wij maximaal het bedrag dat u de afgelopen 12 maanden aan VakSpot heeft betaald. Dit is een standaard beperking die veel platforms hanteren.
+
+Tip voor opdrachtgevers:
+Vraag altijd naar verzekeringen en garanties van de vakman. Een goede vakman heeft een aansprakelijkheidsverzekering.`,
     },
     {
       title: '9. Intellectueel eigendom',

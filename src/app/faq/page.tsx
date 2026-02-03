@@ -111,6 +111,14 @@ export default function FAQPage() {
           answer: 'Bekijk het profiel, lees reviews van andere klanten, en chat eerst via het platform voordat u afspraken maakt.',
         },
         {
+          question: 'Wat is een KvK-nummer en waarom is dit belangrijk?',
+          answer: 'KvK staat voor Kamer van Koophandel. Elk officieel geregistreerd bedrijf in Nederland heeft een uniek KvK-nummer (8 cijfers). Als een vakman een KvK-nummer op zijn profiel toont, betekent dit: 1) Het bedrijf is officieel ingeschreven bij de Kamer van Koophandel, 2) U kunt het bedrijf opzoeken via kvk.nl om te controleren of de gegevens kloppen, 3) Het geeft zekerheid dat u met een geregistreerde ondernemer werkt. Tip: controleer altijd of de bedrijfsnaam en het KvK-nummer overeenkomen via kvk.nl voordat u akkoord gaat met een grote opdracht.',
+        },
+        {
+          question: 'Hoe controleer ik een KvK-nummer?',
+          answer: 'Ga naar kvk.nl en zoek op het KvK-nummer of de bedrijfsnaam. U ziet dan de officiële bedrijfsgegevens, vestigingsadres en of het bedrijf nog actief is. Dit is gratis en openbaar toegankelijk.',
+        },
+        {
           question: 'Hoe meld ik verdacht gedrag?',
           answer: 'Klik op "Melden" op het profiel of in het berichtenvenster. Ons team onderzoekt alle meldingen binnen 24 uur.',
         },

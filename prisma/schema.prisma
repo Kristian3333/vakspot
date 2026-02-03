@@ -100,6 +100,11 @@ enum Role {
   ADMIN
 }
 
+enum EntityType {
+  BUSINESS   // Registered business (e.g., BV, VOF)
+  INDIVIDUAL // Sole proprietor / ZZP'er
+}
+
 // ============================================
 // PROFILES
 // ============================================
@@ -120,12 +125,13 @@ model ClientProfile {
 }
 
 model ProProfile {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String     @id @default(cuid())
+  userId        String     @unique
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyName   String
-  kvkNumber     String?  // Chamber of Commerce number
-  description   String?  @db.Text
+  kvkNumber     String?    // Chamber of Commerce number
+  entityType    EntityType @default(INDIVIDUAL) // Business or individual (ZZP'er)
+  description   String?    @db.Text
   phone         String
   website       String?
   serviceRadius    Int      @default(25) // km

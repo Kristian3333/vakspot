@@ -179,6 +179,15 @@ export default async function ProProfilePage() {
                   KvK: {proProfile.kvkNumber}
                 </p>
               )}
+              {proProfile?.entityType && (
+                <span className={`mt-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  proProfile.entityType === 'BUSINESS'
+                    ? 'bg-brand-100 text-brand-700'
+                    : 'bg-surface-100 text-surface-700'
+                }`}>
+                  {proProfile.entityType === 'BUSINESS' ? 'Bedrijf (BV/VOF)' : 'ZZP / Eenmanszaak'}
+                </span>
+              )}
 
               <div className="mt-4 flex flex-wrap gap-4 text-sm text-surface-600">
                 <span className="flex items-center gap-2">

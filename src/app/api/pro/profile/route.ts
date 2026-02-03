@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
             id: true,
             companyName: true,
             kvkNumber: true,
+            entityType: true,
             phone: true,
             description: true,
             serviceRadius: true,
@@ -74,6 +75,8 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const {
       companyName,
+      kvkNumber,
+      entityType,
       phone,
       postcode,
       description,
@@ -114,6 +117,8 @@ export async function PUT(request: NextRequest) {
       where: { id: existingProfile.id },
       data: {
         ...(companyName !== undefined && { companyName }),
+        ...(kvkNumber !== undefined && { kvkNumber: kvkNumber || null }),
+        ...(entityType !== undefined && { entityType }),
         ...(phone !== undefined && { phone }),
         ...(description !== undefined && { description }),
         ...(serviceRadius !== undefined && { serviceRadius }),

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { Button, Card, Badge, Avatar } from '@/components/ui';
+import { Button, Card, Badge, Avatar, ReportButton } from '@/components/ui';
 import { DeleteJobButton } from '@/components/jobs/delete-job-button';
 import { AcceptProButton } from '@/components/jobs/accept-pro-button';
 import { formatDate, formatRelativeTime } from '@/lib/utils';
@@ -263,12 +263,15 @@ export default async function JobDetailPage({ params }: PageProps) {
                         
                         {/* Accept button - only show if job can accept and bid isn't rejected */}
                         {canAcceptPros && !isRejected && (
-                          <AcceptProButton 
-                            bidId={interest.id} 
+                          <AcceptProButton
+                            bidId={interest.id}
                             proName={interest.pro.companyName || interest.pro.user.name || 'deze vakman'}
                             jobTitle={job.title}
                           />
                         )}
+
+                        {/* Report PRO button */}
+                        <ReportButton type="PROFILE" targetId={interest.pro.id} variant="icon" />
                       </div>
                     </div>
                   </div>

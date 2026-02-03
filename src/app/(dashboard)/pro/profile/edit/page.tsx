@@ -20,6 +20,7 @@ type ProProfile = {
   proProfile?: {
     companyName: string | null;
     kvkNumber: string | null;
+    entityType: 'BUSINESS' | 'INDIVIDUAL' | null;
     phone: string | null;
     description: string | null;
     locationCity: string | null;
@@ -41,6 +42,7 @@ export default function EditProProfilePage() {
   const [formData, setFormData] = useState({
     companyName: '',
     kvkNumber: '',
+    entityType: 'INDIVIDUAL' as 'BUSINESS' | 'INDIVIDUAL',
     phone: '',
     postcode: '',
     description: '',
@@ -59,6 +61,7 @@ export default function EditProProfilePage() {
           setFormData({
             companyName: profileData.proProfile?.companyName || '',
             kvkNumber: profileData.proProfile?.kvkNumber || '',
+            entityType: profileData.proProfile?.entityType || 'INDIVIDUAL',
             phone: profileData.proProfile?.phone || '',
             postcode: profileData.proProfile?.locationPostcode || '',
             description: profileData.proProfile?.description || '',
@@ -195,6 +198,62 @@ export default function EditProProfilePage() {
             <p className="text-xs text-surface-500 mt-3">
               Het KvK-nummer helpt opdrachtgevers uw bedrijf te verifiëren.
             </p>
+
+            {/* Entity Type */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-surface-700 mb-3">
+                Type onderneming
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label
+                  className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
+                    formData.entityType === 'INDIVIDUAL'
+                      ? 'border-brand-500 bg-brand-50'
+                      : 'border-surface-200 hover:border-surface-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="entityType"
+                    value="INDIVIDUAL"
+                    checked={formData.entityType === 'INDIVIDUAL'}
+                    onChange={() => setFormData(prev => ({ ...prev, entityType: 'INDIVIDUAL' }))}
+                    className="mt-1"
+                  />
+                  <div>
+                    <span className="font-medium text-surface-900">ZZP / Eenmanszaak</span>
+                    <p className="text-sm text-surface-500 mt-1">
+                      U werkt als zelfstandige of heeft een eenmanszaak
+                    </p>
+                  </div>
+                </label>
+                <label
+                  className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
+                    formData.entityType === 'BUSINESS'
+                      ? 'border-brand-500 bg-brand-50'
+                      : 'border-surface-200 hover:border-surface-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="entityType"
+                    value="BUSINESS"
+                    checked={formData.entityType === 'BUSINESS'}
+                    onChange={() => setFormData(prev => ({ ...prev, entityType: 'BUSINESS' }))}
+                    className="mt-1"
+                  />
+                  <div>
+                    <span className="font-medium text-surface-900">Bedrijf (BV/VOF)</span>
+                    <p className="text-sm text-surface-500 mt-1">
+                      U vertegenwoordigt een geregistreerd bedrijf
+                    </p>
+                  </div>
+                </label>
+              </div>
+              <p className="text-xs text-surface-500 mt-2">
+                Dit helpt opdrachtgevers te begrijpen met wie ze zaken doen.
+              </p>
+            </div>
           </Card>
 
           {/* Service Area */}
