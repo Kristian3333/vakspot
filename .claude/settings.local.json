@@ -8,7 +8,15 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npx next build)",
+      "Bash(npm run build:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(tasklist:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx depcheck --json)",
+      "Bash(npm uninstall:*)"
     ]
   }
 }

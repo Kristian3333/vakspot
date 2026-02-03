@@ -27,8 +27,8 @@ All core simplification work is done:
 - [x] Registration validation fix
 
 ### 4.2 Performance
-- [ ] Remove unused dependencies
-- [ ] Clean up unused components
+- [x] Remove unused dependencies (removed date-fns)
+- [x] Clean up unused components
 
 ---
 
@@ -131,10 +131,10 @@ All core simplification work is done:
 - [x] "Target not found" error fixed (was already working, component receives correct props)
 - [x] Complaints procedure page (`/complaints`)
 
-### 6.12 Moderation (Internal) ✅ MOSTLY COMPLETE
+### 6.12 Moderation (Internal) ✅ COMPLETE
 - [x] ModerationLog Prisma model with audit trail
 - [x] Admin reports interface with resolution workflow
-- [ ] Document contact point for regulators (role description)
+- [x] Document contact point for regulators (added to contact page)
 
 ### 6.13 Transparency / About Us ✅ MOSTLY COMPLETE
 - [x] Contact page exists with email/phone/city
@@ -178,26 +178,26 @@ Blueprint requires 15 statuses for tracking, conversion reporting, automated ema
 | 15 | EXPIRED | — | New: job inactive |
 
 Tasks:
-- [ ] Update Prisma `JobStatus` enum (5 → 15 values)
+- [x] Update Prisma `JobStatus` enum (5 → 15 values)
 - [ ] Write data migration (DRAFT→CREATED, ACCEPTED→SELECTED, COMPLETED→COMPLETED_BY_CONSUMER)
 - [ ] Update all API routes referencing old status values
-- [ ] Update all UI components displaying/filtering by status
+- [x] Update all UI components displaying/filtering by status (JOB_STATUS_CONFIG updated)
 
-### 7.2 Schema: New Fields on Job Model
+### 7.2 Schema: New Fields on Job Model ✅ COMPLETE
 
-Currently has `startDate` and `completedAt`. Still needs:
-- [ ] `started_at` (DateTime, nullable) — actual work start timestamp
-- [ ] `completed_at_by_pro` (DateTime, nullable)
-- [ ] `completed_at_by_cons` (DateTime, nullable)
-- [ ] `cancelled_at` (DateTime, nullable)
-- [ ] `cancellation_reason` (String, nullable, min 10 chars)
-- [ ] `status_changed_by` (enum: CONSUMER | PROFESSIONAL | SYSTEM)
-- [ ] `status_changed_at` (DateTime)
+Currently has `startDate` and `completedAt`. Added:
+- [x] `startedAt` (DateTime, nullable) — actual work start timestamp
+- [x] `completedAtByPro` (DateTime, nullable)
+- [x] `completedAtByCons` (DateTime, nullable)
+- [x] `cancelledAt` (DateTime, nullable)
+- [x] `cancellationReason` (String, nullable, min 10 chars)
+- [x] `statusChangedBy` (enum: CONSUMER | PROFESSIONAL | SYSTEM | ADMIN)
+- [x] `statusChangedAt` (DateTime)
 
-### 7.3 Schema: StatusHistory Model (Audit Trail)
+### 7.3 Schema: StatusHistory Model (Audit Trail) ✅ COMPLETE
 
-- [ ] Create `StatusHistory` model: jobId, fromStatus, toStatus, changedBy, changedAt, reason
-- [ ] Log every status transition automatically
+- [x] Create `StatusHistory` model: jobId, fromStatus, toStatus, changedBy, changedAt, reason
+- [x] Log every status transition automatically (via transitionJobStatus)
 
 ### 7.4 State Machine: Transition Validation
 
@@ -219,30 +219,30 @@ Currently has `startDate` and `completedAt`. Still needs:
 ```
 
 Tasks:
-- [ ] Implement state machine validation lib (reject invalid transitions)
+- [x] Implement state machine validation lib (reject invalid transitions) — `lib/job-state-machine.ts`
 - [ ] Auto-transition: CREATED→RESPONSES_RECEIVED on first bid/interest
 - [ ] Auto-transition: RESPONSES_RECEIVED→IN_CONVERSATION on first message
 - [ ] Auto-transition: SCHEDULED→IN_PROGRESS when `start_date` reached (cron or on-access)
 - [ ] Auto-transition: CREATED→NO_MATCH / EXPIRED after configurable timeout
 - [ ] Skip PUBLISHED: auto-publish on create (CREATED = published)
 
-### 7.5 PRO 4-Step Flow UI
+### 7.5 PRO 4-Step Flow UI ✅ COMPLETE
 
 After selection (status 6), PRO sees: `Selected → Scheduled → In Progress → Completed`
 
-- [ ] Progress bar / stepper component on PRO job detail view
-- [ ] Step 1 — Selected: "Nader te bepalen" badge + "Startdatum instellen" action
-- [ ] Step 2 — Scheduled: Date picker (future date required), confirm button → status 7
-- [ ] Step 3 — In Progress: Auto-transition or manual "Start werk" button → status 8
-- [ ] Step 4 — Completed: "Markeer als voltooid" button → status 10 (COMPLETED_BY_PRO)
-- [ ] Cancel button at steps 1-3 (reason required, min 10 chars) → status 13
-- [ ] PROs do NOT see/interact with statuses 1-5, 9, 12, 14, 15
+- [x] Progress bar / stepper component on PRO job detail view — `ProJobStepper`
+- [x] Step 1 — Selected: "Nader te bepalen" badge + "Startdatum instellen" action
+- [x] Step 2 — Scheduled: Date picker (future date required), confirm button → status 7
+- [x] Step 3 — In Progress: Manual "Start werk" button → status 8
+- [x] Step 4 — Completed: "Markeer als voltooid" button → status 10 (COMPLETED_BY_PRO)
+- [x] Cancel button at steps 1-3 (reason required, min 10 chars) → status 13
+- [x] PROs do NOT see/interact with statuses 1-5, 9, 12, 14, 15
 
-### 7.6 Consumer Actions UI
+### 7.6 Consumer Actions UI ✅ COMPLETE
 
-- [ ] "Markeer als voltooid" button at statuses 7/8 → status 9 (COMPLETED_BY_CONSUMER)
-- [ ] "Annuleer project" button at statuses 6/7/8 → status 12 (CANCELLED_BY_CONSUMER)
-- [ ] After completion (9/10): prompt for review → status 11
+- [x] "Markeer als voltooid" button at statuses 7/8 → status 9 (COMPLETED_BY_CONSUMER)
+- [x] "Annuleer project" button at statuses 6/7/8 → status 12 (CANCELLED_BY_CONSUMER)
+- [x] After completion (9/10): prompt for review → status 11
 - [ ] Flag conversation option → status 2 (FLAGGED)
 
 ### 7.7 Quote Feature (Status 5)

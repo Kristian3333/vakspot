@@ -193,8 +193,24 @@ export type BudgetTypeConfig = {
   description: string;
 };
 
-// Status configurations
+// Status configurations (Phase 7 expanded)
 export const JOB_STATUS_CONFIG: Record<JobStatus, JobStatusConfig> = {
+  // Phase 7 statuses
+  CREATED: { label: 'Actief', color: 'primary', description: 'Klus is actief' },
+  FLAGGED: { label: 'Gemeld', color: 'warning', description: 'Onder review' },
+  RESPONSES_RECEIVED: { label: 'Reacties', color: 'primary', description: 'Reacties ontvangen' },
+  IN_CONVERSATION: { label: 'In gesprek', color: 'primary', description: 'In gesprek met vakman' },
+  QUOTE_RECEIVED: { label: 'Offerte', color: 'warning', description: 'Offerte ontvangen' },
+  SELECTED: { label: 'Gekozen', color: 'success', description: 'Vakman gekozen' },
+  SCHEDULED: { label: 'Ingepland', color: 'primary', description: 'Startdatum gepland' },
+  IN_PROGRESS: { label: 'Bezig', color: 'warning', description: 'Werk in uitvoering' },
+  COMPLETED_BY_CONSUMER: { label: 'Voltooid', color: 'success', description: 'Bevestigd door opdrachtgever' },
+  COMPLETED_BY_PRO: { label: 'Voltooid (PRO)', color: 'success', description: 'Gemarkeerd door vakman' },
+  CANCELLED_BY_CONSUMER: { label: 'Geannuleerd', color: 'neutral', description: 'Door opdrachtgever geannuleerd' },
+  CANCELLED_BY_PRO: { label: 'Geannuleerd', color: 'neutral', description: 'Door vakman geannuleerd' },
+  NO_MATCH: { label: 'Geen match', color: 'neutral', description: 'Geen reacties ontvangen' },
+  EXPIRED: { label: 'Verlopen', color: 'neutral', description: 'Klus is verlopen' },
+  // Legacy statuses (backwards compatibility)
   DRAFT: { label: 'Concept', color: 'neutral', description: 'Nog niet gepubliceerd' },
   PUBLISHED: { label: 'Gepubliceerd', color: 'primary', description: 'Wacht op offertes' },
   ACCEPTED: { label: 'Geaccepteerd', color: 'success', description: 'Offerte geaccepteerd' },

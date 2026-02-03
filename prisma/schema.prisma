@@ -224,24 +224,34 @@ model Job {
   
   // Timeline
   timeline    Timeline  @default(FLEXIBLE)
-  startDate   DateTime?
-  
+  startDate   DateTime?  // Desired start date from client
+
+  // Status Tracking (Phase 7)
+  startedAt           DateTime?        // Actual work start timestamp
+  completedAtByPro    DateTime?        // When PRO marked complete
+  completedAtByCons   DateTime?        // When consumer marked complete
+  cancelledAt         DateTime?        // When cancelled
+  cancellationReason  String?   @db.Text  // Required for PRO cancellation (min 10 chars)
+  statusChangedBy     StatusChangedBy? // Who made the last status change
+  statusChangedAt     DateTime?        // When status last changed
+
   // Metadata
   viewCount   Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
-  completedAt DateTime?
+  completedAt DateTime?  // Legacy field for backwards compatibility
 
   // Sponsored placement
   sponsoredUntil DateTime?
   sponsorLevel   Int       @default(0) // 0=none, 1=basic, 2=premium
 
   // Relations
-  images      JobImage[]
-  bids        Bid[]
-  review      Review?
-  
+  images        JobImage[]
+  bids          Bid[]
+  review        Review?
+  statusHistory StatusHistory[]
+
   // Accepted bid (one-to-one)
   acceptedBidId String? @unique
   acceptedBid   Bid?    @relation("AcceptedBid", fields: [acceptedBidId], references: [id])
@@ -265,12 +275,60 @@ model JobImage {
   @@index([jobId])
 }
 
+// Status History (Audit Trail for Phase 7)
+model StatusHistory {
+  id          String          @id @default(cuid())
+  jobId       String
+  job         Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  fromStatus  JobStatus
+  toStatus    JobStatus
+  changedBy   StatusChangedBy
+  changedAt   DateTime        @default(now())
+  reason      String?         @db.Text  // Optional reason for the change
+  userId      String?         // Who triggered the change (null for SYSTEM)
+
+  @@index([jobId])
+  @@index([changedAt])
+}
+
 enum JobStatus {
-  DRAFT
-  PUBLISHED
-  ACCEPTED
-  COMPLETED
-  REVIEWED
+  // Phase 1: Job Creation & Visibility
+  CREATED           // Was DRAFT - job created, visible to PROs
+  FLAGGED           // Reported via DSA, under review
+
+  // Phase 2: PRO Interest & Communication
+  RESPONSES_RECEIVED // At least one PRO showed interest
+  IN_CONVERSATION   // Messages exchanged between client and PRO
+  QUOTE_RECEIVED    // PRO sent a formal quote
+
+  // Phase 3: Selection & Scheduling
+  SELECTED          // Was ACCEPTED - Client chose a PRO ("Nader te bepalen")
+  SCHEDULED         // PRO set a start date
+  IN_PROGRESS       // Work has started
+
+  // Phase 4: Completion
+  COMPLETED_BY_CONSUMER // Client marked as complete
+  COMPLETED_BY_PRO      // PRO marked as complete
+  REVIEWED              // Client left a review
+
+  // Cancellation & Expiry
+  CANCELLED_BY_CONSUMER // Client cancelled
+  CANCELLED_BY_PRO      // PRO cancelled (reason required)
+  NO_MATCH              // No responses after timeout
+  EXPIRED               // Job inactive/expired
+
+  // Legacy (for migration compatibility)
+  DRAFT      @map("DRAFT")
+  PUBLISHED  @map("PUBLISHED")
+  ACCEPTED   @map("ACCEPTED")
+  COMPLETED  @map("COMPLETED")
+}
+
+enum StatusChangedBy {
+  CONSUMER
+  PROFESSIONAL
+  SYSTEM
+  ADMIN
 }
 
 enum BudgetType {

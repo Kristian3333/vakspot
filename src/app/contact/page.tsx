@@ -223,6 +223,45 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
+
+      {/* Regulatory Contact Section */}
+      <section className="py-12 border-t border-surface-200">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-xl mx-auto">
+            <h2 className="text-xl font-bold text-surface-900 mb-6 text-center">
+              Contact voor toezichthouders
+            </h2>
+            <Card>
+              <div className="space-y-4 text-sm">
+                <p className="text-surface-600">
+                  VakSpot B.V. valt onder toezicht van de Autoriteit Consument & Markt (ACM)
+                  voor wat betreft de Platform-to-Business (P2B) verordening en de Digital Services Act (DSA).
+                </p>
+                <div className="border-t border-surface-200 pt-4">
+                  <h3 className="font-semibold text-surface-900 mb-2">Aangewezen contactpersoon voor toezichthouders:</h3>
+                  <div className="space-y-1 text-surface-600">
+                    <p><strong>Functie:</strong> Compliance Officer / Legal Affairs</p>
+                    <p><strong>E-mail:</strong> <a href="mailto:legal@vakspot.nl" className="text-brand-600 hover:text-brand-700">legal@vakspot.nl</a></p>
+                    <p><strong>Telefoon:</strong> 020-123 4567 (keuzemenu: toezichthouders)</p>
+                    <p><strong>Postadres:</strong> VakSpot B.V., t.a.v. Legal Affairs, Herengracht 123, 1015 BH Amsterdam</p>
+                  </div>
+                </div>
+                <div className="border-t border-surface-200 pt-4">
+                  <h3 className="font-semibold text-surface-900 mb-2">Toepasselijke toezichthouders:</h3>
+                  <ul className="list-disc list-inside text-surface-600 space-y-1">
+                    <li>Autoriteit Consument & Markt (ACM) - P2B & DSA</li>
+                    <li>Autoriteit Persoonsgegevens (AP) - AVG/GDPR</li>
+                    <li>Kamer van Koophandel - Handelsregister</li>
+                  </ul>
+                </div>
+                <p className="text-xs text-surface-500 pt-2">
+                  Wij reageren binnen 5 werkdagen op verzoeken van toezichthoudende autoriteiten.
+                </p>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
