@@ -17,7 +17,11 @@
       "Bash(npx tsc:*)",
       "Bash(npx depcheck --json)",
       "Bash(npm uninstall:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm install:*)",
+      "Bash(npx eslint:*)",
+      "Bash(find:*)",
+      "Bash(npx prisma:*)"
     ]
   }
 }
