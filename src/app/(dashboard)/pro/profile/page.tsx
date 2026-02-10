@@ -15,10 +15,12 @@ import {
   Edit,
   CheckCircle2,
   MessageSquare,
+  Award,
 } from 'lucide-react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { formatRelativeTime } from '@/lib/utils';
+import { CertificateList } from '@/components/certificates/certificate-list';
 
 export const metadata: Metadata = {
   title: 'Mijn profiel',
@@ -34,6 +36,14 @@ async function getProfile(userId: string) {
           categories: {
             include: {
               category: true,
+            },
+          },
+          certificates: {
+            include: {
+              certificateType: true,
+            },
+            orderBy: {
+              createdAt: 'desc',
             },
           },
           _count: {
@@ -242,6 +252,37 @@ export default async function ProProfilePage() {
           </Card>
         )}
 
+        {/* Work Area */}
+        {proProfile?.serviceRadius && (
+          <Card className="mb-6">
+            <h3 className="font-semibold text-surface-900 mb-3">Werkgebied</h3>
+            <p className="text-surface-600">
+              {proProfile.locationCity || 'Uw locatie'} + {proProfile.serviceRadius} km radius
+            </p>
+          </Card>
+        )}
+
+        {/* Certificates */}
+        {proProfile && (
+          <Card className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-brand-500" />
+                <h3 className="font-semibold text-surface-900">Certificaten & Diploma's</h3>
+              </div>
+              <Link href="/pro/profile/edit">
+                <Button variant="outline" size="sm">
+                  Beheren
+                </Button>
+              </Link>
+            </div>
+            <CertificateList
+              certificates={proProfile.certificates || []}
+              emptyMessage="Nog geen certificaten toegevoegd. Voeg certificaten toe om uw professionaliteit te tonen."
+            />
+          </Card>
+        )}
+
         {/* Categories */}
         {proProfile?.categories && proProfile.categories.length > 0 && (
           <Card className="mb-6">
@@ -256,16 +297,6 @@ export default async function ProProfilePage() {
                 </span>
               ))}
             </div>
-          </Card>
-        )}
-
-        {/* Work Area */}
-        {proProfile?.serviceRadius && (
-          <Card className="mb-6">
-            <h3 className="font-semibold text-surface-900 mb-3">Werkgebied</h3>
-            <p className="text-surface-600">
-              {proProfile.locationCity || 'Uw locatie'} + {proProfile.serviceRadius} km radius
-            </p>
           </Card>
         )}
 

@@ -30,3 +30,5 @@ export {
 export { ToastProvider, useToast } from './toast';
 
 export { ReportButton } from './report-button';
+
+export { UserLink } from './user-link';

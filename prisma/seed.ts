@@ -1,5 +1,5 @@
 // prisma/seed.ts
-import { PrismaClient, Role, JobStatus, Timeline, BudgetType } from '@prisma/client';
+import { PrismaClient, Role, JobStatus, Timeline, BudgetType, CertificateCategory } from '@prisma/client';
 import { hash } from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -37,6 +37,167 @@ async function main() {
     });
   }
   console.log(`✅ Created ${categories.length} categories`);
+
+  // ============================================
+  // CERTIFICATE TYPES
+  // ============================================
+  const certificateTypes = [
+    // Safety certifications
+    {
+      code: 'VCA',
+      name: 'VCA Veiligheid en Gezondheid',
+      category: CertificateCategory.SAFETY,
+      description: 'VCA (Veiligheid, Gezondheid en Milieu Checklist Aannemers) certificaat voor veilig werken',
+      clientLabel: 'VCA-gecertificeerd',
+      validityYears: 10,
+      order: 1,
+    },
+    {
+      code: 'BHV',
+      name: 'Bedrijfshulpverlening',
+      category: CertificateCategory.SAFETY,
+      description: 'BHV certificaat voor eerste hulp en evacuatie',
+      clientLabel: null, // Will use requiredHours in label
+      requiredHours: 16,
+      validityYears: 1,
+      order: 2,
+    },
+    {
+      code: 'ASBEST_INVENTARISATIE',
+      name: 'Asbest Inventarisatie',
+      category: CertificateCategory.SAFETY,
+      description: 'Gecertificeerd voor het inventariseren van asbest',
+      clientLabel: 'Asbest Inventarisatie gecertificeerd',
+      validityYears: 5,
+      order: 3,
+    },
+    {
+      code: 'ASBEST_SANERING',
+      name: 'Asbest Sanering',
+      category: CertificateCategory.SAFETY,
+      description: 'Gecertificeerd voor het verwijderen van asbest',
+      clientLabel: 'Asbest Sanering gecertificeerd',
+      validityYears: 5,
+      order: 4,
+    },
+
+    // Electrical certifications
+    {
+      code: 'NEN_1010',
+      name: 'NEN 1010 Laagspanning',
+      category: CertificateCategory.ELECTRICAL,
+      description: 'Kennis van elektrische installaties volgens NEN 1010 norm',
+      clientLabel: 'NEN 1010 gecertificeerd',
+      validityYears: 5,
+      order: 10,
+    },
+    {
+      code: 'NEN_3140',
+      name: 'NEN 3140 Bedrijfsvoering',
+      category: CertificateCategory.ELECTRICAL,
+      description: 'Bedrijfsvoering voor elektrotechnische werkzaamheden',
+      clientLabel: 'NEN 3140 gecertificeerd',
+      validityYears: null, // No expiration
+      order: 11,
+    },
+
+    // Installation certifications
+    {
+      code: 'INSTALLQ',
+      name: 'InstallQ Erkend Installatiebedrijf',
+      category: CertificateCategory.INSTALLATION,
+      description: 'InstallQ erkenning voor installatiewerkzaamheden',
+      clientLabel: 'InstallQ erkend',
+      validityYears: 1,
+      order: 20,
+    },
+    {
+      code: 'UNETO_VNI',
+      name: 'Uneto-VNI Gecertificeerd',
+      category: CertificateCategory.INSTALLATION,
+      description: 'Lid van Uneto-VNI brancheorganisatie',
+      clientLabel: 'Uneto-VNI lid',
+      validityYears: 1,
+      order: 21,
+    },
+    {
+      code: 'VIL',
+      name: 'VIL Erkend',
+      category: CertificateCategory.INSTALLATION,
+      description: 'VIL (Vereniging InstallatieBranche Liechtenstein) erkenning',
+      clientLabel: 'VIL erkend',
+      validityYears: 1,
+      order: 22,
+    },
+
+    // Education certifications
+    {
+      code: 'MBO_1',
+      name: 'MBO Niveau 1',
+      category: CertificateCategory.EDUCATION,
+      description: 'MBO diploma niveau 1 (assistentenopleiding)',
+      clientLabel: 'MBO Niveau 1',
+      validityYears: null,
+      order: 30,
+    },
+    {
+      code: 'MBO_2',
+      name: 'MBO Niveau 2',
+      category: CertificateCategory.EDUCATION,
+      description: 'MBO diploma niveau 2 (basisberoepsopleiding)',
+      clientLabel: 'MBO Niveau 2',
+      validityYears: null,
+      order: 31,
+    },
+    {
+      code: 'MBO_3',
+      name: 'MBO Niveau 3',
+      category: CertificateCategory.EDUCATION,
+      description: 'MBO diploma niveau 3 (vakopleiding)',
+      clientLabel: 'MBO Niveau 3',
+      validityYears: null,
+      order: 32,
+    },
+    {
+      code: 'MBO_4',
+      name: 'MBO Niveau 4',
+      category: CertificateCategory.EDUCATION,
+      description: 'MBO diploma niveau 4 (middenkaderopleiding of specialistenopleiding)',
+      clientLabel: 'MBO Niveau 4',
+      validityYears: null,
+      order: 33,
+    },
+    {
+      code: 'HBO',
+      name: 'HBO Bachelor',
+      category: CertificateCategory.EDUCATION,
+      description: 'HBO bachelor diploma',
+      clientLabel: 'HBO opgeleid',
+      validityYears: null,
+      order: 34,
+    },
+
+    // Construction certifications
+    {
+      code: 'VOL_VCA',
+      name: 'VOL-VCA Operationeel Leidinggevende',
+      category: CertificateCategory.CONSTRUCTION,
+      description: 'VCA voor operationeel leidinggevenden in de bouw',
+      clientLabel: 'VOL-VCA gecertificeerd',
+      validityYears: 10,
+      order: 40,
+    },
+  ];
+
+  console.log('📜 Creating certificate types...');
+  for (const certType of certificateTypes) {
+    await prisma.certificateType.upsert({
+      where: { code: certType.code },
+      update: certType,
+      create: certType,
+    });
+  }
+  console.log(`✅ Created ${certificateTypes.length} certificate types`);
 
   // ============================================
   // TEST USERS (only in development)

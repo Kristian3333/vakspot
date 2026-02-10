@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Card, Button, Textarea, Avatar, Spinner } from '@/components/ui';
 import { ArrowLeft, Star, Send, CheckCircle2, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
@@ -28,7 +28,6 @@ type JobDetail = {
 };
 
 export default function JobReviewPage() {
-  const router = useRouter();
   const params = useParams();
   const jobId = params.id as string;
 
@@ -130,6 +129,7 @@ export default function JobReviewPage() {
   }
 
   // Check if job is completed (required before review)
+  // Note: canBeReviewed from job-state-machine checks COMPLETED_BY_CONSUMER and COMPLETED_BY_PRO
   const completedStatuses = ['COMPLETED_BY_CONSUMER', 'COMPLETED_BY_PRO', 'COMPLETED'];
   if (!completedStatuses.includes(job.status)) {
     return (

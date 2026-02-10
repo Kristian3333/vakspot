@@ -82,8 +82,8 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-surface-900 mb-4">Bedrijfsgegevens</h3>
             <address className="not-italic text-sm text-surface-600 space-y-1">
               <p className="font-medium text-surface-900">VakSpot B.V.</p>
-              <p>Herengracht 123</p>
-              <p>1015 BH Amsterdam</p>
+              <p>Postbus 1082</p>
+              <p>9701 BB Groningen</p>
               <p className="pt-2">KvK: 12345678</p>
               <p>BTW: NL123456789B01</p>
             </address>

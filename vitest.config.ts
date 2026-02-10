@@ -21,6 +21,12 @@ export default defineConfig({
         '**/*.config.*',
         'prisma/**',
       ],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 70,
+        statements: 80,
+      },
     },
   },
   resolve: {

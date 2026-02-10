@@ -35,8 +35,8 @@ export default function ContactPage() {
     },
     {
       title: 'Adres',
-      description: 'Bezoek ons kantoor',
-      value: 'Herengracht 123, 1015 BH Amsterdam',
+      description: 'Postadres',
+      value: 'Postbus 1082, 9701 BB Groningen',
       icon: MapPin,
       href: null,
     },
@@ -46,9 +46,9 @@ export default function ContactPage() {
     companyName: 'VakSpot B.V.',
     kvkNumber: '12345678',
     vatNumber: 'NL123456789B01',
-    address: 'Herengracht 123',
-    postalCode: '1015 BH',
-    city: 'Amsterdam',
+    address: 'Postbus 1082',
+    postalCode: '9701 BB',
+    city: 'Groningen',
     country: 'Nederland',
   };
 
@@ -243,7 +243,7 @@ export default function ContactPage() {
                     <p><strong>Functie:</strong> Compliance Officer / Legal Affairs</p>
                     <p><strong>E-mail:</strong> <a href="mailto:legal@vakspot.nl" className="text-brand-600 hover:text-brand-700">legal@vakspot.nl</a></p>
                     <p><strong>Telefoon:</strong> 020-123 4567 (keuzemenu: toezichthouders)</p>
-                    <p><strong>Postadres:</strong> VakSpot B.V., t.a.v. Legal Affairs, Herengracht 123, 1015 BH Amsterdam</p>
+                    <p><strong>Postadres:</strong> VakSpot B.V., t.a.v. Legal Affairs, Postbus 1082, 9701 BB Groningen</p>
                   </div>
                 </div>
                 <div className="border-t border-surface-200 pt-4">

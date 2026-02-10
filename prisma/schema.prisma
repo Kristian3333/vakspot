@@ -146,7 +146,7 @@ model ProProfile {
   locationPostcode String?
   verified      Boolean  @default(false)
   active        Boolean  @default(true)
-  
+
   // Aggregated stats (denormalized for performance)
   avgRating     Float    @default(0)
   totalReviews  Int      @default(0)
@@ -161,6 +161,7 @@ model ProProfile {
   bids             Bid[]
   reviews          Review[]
   servicePurchases ServicePurchase[]
+  certificates     ProCertificate[]
 
   @@index([locationLat, locationLng])
   @@index([avgRating])
@@ -688,4 +689,76 @@ enum ModerationAction {
   REJECT_APPEAL
   VERIFY_PRO
   UNVERIFY_PRO
+}
+
+// ============================================
+// CERTIFICATES & ACCREDITATIONS
+// ============================================
+
+enum CertificateCategory {
+  SAFETY        // VCA, BHV, Asbestos
+  ELECTRICAL    // NEN 1010, NEN 3140
+  INSTALLATION  // InstallQ, Uneto-VNI
+  EDUCATION     // MBO, HBO
+  CONSTRUCTION  // Construction-specific
+  GENERAL       // General trade certifications
+}
+
+enum CertificateStatus {
+  PENDING    // Awaiting verification
+  VERIFIED   // Verified by admin or email
+  EXPIRED    // Past expiration date
+  REJECTED   // Verification failed
+}
+
+model CertificateType {
+  id            String              @id @default(cuid())
+  code          String              @unique // e.g., "VCA", "NEN_1010", "MBO_2"
+  name          String              // e.g., "VCA Veiligheid en Gezondheid"
+  category      CertificateCategory
+  description   String?             @db.Text
+  clientLabel   String?             // How to display to clients (e.g., "VCA-gecertificeerd")
+  requiredHours Int?                // For time-based certs (e.g., BHV 16 hours)
+  validityYears Int?                // Expiration period (null = no expiration)
+  active        Boolean             @default(true)
+  order         Int                 @default(0) // Display order
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  proCertificates ProCertificate[]
+
+  @@index([category, active, order])
+  @@index([code])
+}
+
+model ProCertificate {
+  id                String            @id @default(cuid())
+  proId             String
+  pro               ProProfile        @relation(fields: [proId], references: [id], onDelete: Cascade)
+  certificateTypeId String
+  certificateType   CertificateType   @relation(fields: [certificateTypeId], references: [id], onDelete: Cascade)
+
+  // Status & verification
+  status            CertificateStatus @default(PENDING)
+  verifiedAt        DateTime?
+  expiresAt         DateTime?
+  issuedAt          DateTime?         // When certificate was originally issued
+
+  // Certificate details
+  certificateNumber String?           // Official certificate number
+  issuingBody       String?           // Organization that issued it
+
+  // Email verification flow
+  verificationEmail String?           // Email to send verification request
+  verificationToken String?           // Unique token for email verification
+  verificationSentAt DateTime?        // When verification email was sent
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@unique([proId, certificateTypeId]) // One certificate type per PRO
+  @@index([proId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([verificationToken])
 }

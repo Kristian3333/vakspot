@@ -4,9 +4,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { Button, Card, Badge, Avatar, ReportButton } from '@/components/ui';
+import { Button, Card, Badge, ReportButton, UserLink } from '@/components/ui';
 import { DeleteJobButton } from '@/components/jobs/delete-job-button';
 import { AcceptProButton } from '@/components/jobs/accept-pro-button';
+import { JobCompletionActions } from '@/components/jobs/job-completion-actions';
 import { formatDate, formatRelativeTime } from '@/lib/utils';
 import { 
   MapPin, 
@@ -60,12 +61,13 @@ async function getJob(id: string, userId: string) {
         },
       },
       images: { orderBy: { order: 'asc' } },
+      review: { select: { id: true } },
       bids: {
         orderBy: { createdAt: 'desc' },
         include: {
           pro: {
             include: {
-              user: { select: { name: true, image: true } },
+              user: { select: { id: true, name: true, image: true } },
             },
           },
           conversation: {
@@ -167,6 +169,18 @@ export default async function JobDetailPage({ params }: PageProps) {
         )}
       </Card>
 
+      {/* Job completion actions */}
+      {acceptedBid && (
+        <div className="mb-6">
+          <JobCompletionActions
+            jobId={job.id}
+            status={job.status}
+            acceptedProId={acceptedBid.pro.id}
+            hasReview={!!job.review}
+          />
+        </div>
+      )}
+
       {/* Accepted pro - show prominently if someone is chosen */}
       {acceptedBid && (
         <Card className="mb-6 border-success-200 bg-success-50/30">
@@ -175,18 +189,14 @@ export default async function JobDetailPage({ params }: PageProps) {
             <h2 className="text-lg font-semibold text-surface-900">Gekozen vakman</h2>
           </div>
           <div className="flex items-start gap-4">
-            <Avatar
-              src={acceptedBid.pro.user.image}
+            <UserLink
+              userId={acceptedBid.pro.user.id}
               name={acceptedBid.pro.user.name}
-              size="lg"
+              image={acceptedBid.pro.user.image}
+              companyName={acceptedBid.pro.companyName}
+              size="md"
             />
             <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-surface-900">
-                {acceptedBid.pro.companyName || acceptedBid.pro.user.name}
-              </h3>
-              {acceptedBid.pro.companyName && (
-                <p className="text-sm text-surface-500">{acceptedBid.pro.user.name}</p>
-              )}
               {acceptedBid.pro.avgRating > 0 && (
                 <span className="flex items-center gap-1 mt-1 text-sm text-surface-500">
                   <Star className="h-4 w-4 text-warning-500 fill-warning-500" />
@@ -227,21 +237,15 @@ export default async function JobDetailPage({ params }: PageProps) {
                   }`}
                 >
                   <div className="flex items-start gap-4">
-                    <Avatar
-                      src={interest.pro.user.image}
+                    <UserLink
+                      userId={interest.pro.user.id}
                       name={interest.pro.user.name}
-                      size="lg"
+                      image={interest.pro.user.image}
+                      companyName={interest.pro.companyName}
+                      size="md"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-medium text-surface-900">
-                            {interest.pro.companyName || interest.pro.user.name}
-                          </h3>
-                          {interest.pro.companyName && (
-                            <p className="text-sm text-surface-500">{interest.pro.user.name}</p>
-                          )}
-                        </div>
                         <div className="flex items-center gap-2">
                           {isRejected && (
                             <Badge variant="neutral" size="sm">Afgewezen</Badge>

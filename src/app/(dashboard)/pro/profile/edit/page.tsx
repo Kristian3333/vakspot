@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation';
 import { Card, Button, Input, Textarea, Avatar, Spinner, Select } from '@/components/ui';
 import { ArrowLeft, Save, Upload } from 'lucide-react';
 import Link from 'next/link';
+import { CertificateManager } from '@/components/certificates/certificate-manager';
+import type { ProCertificateWithType, CertificateTypeInfo } from '@/types/certificates';
+import type { CertificateFormData } from '@/components/certificates/certificate-form';
 
 type Category = {
   id: string;
@@ -18,6 +21,7 @@ type ProProfile = {
   email: string;
   image: string | null;
   proProfile?: {
+    id: string;
     companyName: string | null;
     kvkNumber: string | null;
     entityType: 'BUSINESS' | 'INDIVIDUAL' | null;
@@ -27,6 +31,7 @@ type ProProfile = {
     locationPostcode: string | null;
     serviceRadius: number | null;
     categories: { categoryId: string }[];
+    certificates?: ProCertificateWithType[];
   } | null;
 };
 
@@ -34,6 +39,8 @@ export default function EditProProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<ProProfile | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [certificateTypes, setCertificateTypes] = useState<CertificateTypeInfo[]>([]);
+  const [certificates, setCertificates] = useState<ProCertificateWithType[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,10 +61,12 @@ export default function EditProProfilePage() {
     Promise.all([
       fetch('/api/pro/profile').then(res => res.json()),
       fetch('/api/categories').then(res => res.json()),
+      fetch('/api/certificates/types').then(res => res.json()),
     ])
-      .then(([profileData, categoriesData]) => {
+      .then(([profileData, categoriesData, certTypesData]) => {
         if (profileData && !profileData.error) {
           setProfile(profileData);
+          setCertificates(profileData.proProfile?.certificates || []);
           setFormData({
             companyName: profileData.proProfile?.companyName || '',
             kvkNumber: profileData.proProfile?.kvkNumber || '',
@@ -70,6 +79,7 @@ export default function EditProProfilePage() {
           });
         }
         setCategories(Array.isArray(categoriesData) ? categoriesData : categoriesData.categories || []);
+        setCertificateTypes(Array.isArray(certTypesData) ? certTypesData : certTypesData.certificateTypes || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -108,6 +118,65 @@ export default function EditProProfilePage() {
       setError(err instanceof Error ? err.message : 'Opslaan mislukt');
     }
     setSaving(false);
+  };
+
+  const handleAddCertificate = async (data: CertificateFormData) => {
+    try {
+      const res = await fetch('/api/certificates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Toevoegen mislukt');
+      }
+
+      const newCert = await res.json();
+      setCertificates([...certificates, newCert]);
+    } catch (err) {
+      console.error('Error adding certificate:', err);
+      throw err;
+    }
+  };
+
+  const handleRemoveCertificate = async (certificateId: string) => {
+    try {
+      const res = await fetch(`/api/certificates/${certificateId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Verwijderen mislukt');
+      }
+
+      setCertificates(certificates.filter(c => c.id !== certificateId));
+    } catch (err) {
+      console.error('Error removing certificate:', err);
+      throw err;
+    }
+  };
+
+  const handleRequestVerification = async (certificateId: string) => {
+    try {
+      const res = await fetch(`/api/certificates/${certificateId}/verify`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Verificatie aanvragen mislukt');
+      }
+
+      // Refresh certificates
+      const updatedCert = await res.json();
+      setCertificates(certificates.map(c => c.id === certificateId ? updatedCert : c));
+    } catch (err) {
+      console.error('Error requesting verification:', err);
+      throw err;
+    }
   };
 
   if (loading) {
@@ -338,9 +407,9 @@ export default function EditProProfilePage() {
 
           {/* Submit */}
           <div className="flex gap-3">
-            <Button 
-              type="submit" 
-              isLoading={saving} 
+            <Button
+              type="submit"
+              isLoading={saving}
               leftIcon={<Save className="h-4 w-4" />}
               disabled={formData.categories.length === 0}
             >
@@ -353,6 +422,20 @@ export default function EditProProfilePage() {
             </Link>
           </div>
         </form>
+
+        {/* Certificate Management */}
+        <div className="mt-8">
+          <h2 className="text-xl font-bold text-surface-900 mb-6">
+            Certificaten & Diploma's
+          </h2>
+          <CertificateManager
+            certificates={certificates}
+            certificateTypes={certificateTypes}
+            onAdd={handleAddCertificate}
+            onRemove={handleRemoveCertificate}
+            onRequestVerification={handleRequestVerification}
+          />
+        </div>
       </div>
     </div>
   );

@@ -73,6 +73,42 @@ describe('formatRelativeTime', () => {
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
     expect(formatRelativeTime(threeDaysAgo)).toContain('dag');
   });
+
+  // Dutch pluralization tests
+  it('should say "10 minuten geleden" not "10 minuuten geleden"', () => {
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    expect(formatRelativeTime(tenMinutesAgo)).toBe('10 minuten geleden');
+  });
+
+  it('should say "2 uur geleden" not "2 uuren geleden"', () => {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    expect(formatRelativeTime(twoHoursAgo)).toBe('2 uur geleden');
+  });
+
+  it('should say "3 jaar geleden" not "3 jaaren geleden"', () => {
+    const threeYearsAgo = new Date(Date.now() - 3 * 365 * 24 * 60 * 60 * 1000);
+    expect(formatRelativeTime(threeYearsAgo)).toBe('3 jaar geleden');
+  });
+
+  it('should say "2 weken geleden" not "2 weeken geleden"', () => {
+    const twoWeeksAgo = new Date(Date.now() - 2 * 7 * 24 * 60 * 60 * 1000);
+    expect(formatRelativeTime(twoWeeksAgo)).toBe('2 weken geleden');
+  });
+
+  it('should say "2 maanden geleden"', () => {
+    const twoMonthsAgo = new Date(Date.now() - 2 * 30 * 24 * 60 * 60 * 1000);
+    expect(formatRelativeTime(twoMonthsAgo)).toBe('2 maanden geleden');
+  });
+
+  it('should say "1 minuut geleden"', () => {
+    const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000);
+    expect(formatRelativeTime(oneMinuteAgo)).toBe('1 minuut geleden');
+  });
+
+  it('should say "1 dag geleden"', () => {
+    const oneDayAgo = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
+    expect(formatRelativeTime(oneDayAgo)).toBe('1 dag geleden');
+  });
 });
 
 describe('calculateDistance', () => {

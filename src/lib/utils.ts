@@ -41,19 +41,19 @@ export function formatRelativeTime(date: Date | string): string {
   const diffInSeconds = Math.floor((now.getTime() - d.getTime()) / 1000);
 
   const intervals = [
-    { label: 'jaar', seconds: 31536000 },
-    { label: 'maand', seconds: 2592000 },
-    { label: 'week', seconds: 604800 },
-    { label: 'dag', seconds: 86400 },
-    { label: 'uur', seconds: 3600 },
-    { label: 'minuut', seconds: 60 },
+    { singular: 'jaar', plural: 'jaar', seconds: 31536000 },
+    { singular: 'maand', plural: 'maanden', seconds: 2592000 },
+    { singular: 'week', plural: 'weken', seconds: 604800 },
+    { singular: 'dag', plural: 'dagen', seconds: 86400 },
+    { singular: 'uur', plural: 'uur', seconds: 3600 },
+    { singular: 'minuut', plural: 'minuten', seconds: 60 },
   ];
 
   for (const interval of intervals) {
     const count = Math.floor(diffInSeconds / interval.seconds);
     if (count >= 1) {
-      const plural = count > 1 && interval.label !== 'maand' ? 'en' : '';
-      return `${count} ${interval.label}${plural} geleden`;
+      const label = count === 1 ? interval.singular : interval.plural;
+      return `${count} ${label} geleden`;
     }
   }
 

@@ -8,15 +8,28 @@ import { formatRelativeTime } from '@/lib/utils';
 import {
   MapPin, ArrowLeft, CheckCircle2, AlertCircle, MessageSquare, Send, Users, XCircle
 } from 'lucide-react';
+import { StatusFlowTracker } from '@/components/jobs/status-flow-tracker';
+import { JobStatus } from '@prisma/client';
 
 type JobDetail = {
   id: string;
   title: string;
   description: string;
-  status: string;
+  status: JobStatus;
   locationCity: string;
   locationPostcode: string;
   publishedAt: string;
+  statusChangedAt?: string | null;
+  statusHistory?: Array<{
+    id: string;
+    jobId: string;
+    fromStatus: JobStatus;
+    toStatus: JobStatus;
+    changedBy: string;
+    changedAt: string;
+    reason?: string | null;
+    userId?: string | null;
+  }>;
   category: { id: string; name: string };
   client: { city: string | null; user: { name: string | null } };
   images: { id: string; url: string }[];
@@ -44,6 +57,7 @@ export default function ProJobDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [existingBid, setExistingBid] = useState<ExistingBid | null>(null);
+  const [markingComplete, setMarkingComplete] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -114,6 +128,38 @@ export default function ProJobDetailPage() {
     }
   };
 
+  const handleMarkComplete = async () => {
+    if (!job) return;
+
+    setMarkingComplete(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/jobs/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'COMPLETED_BY_PRO',
+        }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        setError(result.error || 'Markeren mislukt');
+        setMarkingComplete(false);
+        return;
+      }
+
+      // Refresh job data
+      const updatedJob = await response.json();
+      setJob(updatedJob);
+    } catch (err) {
+      setError('Er ging iets mis');
+    } finally {
+      setMarkingComplete(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-20">
@@ -142,6 +188,10 @@ export default function ProJobDetailPage() {
   const selectedStatuses = ['SELECTED', 'SCHEDULED', 'IN_PROGRESS', 'ACCEPTED'];
   const isJobAccepted = selectedStatuses.includes(job.status);
   const existingConversationId = existingBid?.conversation?.id || null;
+  // PRO can mark as complete
+  const canMarkComplete = isAcceptedByMe && (job.status === JobStatus.IN_PROGRESS || job.status === JobStatus.SCHEDULED);
+  // Show status flow for accepted jobs
+  const showStatusFlow = isAcceptedByMe && selectedStatuses.includes(job.status);
 
   // Success state after submitting interest
   if (submitted) {
@@ -267,6 +317,40 @@ export default function ProJobDetailPage() {
               </Button>
             )}
           </div>
+
+          {/* Mark complete button */}
+          {canMarkComplete && (
+            <div className="mt-4 pt-4 border-t border-success-300">
+              <Button
+                onClick={handleMarkComplete}
+                isLoading={markingComplete}
+                variant="outline"
+                className="w-full"
+                leftIcon={<CheckCircle2 className="h-4 w-4" />}
+              >
+                Markeer als voltooid
+              </Button>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Status flow tracker for accepted jobs */}
+      {showStatusFlow && (
+        <Card>
+          <h3 className="text-lg font-semibold text-surface-900 mb-2">Voortgang</h3>
+          <StatusFlowTracker
+            job={{
+              id: job.id,
+              status: job.status,
+              statusChangedAt: job.statusChangedAt ? new Date(job.statusChangedAt) : null,
+              statusHistory: job.statusHistory?.map(h => ({
+                ...h,
+                changedAt: new Date(h.changedAt),
+              })),
+            }}
+            viewMode="pro"
+          />
         </Card>
       )}
 
